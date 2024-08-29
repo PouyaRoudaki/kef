@@ -28,13 +28,13 @@ normal_mixture <- function(n, means, sds, mixture_weights) {
   }
 
   # Sample from the categorical distribution to choose the component for each sample
-  component <- sample(1:4, size = n, replace = TRUE, prob = mixture_weights)
+  component <- sample(1:length(mixture_weights), size = n, replace = TRUE, prob = mixture_weights)
 
   # Initialize the vector to store the generated samples
   samples <- numeric(n)
 
   # Generate the samples from the corresponding normal distributions
-  for (i in 1:4) {
+  for (i in 1:length(mixture_weights)) {
     samples[component == i] <- rnorm(sum(component == i), mean = means[i], sd = sds[i])
   }
 

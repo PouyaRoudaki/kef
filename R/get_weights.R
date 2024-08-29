@@ -10,7 +10,7 @@
 #'        evaluated at the sampled points.
 #' @param centered_kernel_mat_at_grid A matrix (n x m) representing the centered kernel matrix evaluated
 #'        at the grid points, where n is the number of sampled points and m is the number of grid points.
-#' @param centerd_kernel_self_grid A vector of length m representing the diagonal of the centered kernel
+#' @param centered_kernel_self_grid A vector of length m representing the diagonal of the centered kernel
 #'        matrix evaluated at the grid points.
 #' @param x_grid A vector representing the grid points.
 #'
@@ -25,12 +25,12 @@
 #' m <- 20
 #' centered_kernel_mat_at_sampled <- matrix(runif(n * n), n, n)
 #' centered_kernel_mat_at_grid <- matrix(runif(n * m), n, m)
-#' centerd_kernel_self_grid <- runif(m)
+#' centered_kernel_self_grid <- runif(m)
 #' x_grid <- seq(0, 1, length.out = m)
 #' weights <- get_weights(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
-#'                        centered_kernel_mat_at_grid, centerd_kernel_self_grid, x_grid)
+#'                        centered_kernel_mat_at_grid, centered_kernel_self_grid, x_grid)
 get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
-                        centered_kernel_mat_at_grid, centerd_kernel_self_grid,
+                        centered_kernel_mat_at_grid, centered_kernel_self_grid,
                         x_grid) {
 
   max_iteration <- 2000  # Maximum number of iterations for the Newton-Raphson method
@@ -41,7 +41,7 @@ get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
   for (i in 1:max_iteration) {
     # Calculate probabilities for sampled and grid points
     probs <- get_probs(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-                       centerd_kernel_self_grid, x_grid, lambda_hat, weight_hat_vec)
+                       centered_kernel_self_grid, x_grid, lambda_hat, weight_hat_vec)
 
     prob_sampled_x <- probs$sampled_x
     prob_grid_x <- probs$grid_x
@@ -94,7 +94,7 @@ get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
 #                                                         second_vec_kernel = x_grid,
 #                                                         centering_grid = centering_grid,
 #                                                         hurst_coef = 0.5)
-#centerd_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_grid,
+#centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_grid,
 #                                                        second_vec_kernel = x_grid,
 #                                                        centering_grid = centering_grid,
 #                                                        hurst_coef = 0.5))
@@ -109,13 +109,13 @@ get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
 
 #weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
 #                      centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-#                      centerd_kernel_self_grid, x_grid = x_grid)
+#                      centered_kernel_self_grid, x_grid = x_grid)
 
 #plot(sampled_x,weights_hat[1,])
 
 
 #probs <- get_probs(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-#                   centerd_kernel_self_grid, x_grid, lambda_hat, weights_hat)
+#                   centered_kernel_self_grid, x_grid, lambda_hat, weights_hat)
 
 
 

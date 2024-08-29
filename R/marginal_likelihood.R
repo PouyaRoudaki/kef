@@ -2,7 +2,7 @@
 #'
 #' @param centered_kernel_mat_at_sampled
 #' @param centered_kernel_mat_at_grid
-#' @param centerd_kernel_self_grid
+#' @param centered_kernel_self_grid
 #' @param x_grid
 #' @param p_old_vec
 #' @param lambda_hat
@@ -15,7 +15,7 @@
 #' @examples
 marginal_likelihood <- function(centered_kernel_mat_at_sampled,
                                 centered_kernel_mat_at_grid,
-                                centerd_kernel_self_grid,
+                                centered_kernel_self_grid,
                                 x_grid,
                                 p_old_vec = rep(1,nrow(centered_kernel_mat_at_sampled)),
                                 lambda_hat,
@@ -40,7 +40,7 @@ marginal_likelihood <- function(centered_kernel_mat_at_sampled,
   # Apply get_probs function to each column of w_sampled and get the probability
   probabilities_for_given_weights <- apply(w_sampled, 1, function(w_vec) {
     get_probs(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-              centerd_kernel_self_grid, x_grid, lambda_hat, w_vec)
+              centered_kernel_self_grid, x_grid, lambda_hat, w_vec)
   })
 
 
@@ -65,7 +65,7 @@ marginal_likelihood <- function(centered_kernel_mat_at_sampled,
 #'
 #' @param centered_kernel_mat_at_sampled
 #' @param centered_kernel_mat_at_grid
-#' @param centerd_kernel_self_grid
+#' @param centered_kernel_self_grid
 #' @param x_grid
 #' @param p_old_vec
 #' @param lambda_grid
@@ -78,7 +78,7 @@ marginal_likelihood <- function(centered_kernel_mat_at_sampled,
 #' @examples
 compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
                                              centered_kernel_mat_at_grid,
-                                             centerd_kernel_self_grid,
+                                             centered_kernel_self_grid,
                                              x_grid,
                                              p_old_vec = rep(1, nrow(centered_kernel_mat_at_sampled)),
                                              lambda_grid,
@@ -91,7 +91,7 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
   marginal_log_likelihoods <- mapply(function(lambda_hat, tau_hat) {
     marginal_likelihood(centered_kernel_mat_at_sampled,
                         centered_kernel_mat_at_grid,
-                        centerd_kernel_self_grid,
+                        centered_kernel_self_grid,
                         x_grid,
                         p_old_vec,
                         lambda_hat,
@@ -143,7 +143,7 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
 # Compute marginal likelihood over the grid
 #marginal_likelihood_wrt_tau_lambda <- compute_marginal_likelihood_grid(centered_kernel_mat_at_sampled,
 #                                            centered_kernel_mat_at_grid,
-#                                            centerd_kernel_self_grid,
+#                                            centered_kernel_self_grid,
 #                                            x_grid,
 #                                            p_old_vec= rep(1, nrow(centered_kernel_mat_at_sampled)),
 #                                            lambda_grid,
@@ -151,32 +151,32 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
 #                                            MC_iterations = 1000)
 
 
-save.image(file = "marginal_likelihoods.RData")
+#save.image(file = "marginal_likelihoods.RData")
 
 #install.packages("plot3D")
 #install.packages("rgl")
 #install.packages("akima")
-library(rgl)
-library(akima)
+#library(rgl)
+#library(akima)
 
 
-marginal_likelihood_wrt_tau_lambda_1 <- na.omit(marginal_likelihood_wrt_tau_lambda)
+#marginal_likelihood_wrt_tau_lambda_1 <- na.omit(marginal_likelihood_wrt_tau_lambda)
 # Interpolate to create a grid
-interp_result <- with(marginal_likelihood_wrt_tau_lambda_1,
-                      interp(lambda_hat,
-                             tau_hat,
-                             marginal_log_likelihood,
-                             duplicate = "mean"))
+#interp_result <- with(marginal_likelihood_wrt_tau_lambda_1,
+#                      interp(lambda_hat,
+#                             tau_hat,
+#                             marginal_log_likelihood,
+#                             duplicate = "mean"))
 
 # Handle NAs in the interpolated grid
-interp_result$z[is.na(interp_result$z)] <- mean(interp_result$z, na.rm = TRUE)
+#interp_result$z[is.na(interp_result$z)] <- mean(interp_result$z, na.rm = TRUE)
 
 # Plot the surface
-persp3d(interp_result$x, interp_result$y, interp_result$z, col = "lightblue")
+#persp3d(interp_result$x, interp_result$y, interp_result$z, col = "lightblue")
 
 # Add points
-points3d(marginal_likelihood_wrt_tau_lambda_1$lambda_hat,
-         marginal_likelihood_wrt_tau_lambda_1$tau_hat,
-         marginal_likelihood_wrt_tau_lambda_1$marginal_log_likelihood, col = "red", size = 5)
+#points3d(marginal_likelihood_wrt_tau_lambda_1$lambda_hat,
+#         marginal_likelihood_wrt_tau_lambda_1$tau_hat,
+#         marginal_likelihood_wrt_tau_lambda_1$marginal_log_likelihood, col = "red", size = 5)
 
 
