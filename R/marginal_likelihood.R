@@ -1,182 +1,122 @@
-#' Title
+#' Title: Compute Marginal Likelihood
 #'
-#' @param centered_kernel_mat_at_sampled
-#' @param centered_kernel_mat_at_grid
-#' @param centered_kernel_self_grid
-#' @param x_grid
-#' @param p_old_vec
-#' @param lambda_hat
-#' @param tau_hat
-#' @param MC_iterations
+#' This function calculates the marginal likelihood for a given set of parameters.
 #'
-#' @return
+#' @param centered_kernel_mat_at_sampled A matrix of centered kernel values at sampled points.
+#' @param centered_kernel_mat_at_grid A matrix of centered kernel values at grid points.
+#' @param centered_kernel_self_grid A matrix of centered kernel self-values at grid points.
+#' @param x_grid A grid of x values where the function is evaluated.
+#' @param p_vec A vector of initial probabilities (default is a vector of 1's).
+#' @param lambda_hat A scalar parameter, lambda, to be used in the likelihood computation.
+#' @param tau_hat A scalar parameter, tau, to be used in the likelihood computation.
+#' @param MC_iterations Number of Monte Carlo iterations to perform.
+#'
+#' @return The log of the marginal likelihood.
 #' @export
 #'
-#' @examples
 marginal_likelihood <- function(centered_kernel_mat_at_sampled,
                                 centered_kernel_mat_at_grid,
                                 centered_kernel_self_grid,
+                                sampled_x,
                                 x_grid,
-                                p_old_vec = rep(1,nrow(centered_kernel_mat_at_sampled)),
+                                p_vec = rep(1,nrow(centered_kernel_mat_at_sampled)),
                                 lambda_hat,
                                 tau_hat,
-                                MC_iterations){
+                                MC_iterations,
+                                type_of_p_is_prob = TRUE,
+                                type_of_q_is_prob = TRUE,
+                                method_of_p_calculation = "ordinary"){
 
-  # initials
+  # Get the number of sampled points
   n <- nrow(centered_kernel_mat_at_sampled)
 
-  # Take number of iteration in Monte Carlo approximation
-  #MC_iterations <- 1000
+  # Replicate p_vec for Monte Carlo iterations and convert it into a matrix
+  p_matrix <- matrix(rep(p_vec, each = MC_iterations), nrow = MC_iterations, byrow = FALSE)
 
-  # Take probability of p_old(x_i)
-  #p_old_vec <- rep(1,n)
-  p_old_matrix <- matrix(rep(p_old_vec, each = MC_iterations), nrow = MC_iterations, byrow = F)
-
-  # Take weights w_i from Normal distribution N(0, p(x_i)/\tau)
-  w_sampled <- matrix(rnorm(MC_iterations * n, mean = 0, sd = sqrt(p_old_matrix / tau_hat)),
+  # Sample weights w_i from a normal distribution N(0, p(x_i)/tau)
+  w_sampled <- matrix(rnorm(MC_iterations * n, mean = 0, sd = sqrt(p_matrix / tau_hat)),
                       nrow = MC_iterations, ncol = n)
 
-
-  # Apply get_probs function to each column of w_sampled and get the probability
+  # Calculate the probability for each set of sampled weights using the custom 'get_dens_or_prob' function
   probabilities_for_given_weights <- apply(w_sampled, 1, function(w_vec) {
-    get_probs(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-              centered_kernel_self_grid, x_grid, lambda_hat, w_vec)
+    get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+              centered_kernel_self_grid,
+              sampled_x,
+              x_grid,
+              lambda_hat,
+              w_vec,
+              type_of_p_is_prob = type_of_p_is_prob,
+              type_of_q_is_prob = type_of_q_is_prob,
+              method_of_p_calculation = method_of_p_calculation)
   })
 
-
-  # Extract the sampled_x vectors and combine them into a matrix
+  # Extract the probabilities for the sampled x values and combine them into a matrix
   prob_sampled_x_matrix <- do.call(rbind, lapply(probabilities_for_given_weights, `[[`, "sampled_x"))
 
-  # Likelihood vector
-  likelihood_vector <- colMeans(prob_sampled_x_matrix,na.rm = T)
+  # Compute the likelihood vector by taking the mean across Monte Carlo iterations
+  likelihood_vector <- colMeans(prob_sampled_x_matrix, na.rm = TRUE)
 
-  # Marginal likelihood
+  # Compute the log of the marginal likelihood by summing the log of the likelihood vector
   marginal_log_likelihood <- sum(log(likelihood_vector))
 
+  # Print a separator (seems to be for debugging purposes)
   print("-")
-  # Return
+
+  # Return the computed marginal log likelihood
   return(marginal_log_likelihood)
-
-
 }
 
-# Function to compute marginal likelihood for a grid of lambda_hat and tau_hat values
-#' Title
+#' Title: Compute Marginal Likelihood over a Grid of Parameters
 #'
-#' @param centered_kernel_mat_at_sampled
-#' @param centered_kernel_mat_at_grid
-#' @param centered_kernel_self_grid
-#' @param x_grid
-#' @param p_old_vec
-#' @param lambda_grid
-#' @param tau_grid
-#' @param MC_iterations
+#' This function computes the marginal likelihood for each combination of lambda and tau
+#' in the provided grids.
 #'
-#' @return
+#' @param centered_kernel_mat_at_sampled A matrix of centered kernel values at sampled points.
+#' @param centered_kernel_mat_at_grid A matrix of centered kernel values at grid points.
+#' @param centered_kernel_self_grid A matrix of centered kernel self-values at grid points.
+#' @param x_grid A grid of x values where the function is evaluated.
+#' @param p_vec A vector of initial probabilities (default is a vector of 1's).
+#' @param lambda_grid A grid of lambda values to be evaluated.
+#' @param tau_grid A grid of tau values to be evaluated.
+#' @param MC_iterations Number of Monte Carlo iterations to perform.
+#'
+#' @return A data frame containing lambda, tau, and their corresponding marginal log likelihoods.
 #' @export
 #'
-#' @examples
 compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
                                              centered_kernel_mat_at_grid,
                                              centered_kernel_self_grid,
+                                             sampled_x,
                                              x_grid,
-                                             p_old_vec = rep(1, nrow(centered_kernel_mat_at_sampled)),
+                                             p_vec = rep(1, nrow(centered_kernel_mat_at_sampled)),
                                              lambda_grid,
                                              tau_grid,
-                                             MC_iterations) {
-  # Create a grid of lambda_hat and tau_hat values
+                                             MC_iterations,
+                                             type_of_p_is_prob = TRUE,
+                                             type_of_q_is_prob = TRUE,
+                                             method_of_p_calculation = "ordinary") {
+  # Create a grid of all combinations of lambda_hat and tau_hat
   grid <- expand.grid(lambda_hat = lambda_grid, tau_hat = tau_grid)
 
-  # Compute marginal likelihood for each combination in the grid using mapply
+  # Compute the marginal likelihood for each combination in the grid using mapply
   marginal_log_likelihoods <- mapply(function(lambda_hat, tau_hat) {
     marginal_likelihood(centered_kernel_mat_at_sampled,
                         centered_kernel_mat_at_grid,
                         centered_kernel_self_grid,
+                        sampled_x,
                         x_grid,
-                        p_old_vec,
+                        p_vec,
                         lambda_hat,
                         tau_hat,
-                        MC_iterations)
+                        MC_iterations,
+                        type_of_p_is_prob,
+                        type_of_q_is_prob,
+                        method_of_p_calculation)
   }, grid$lambda_hat, grid$tau_hat)
 
-  # Combine results into a data frame
+  # Combine the results into a data frame
   results <- data.frame(lambda_hat = grid$lambda_hat, tau_hat = grid$tau_hat, marginal_log_likelihood = marginal_log_likelihoods)
 
+  # Return the results
   return(results)
 }
-
-# Define grids for lambda_hat
-#log_min_lambda <- log10(0.04)
-#log_max_lambda <- log10(400)
-
-# Number of intervals
-#num_intervals <- 10
-
-# Calculate the step size
-#step_size <- (log_max_lambda - log_min_lambda) / num_intervals
-
-# Generate the log scale values
-#log_lambda_values <- seq(log_min_lambda, log_max_lambda, by = step_size)
-
-# Convert back to the original scale
-#lambda_grid <- 10^log_lambda_values
-
-# Define grids for tau_hat
-#log_min_tau <- log10(0.0001)
-#log_max_tau <- log10(10)
-
-# Number of intervals
-#num_intervals <- 100
-
-# Calculate the step size
-#step_size <- (log_max_tau - log_min_tau) / num_intervals
-
-# Generate the log scale values
-#log_tau_values <- seq(log_min_tau, log_max_tau, by = step_size)
-
-# Convert back to the original scale
-#tau_grid <- 10^log_tau_values
-
-
-
-
-# Compute marginal likelihood over the grid
-#marginal_likelihood_wrt_tau_lambda <- compute_marginal_likelihood_grid(centered_kernel_mat_at_sampled,
-#                                            centered_kernel_mat_at_grid,
-#                                            centered_kernel_self_grid,
-#                                            x_grid,
-#                                            p_old_vec= rep(1, nrow(centered_kernel_mat_at_sampled)),
-#                                            lambda_grid,
-#                                            tau_grid,
-#                                            MC_iterations = 1000)
-
-
-#save.image(file = "marginal_likelihoods.RData")
-
-#install.packages("plot3D")
-#install.packages("rgl")
-#install.packages("akima")
-#library(rgl)
-#library(akima)
-
-
-#marginal_likelihood_wrt_tau_lambda_1 <- na.omit(marginal_likelihood_wrt_tau_lambda)
-# Interpolate to create a grid
-#interp_result <- with(marginal_likelihood_wrt_tau_lambda_1,
-#                      interp(lambda_hat,
-#                             tau_hat,
-#                             marginal_log_likelihood,
-#                             duplicate = "mean"))
-
-# Handle NAs in the interpolated grid
-#interp_result$z[is.na(interp_result$z)] <- mean(interp_result$z, na.rm = TRUE)
-
-# Plot the surface
-#persp3d(interp_result$x, interp_result$y, interp_result$z, col = "lightblue")
-
-# Add points
-#points3d(marginal_likelihood_wrt_tau_lambda_1$lambda_hat,
-#         marginal_likelihood_wrt_tau_lambda_1$tau_hat,
-#         marginal_likelihood_wrt_tau_lambda_1$marginal_log_likelihood, col = "red", size = 5)
-
-

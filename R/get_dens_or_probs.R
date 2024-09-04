@@ -1,4 +1,79 @@
 
+#' Density at Sampled Points
+#'
+#' This function calculates the density values at sampled data points using
+#' a given centered kernel matrix, a scaling parameter (lambda_hat), and a vector of weights (weight_hat_vec).
+#'
+#' @param centered_kernel_mat_at_sampled A matrix where each column represents the
+#' centered kernel values at different sampled data points.
+#' @param lambda_hat A scalar parameter used to scale the contribution of the kernel
+#' values and weights in the exponential function.
+#' @param weight_hat_vec A vector of weights that are applied to the centered kernel
+#' matrix in the computation.
+#'
+#' @return A vector containing the computed density values at each sampled data point.
+#' @export
+#'
+#' @examples
+#' # Example usage of the function
+#' density_at_sampled_x(centered_kernel_mat_at_sampled, lambda_hat, weight_hat_vec)
+density_at_sampled_x <- function(centered_kernel_mat_at_sampled, lambda_hat, weight_hat_vec) {
+
+  # Extract the diagonal elements of the kernel matrix, which represent the
+  # self-kernel values (i.e., the kernel values of each point with itself).
+  diag_vals <- diag(centered_kernel_mat_at_sampled)
+
+  # Compute the density values at each sampled data point
+  p_vec <- sapply(1:nrow(centered_kernel_mat_at_sampled), function(i) {
+    # For each sampled point, calculate the exponential of the linear combination of weights
+    # and centered kernel values, adjusted by lambda_hat, and subtract 0.5 times the
+    # self-kernel value for that point.
+    exp(lambda_hat * (weight_hat_vec %*% centered_kernel_mat_at_sampled[,i] - 0.5 * diag_vals[i]))
+  })
+
+  # Return the vector of density values
+  return(p_vec)
+}
+
+
+
+#' Density at Grid Points
+#'
+#' This function calculates the density values at specific grid points using
+#' a given centered kernel matrix, self-grid kernel values, a scaling parameter (lambda_hat),
+#' and a vector of weights (weight_hat_vec).
+#'
+#' @param centered_kernel_mat_at_grid A matrix where each column represents the
+#' centered kernel values at different grid points.
+#' @param centerd_kernel_self_grid A vector containing the centered kernel values
+#' for the grid points when compared to themselves.
+#' @param lambda_hat A scalar parameter used to scale the contribution of the kernel
+#' values and weights in the exponential function.
+#' @param weight_hat_vec A vector of weights that are applied to the centered kernel
+#' matrix in the computation.
+#'
+#' @return A vector containing the computed density values at each grid point.
+#' @export
+#'
+#' @examples
+#' # Example usage of the function
+#' density_at_grid(centered_kernel_mat_at_grid, centerd_kernel_self_grid, lambda_hat, weight_hat_vec)
+density_at_grid <- function(centered_kernel_mat_at_grid, centerd_kernel_self_grid, lambda_hat, weight_hat_vec) {
+
+  # Compute the density values at each grid point
+  p_vec <- sapply(1:ncol(centered_kernel_mat_at_grid), function(i) {
+    # For each grid point, calculate the exponential of the linear combination of weights
+    # and centered kernel values, adjusted by lambda_hat, and subtract 0.5 times the
+    # self-grid kernel value.
+    exp(lambda_hat * (weight_hat_vec %*% centered_kernel_mat_at_grid[,i] - 0.5 * centerd_kernel_self_grid[i]))
+  })
+
+  # Return the vector of density values
+  return(p_vec)
+}
+
+
+
 #' Compute Densities for Sampled and Grid Points
 #'
 #' This function computes densities for both sampled points and grid points.
@@ -17,7 +92,7 @@
 #' @param weight_hat_vec A vector of weights (length n) corresponding to the sampled points.
 #' @param type_of_p_is_prob A Boolean that specifies if the type of p is probability (TRUE) or it is density (FALSE).
 #' @param type_of_q_is_prob A Boolean that specifies if the type of q is probability (TRUE) or it is density (FALSE).
-#' @param method_of_p_calculation A string that shows by which approach we calculate the p. If it is ''ordinary'' it means that we used the ordinary approach of density at sampled points and if it is ''grid_based'' approach it means that we approximate sample densities or probabilities using grid densities.
+#' @param method_of_p_calculation A string that shows by which approach we calculate the p. If it is ''ordinary'' it means that we used the ordinary approach of density at sampled points and if it is ''neighborhood_grid'' approach it means that we approximate sample densities or probabilities using grid densities.
 #'
 #' @return A list containing two elements:
 #'         \item{sampled_x}{A vector of densities or normalized probabilities at the sampled points.}
@@ -38,7 +113,7 @@ get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
                           weight_hat_vec,
                           type_of_p_is_prob = TRUE,
                           type_of_q_is_prob = TRUE,
-                          method_of_p_calculation = 1){
+                          method_of_p_calculation = "ordinary"){
 
   # Compute the probabilities at the sampled points
   dens_sampled_x <- density_at_sampled_x(centered_kernel_mat_at_sampled, lambda_hat, weight_hat_vec)
@@ -55,11 +130,11 @@ get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
   dens_list$grid_x <- dens_grid / normalizing_cte
 
   prob_list <- list()
-  prob_list$sampled_x <- den_list$sampled_x / sum(den_list$sampled_x)
-  prob_list$grid_x <- den_list$grid_x / sum(den_list$grid_x)
+  prob_list$sampled_x <- dens_list$sampled_x / sum(dens_list$sampled_x)
+  prob_list$grid_x <- dens_list$grid_x / sum(dens_list$grid_x)
 
-
-  if(method_of_p_calculation == "grid_based"){
+  #print(paste("inside get_dens_or_probs",length(prob_list$grid_x)))
+  if(method_of_p_calculation == "neighborhood_grid"){
 
     approx_dens_or_prob <- get_grid_approx_dens_or_probs(sampled_x, x_grid, dens_list)
 
@@ -70,28 +145,20 @@ get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
   }
 
   result_list <- list()
-  if(type_of_p_is_prob == TRUE & type_of_q_is_prob = TRUE){
 
+  if(type_of_p_is_prob){
     result_list$sampled_x <- prob_list$sampled_x
-    result_list$grid_x <- prob_list$grid_x
-
-  } else if(type_of_p_is_prob == TRUE & type_of_q_is_prob = FALSE){
-
-    result_list$sampled_x <- prob_list$sampled_x
-    result_list$grid_x <- dens_list$grid_x
-
-  } else if(type_of_p_is_prob == FALSE & type_of_q_is_prob = TRUE){
-
+  }else{
     result_list$sampled_x <- dens_list$sampled_x
-    result_list$grid_x <- prob_list$grid_x
-
-  } else if(type_of_p_is_prob == FALSE & type_of_q_is_prob = FALSE){
-
-    result_list$sampled_x <- dens_list$sampled_x
-    result_list$grid_x <- dens_list$grid_x
-
   }
 
+  if(type_of_q_is_prob){
+    result_list$grid_x <- prob_list$grid_x
+  }else{
+    result_list$grid_x <- dens_list$grid_x
+  }
+
+  #print(paste("inside get_dens_or_probs",length(result_list$grid_x)))
 
   return(result_list)
 }
