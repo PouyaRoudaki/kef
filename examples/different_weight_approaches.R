@@ -123,16 +123,16 @@ p_vec <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at
                           method_of_p_calculation = "neighborhood_grid")$sampled_x
 
 # Open a connection to the file
-#sink("max_marginal_likelihood_result_4th_approach_20_iter.txt")
+sink("examples/max_marginal_likelihood_result_4th_approach_20_iter_first_try.txt")
 for (j in 1:20) {
 
   # printing step of iteration
   print(paste("Step:",j))
-
+  cat('------------------------------------------------------------\n')
   # maximum marginal likelihood
   print("p_vec summary:")
   print(summary(p_vec))
-
+  cat('------------------------------------------------------------\n')
   marginal_likelihood_df <- compute_marginal_likelihood_grid(centered_kernel_mat_at_sampled,
                                                              centered_kernel_mat_at_grid,
                                                              centered_kernel_self_grid,
@@ -151,12 +151,13 @@ for (j in 1:20) {
     arrange(desc(marginal_log_likelihood))
 
   # Print header
+  cat('------------------------------------------------------------\n')
   cat(sprintf("lambda_hat.    tau_hat.      marginal_log_likelihood. \n"))
-  cat('----------------------------------------\n')
+  cat('------------------------------------------------------------\n')
 
   # Print first 20 rows in the specified format
   for(i in 1:20) {
-    cat(sprintf("%4i      %8.2e     %8.2e\n", marginal_likelihood_df_sorted$lambda_hat[i],
+    cat(sprintf("%4.2e        %8.2e     %8.2e\n", marginal_likelihood_df_sorted$lambda_hat[i],
                 marginal_likelihood_df_sorted$tau_hat[i],
                 marginal_likelihood_df_sorted$marginal_log_likelihood[i]))
   }
@@ -174,29 +175,22 @@ for (j in 1:20) {
     print(paste('Chosen_lambda_hat =',lambda_hat,',', 'Chosen_tau_hat =', tau_hat))
 
     tryCatch(get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
-                           centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-                           centered_kernel_self_grid, sampled_x = sampled_x,
-                           x_grid = x_grid,
-                           type_of_p_is_prob = TRUE,
-                           type_of_q_is_prob = TRUE,
-                           method_of_p_calculation = "neighborhood_grid"),
+                         centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+                         centered_kernel_self_grid, sampled_x = sampled_x,
+                         x_grid = x_grid,
+                         type_of_p_is_prob = TRUE,
+                         type_of_q_is_prob = TRUE,
+                         method_of_p_calculation = "neighborhood_grid"),
              error = function(e) {
                # Code to handle error
-               cat("An error occurred: ", e$message, "\n")
+               cat("An error occurred because of non-invertible Hessian: ", e$message, "\n")
                marginal_likelihood_df$marginal_log_likelihood[which.max(marginal_likelihood_df$marginal_log_likelihood)] <<- -10^6
                error_flag <<- TRUE
                return(NULL)
              })
     #print(marginal_likelihood_df$marginal_log_likelihood[which.max(marginal_likelihood_df$marginal_log_likelihood)])
-    print(error_flag)
+    #print(error_flag)
     if (!error_flag){
-      weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
-                                 centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-                                 centered_kernel_self_grid, sampled_x = sampled_x,
-                                 x_grid = x_grid,
-                                 type_of_p_is_prob = TRUE,
-                                 type_of_q_is_prob = TRUE,
-                                 method_of_p_calculation = "neighborhood_grid")
       loop_continue <- FALSE
     }
 
@@ -206,23 +200,23 @@ for (j in 1:20) {
 
   #weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
   #                           centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-  #                           centerd_kernel_self_grid, x_grid = x_grid)
+  #                           centered_kernel_self_grid, x_grid = x_grid)
 
 
   probs <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-                                centered_kernel_self_grid,
-                                sampled_x,
-                                x_grid,
-                                lambda_hat,
-                                weights_hat,
-                                type_of_p_is_prob = TRUE,
-                                type_of_q_is_prob = TRUE,
-                                method_of_p_calculation = "neighborhood_grid")
+                            centered_kernel_self_grid,
+                            sampled_x,
+                            x_grid,
+                            lambda_hat,
+                            weights_hat,
+                            type_of_p_is_prob = TRUE,
+                            type_of_q_is_prob = TRUE,
+                            method_of_p_calculation = "neighborhood_grid")
 
   p_vec <- probs$sampled_x
-
+  cat('============================================================\n')
 }
-#sink()
+sink()
 
 
 
@@ -289,6 +283,7 @@ lambda_hat_min <- 1
 lambda_hat_max <- 100
 num_points <- 20
 
+
 # Generate the log scale grid
 lambda_hat_grid <- seq(lambda_hat_min, lambda_hat_max, length.out = num_points)
 
@@ -296,6 +291,7 @@ lambda_hat_grid <- seq(lambda_hat_min, lambda_hat_max, length.out = num_points)
 tau_hat_min <- 0.01
 tau_hat_max <- 2
 num_points <- 20
+
 
 # Generate the log scale grid
 tau_hat_grid <- seq(tau_hat_min, tau_hat_max, length.out = num_points)
@@ -308,16 +304,16 @@ p_vec <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at
                           method_of_p_calculation = "neighborhood_grid")$sampled_x
 
 # Open a connection to the file
-#sink("max_marginal_likelihood_result_4th_approach_20_iter.txt")
+sink("examples/max_marginal_likelihood_result_4th_approach_20_iter_second_try.txt")
 for (j in 1:20) {
 
   # printing step of iteration
   print(paste("Step:",j))
-
+  cat('------------------------------------------------------------\n')
   # maximum marginal likelihood
   print("p_vec summary:")
   print(summary(p_vec))
-
+  cat('------------------------------------------------------------\n')
   marginal_likelihood_df <- compute_marginal_likelihood_grid(centered_kernel_mat_at_sampled,
                                                              centered_kernel_mat_at_grid,
                                                              centered_kernel_self_grid,
@@ -336,8 +332,9 @@ for (j in 1:20) {
     arrange(desc(marginal_log_likelihood))
 
   # Print header
+  cat('------------------------------------------------------------\n')
   cat(sprintf("lambda_hat.    tau_hat.      marginal_log_likelihood. \n"))
-  cat('----------------------------------------\n')
+  cat('------------------------------------------------------------\n')
 
   # Print first 20 rows in the specified format
   for(i in 1:20) {
@@ -367,21 +364,14 @@ for (j in 1:20) {
                          method_of_p_calculation = "neighborhood_grid"),
              error = function(e) {
                # Code to handle error
-               cat("An error occurred: ", e$message, "\n")
+               cat("An error occurred because of non-invertible Hessian: ", e$message, "\n")
                marginal_likelihood_df$marginal_log_likelihood[which.max(marginal_likelihood_df$marginal_log_likelihood)] <<- -10^6
                error_flag <<- TRUE
                return(NULL)
              })
     #print(marginal_likelihood_df$marginal_log_likelihood[which.max(marginal_likelihood_df$marginal_log_likelihood)])
-    print(error_flag)
+    #print(error_flag)
     if (!error_flag){
-      weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
-                                 centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-                                 centered_kernel_self_grid, sampled_x = sampled_x,
-                                 x_grid = x_grid,
-                                 type_of_p_is_prob = TRUE,
-                                 type_of_q_is_prob = TRUE,
-                                 method_of_p_calculation = "neighborhood_grid")
       loop_continue <- FALSE
     }
 
@@ -405,9 +395,9 @@ for (j in 1:20) {
                             method_of_p_calculation = "neighborhood_grid")
 
   p_vec <- probs$sampled_x
-
+  cat('============================================================\n')
 }
-#sink()
+sink()
 #lambda_hat
 #tau_hat
 
