@@ -101,11 +101,11 @@ ggplot() +
 
 # Define the range and number of points
 lambda_hat_min <- 1
-lambda_hat_max <- 10
+lambda_hat_max <- 100
 num_points <- 10
 
 # Generate the log scale grid
-lambda_hat_grid <- c(seq(lambda_hat_min, lambda_hat_max-1, length.out = num_points-1),10*seq(lambda_hat_min, lambda_hat_max, length.out = num_points))
+lambda_hat_grid <- seq(lambda_hat_min, lambda_hat_max, length.out = num_points)
 
 # Define the range and number of points
 tau_hat_min <- 0.1
@@ -113,10 +113,7 @@ tau_hat_max <- 100
 num_points <- 10
 
 # Generate the log scale grid
-tau_hat_grid <- c(0.01*seq(lambda_hat_min, lambda_hat_max-1, length.out = num_points-1),
-                  0.1*seq(lambda_hat_min, lambda_hat_max-1, length.out = num_points-1),
-                  seq(lambda_hat_min, lambda_hat_max-1, length.out = num_points-1),
-                  10*seq(lambda_hat_min, lambda_hat_max, length.out = num_points))
+tau_hat_grid <- seq(tau_hat_min, tau_hat_max, length.out = num_points)
 
 p_vec <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
                           centered_kernel_self_grid, sampled_x,

@@ -81,7 +81,8 @@ get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
                              diag(tau_hat / prob_sampled_x))
     }
 
-
+    #print(s)
+    #print(Hessian_inv)
     # Update the weight vector using the Newton-Raphson method
     #weight_hat_change <- NRstepsize * s %*% Hessian_inv
     weight_hat_vec <- weight_hat_vec + NRstepsize * s %*% Hessian_inv
