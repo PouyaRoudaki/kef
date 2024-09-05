@@ -18,9 +18,13 @@ loocv_weight_error_grid <- function(weight_hat,
                                     centered_kernel_mat_at_sampled,
                                     centered_kernel_mat_at_grid,
                                     centered_kernel_self_grid,
+                                    sampled_x,
                                     x_grid,
                                     lambda_hat_grid,
-                                    tau_hat_grid) {
+                                    tau_hat_grid,
+                                    type_of_p_is_prob=TRUE,
+                                    type_of_q_is_prob=TRUE,
+                                    method_of_p_calculation="ordinary") {
 
   # Create a grid of lambda_hat and tau_hat values
   grid <- expand.grid(lambda_hat = lambda_hat_grid, tau_hat = tau_hat_grid)
@@ -41,7 +45,11 @@ loocv_weight_error_grid <- function(weight_hat,
                                             temp_centered_kernel_mat_at_sampled,
                                             temp_centered_kernel_mat_at_grid,
                                             centered_kernel_self_grid,
-                                            x_grid = x_grid))
+                                            sampled_x = sampled_x,
+                                            x_grid = x_grid,
+                                            type_of_p_is_prob=type_of_p_is_prob,
+                                            type_of_q_is_prob=type_of_q_is_prob,
+                                            method_of_p_calculation=method_of_p_calculation))
 
       # Calculate the error for the left-out sample
       one_out_err <- t(w_hat_loocv - weight_hat[-i]) %*%

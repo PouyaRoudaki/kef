@@ -23,8 +23,8 @@ marginal_likelihood <- function(centered_kernel_mat_at_sampled,
                                 lambda_hat,
                                 tau_hat,
                                 MC_iterations,
-                                type_of_p_is_prob = TRUE,
-                                type_of_q_is_prob = TRUE,
+                                type_of_p_is_prob = FALSE,
+                                type_of_q_is_prob = FALSE,
                                 method_of_p_calculation = "ordinary"){
 
   # Get the number of sampled points
@@ -92,8 +92,8 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
                                              lambda_grid,
                                              tau_grid,
                                              MC_iterations,
-                                             type_of_p_is_prob = TRUE,
-                                             type_of_q_is_prob = TRUE,
+                                             type_of_p_is_prob = FALSE,
+                                             type_of_q_is_prob = FALSE,
                                              method_of_p_calculation = "ordinary") {
   # Create a grid of all combinations of lambda_hat and tau_hat
   grid <- expand.grid(lambda_hat = lambda_grid, tau_hat = tau_grid)

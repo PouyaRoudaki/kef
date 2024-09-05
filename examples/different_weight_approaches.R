@@ -1,5 +1,6 @@
 library(quantreg)
 library(ggplot2)
+library(dplyr)
 # Example usage
 # Define the weights for the mixture distribution
 mixture_weights <- c(1/2, 1/6, 1/6, 1/6)
@@ -144,9 +145,9 @@ for (j in 1:20) {
                                                              lambda_grid = lambda_hat_grid,
                                                              tau_grid = tau_hat_grid,
                                                              MC_iterations = 1000,
-                                                             type_of_p_is_prob = TRUE,
-                                                             type_of_q_is_prob = TRUE,
-                                                             method_of_p_calculation = "neighborhood_grid")
+                                                             type_of_p_is_prob = FALSE,
+                                                             type_of_q_is_prob = FALSE,
+                                                             method_of_p_calculation = "ordinary")
 
   # Arrange dataframe by the 3rd column in decreasing order
   marginal_likelihood_df_sorted <- marginal_likelihood_df %>%
@@ -192,10 +193,13 @@ for (j in 1:20) {
     #print(marginal_likelihood_df$marginal_log_likelihood[which.max(marginal_likelihood_df$marginal_log_likelihood)])
     print(error_flag)
     if (!error_flag){
-      weights_hat <- get_weights_4(lambda_hat =lambda_hat, tau_hat = tau_hat,
-                                   centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-                                   centerd_kernel_self_grid, sampled_x = sampled_x,
-                                   x_grid = x_grid)
+      weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
+                                 centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+                                 centered_kernel_self_grid, sampled_x = sampled_x,
+                                 x_grid = x_grid,
+                                 type_of_p_is_prob = TRUE,
+                                 type_of_q_is_prob = TRUE,
+                                 method_of_p_calculation = "neighborhood_grid")
       loop_continue <- FALSE
     }
 
@@ -208,8 +212,15 @@ for (j in 1:20) {
   #                           centerd_kernel_self_grid, x_grid = x_grid)
 
 
-  probs <- get_probs(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-                     centerd_kernel_self_grid, x_grid, lambda_hat, weights_hat)
+  probs <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+                                centered_kernel_self_grid,
+                                sampled_x,
+                                x_grid,
+                                lambda_hat,
+                                weights_hat,
+                                type_of_p_is_prob = TRUE,
+                                type_of_q_is_prob = TRUE,
+                                method_of_p_calculation = "neighborhood_grid")
 
   p_vec <- probs$sampled_x
 

@@ -18,9 +18,13 @@ weights_error_given_true_grid <- function(weight_true,
                        centered_kernel_mat_at_sampled,
                        centered_kernel_mat_at_grid,
                        centered_kernel_self_grid,
+                       sampled_x,
                        x_grid,
                        lambda_hat_grid,
-                       tau_hat_grid) {
+                       tau_hat_grid,
+                       type_of_p_is_prob=TRUE,
+                       type_of_q_is_prob=TRUE,
+                       method_of_p_calculation="ordinary") {
 
   # Create a grid of lambda_hat and tau_hat values
   grid <- expand.grid(lambda_hat = lambda_hat_grid, tau_hat = tau_hat_grid)
@@ -31,7 +35,11 @@ weights_error_given_true_grid <- function(weight_true,
                               centered_kernel_mat_at_sampled,
                               centered_kernel_mat_at_grid,
                               centered_kernel_self_grid,
-                              x_grid)
+                              sampled_x,
+                              x_grid,
+                              type_of_p_is_prob=type_of_p_is_prob,
+                              type_of_q_is_prob=type_of_q_is_prob,
+                              method_of_p_calculation=method_of_p_calculation)
 
     # Ensure weight_hat is a vector
     weight_hat <- as.vector(weight_hat)
