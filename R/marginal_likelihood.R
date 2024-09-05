@@ -60,7 +60,7 @@ marginal_likelihood <- function(centered_kernel_mat_at_sampled,
   marginal_log_likelihood <- sum(log(likelihood_vector))
 
   # Print a separator (seems to be for debugging purposes)
-  print("-")
+  #print("-")
 
   # Return the computed marginal log likelihood
   return(marginal_log_likelihood)
