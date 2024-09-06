@@ -461,6 +461,66 @@ ggplot() +
   theme(legend.position = "bottom")
 
 
+################################################################################
+tau_hat <- 0.8
+lambda_hat <- 1
+weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
+                                                      centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+                                                      centered_kernel_self_grid, x_grid = x_grid)
 
+# Convert the data to a data frame for use with ggplot2
+plot_data <- data.frame(sampled_x = sampled_x, weights_hat = weights_hat[1,])
+
+# Create the ggplot
+p <- ggplot(plot_data, aes(x = sampled_x, y = weights_hat)) +
+  geom_point(color  = "black") +
+  geom_line(color = "blue") +
+  labs(title = "Weights Hat vs Sampled x",
+       x = "Sampled x",
+       y = "Weights Hat")+
+  theme_bw()
+
+print(p)
+
+
+probs <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+                          centered_kernel_self_grid, sampled_x,
+                          x_grid, lambda_hat, weights_hat,
+                          type_of_p_is_prob = FALSE,
+                          type_of_q_is_prob = FALSE,
+                          method_of_p_calculation = "ordinary")
+
+kef_df <- data.frame(grid = x_grid, kef_pdf = probs$grid_x)
+
+true_density <- sapply(x_grid, function(x){
+  result <- mixture_weights[1] * dnorm(x, mean = means[1], sd = sds[1]) +
+    mixture_weights[2] * dnorm(x, mean = means[2], sd = sds[2]) +
+    mixture_weights[3] * dnorm(x, mean = means[3], sd = sds[3]) +
+    mixture_weights[4] * dnorm(x, mean = means[4], sd = sds[4])
+
+  return(result)
+})
+
+
+true_density_df <- data.frame(grid = x_grid, true_pdf = true_density)
+
+
+# Perform the adaptive KDE
+kde_adaptive <- akj(sampled_x,x_grid,kappa = 0.35,alpha = 0.9)
+kde_adaptive_df <- data.frame(grid = x_grid, kde_adaptive_pdf = kde_adaptive$dens)
+
+
+ggplot() +
+  geom_histogram(aes(x = sampled_x, y = ..density..), bins = 60, fill = 'gray', alpha = 1, color = 'black') +
+  geom_line(data = true_density_df, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 1) +
+  geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
+  geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
+  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue', 'KEF' = 'orange')) +
+  ggtitle(paste('Histogram and Kernel Density Estimate for lambda_hat',
+                round(lambda_hat,2),'and tau_hat',round(tau_hat,4))) +
+  xlab('Value') +
+  ylab('Density') +
+  theme_bw() +
+  theme(legend.position = "bottom")
 
 
