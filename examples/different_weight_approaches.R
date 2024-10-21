@@ -11,8 +11,9 @@ means <- c(0, -1, 0, 1)
 sds <- c(1, 0.1, 0.1, 0.1)
 
 sampled_x <- sort(normal_mixture(100, means, sds, mixture_weights))
-x_grid <-  seq(-3.1,3.1,length.out =400)
-centering_grid <- sampled_x
+x_grid <-  seq(-3.1,3.1,length.out = 400)
+# centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
+centering_grid <- runif(min = -3.1,max = 3.1,n = 100)
 
 centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sampled_x,
                                                          second_vec_kernel = sampled_x,
@@ -123,8 +124,8 @@ p_vec <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at
                           method_of_p_calculation = "neighborhood_grid")$sampled_x
 
 # Open a connection to the file
-sink("examples/max_marginal_likelihood_result_4th_approach_20_iter_first_try.txt")
-for (j in 1:20) {
+#sink("examples/max_marginal_likelihood_result_4th_approach_20_iter_first_try.txt")
+for (j in 1:10) {
 
   # printing step of iteration
   print(paste("Step:",j))
@@ -198,9 +199,9 @@ for (j in 1:20) {
   }
 
 
-  #weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
-  #                           centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-  #                           centered_kernel_self_grid, x_grid = x_grid)
+  weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
+                             centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+                             centered_kernel_self_grid, x_grid = x_grid)
 
 
   probs <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
@@ -216,9 +217,22 @@ for (j in 1:20) {
   p_vec <- probs$sampled_x
   cat('============================================================\n')
 }
-sink()
+#sink()
 
-
+library(plotly)
+plot_ly(x=marginal_likelihood_df$lambda_hat,
+        y=marginal_likelihood_df$tau_hat,
+        z=marginal_likelihood_df$marginal_log_likelihood, type="surface")
+plot_ly(x = marginal_likelihood_df$lambda_hat,
+        y = marginal_likelihood_df$tau_hat,
+        z = marginal_likelihood_df$marginal_log_likelihood,
+        type = "scatter3d",
+        mode = "markers") %>%
+  layout(scene = list(
+    xaxis = list(title = "Lambda Hat"),
+    yaxis = list(title = "Tau Hat"),
+    zaxis = list(title = "Marginal Log Likelihood")
+  ))
 
 # Convert the data to a data frame for use with ggplot2
 plot_data <- data.frame(sampled_x = sampled_x, weights_hat = weights_hat[1,])
@@ -279,8 +293,8 @@ ggplot() +
 
 
 # Define the range and number of points
-lambda_hat_min <- 1
-lambda_hat_max <- 100
+lambda_hat_min <- 0.1
+lambda_hat_max <- 20
 num_points <- 20
 
 
@@ -288,8 +302,8 @@ num_points <- 20
 lambda_hat_grid <- seq(lambda_hat_min, lambda_hat_max, length.out = num_points)
 
 # Define the range and number of points
-tau_hat_min <- 0.01
-tau_hat_max <- 2
+tau_hat_min <- 0.1
+tau_hat_max <- 20
 num_points <- 20
 
 
@@ -304,8 +318,8 @@ p_vec <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at
                           method_of_p_calculation = "neighborhood_grid")$sampled_x
 
 # Open a connection to the file
-sink("examples/max_marginal_likelihood_result_4th_approach_20_iter_second_try.txt")
-for (j in 1:20) {
+#sink("examples/max_marginal_likelihood_result_4th_approach_20_iter_second_try.txt")
+for (j in 1:10) {
 
   # printing step of iteration
   print(paste("Step:",j))
@@ -397,7 +411,7 @@ for (j in 1:20) {
   p_vec <- probs$sampled_x
   cat('============================================================\n')
 }
-sink()
+#sink()
 #lambda_hat
 #tau_hat
 

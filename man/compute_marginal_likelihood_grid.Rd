@@ -8,11 +8,15 @@ compute_marginal_likelihood_grid(
   centered_kernel_mat_at_sampled,
   centered_kernel_mat_at_grid,
   centered_kernel_self_grid,
+  sampled_x,
   x_grid,
-  p_old_vec = rep(1, nrow(centered_kernel_mat_at_sampled)),
+  p_vec = rep(1, nrow(centered_kernel_mat_at_sampled)),
   lambda_grid,
   tau_grid,
-  MC_iterations
+  MC_iterations,
+  type_of_p_is_prob = FALSE,
+  type_of_q_is_prob = FALSE,
+  method_of_p_calculation = "ordinary"
 )
 }
 \arguments{
@@ -24,7 +28,7 @@ compute_marginal_likelihood_grid(
 
 \item{x_grid}{A grid of x values where the function is evaluated.}
 
-\item{p_old_vec}{A vector of initial probabilities (default is a vector of 1's).}
+\item{p_vec}{A vector of initial probabilities (default is a vector of 1's).}
 
 \item{lambda_grid}{A grid of lambda values to be evaluated.}
 

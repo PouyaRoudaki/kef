@@ -9,9 +9,13 @@ weights_error_given_true_grid(
   centered_kernel_mat_at_sampled,
   centered_kernel_mat_at_grid,
   centered_kernel_self_grid,
+  sampled_x,
   x_grid,
   lambda_hat_grid,
-  tau_hat_grid
+  tau_hat_grid,
+  type_of_p_is_prob = TRUE,
+  type_of_q_is_prob = TRUE,
+  method_of_p_calculation = "ordinary"
 )
 }
 \arguments{
