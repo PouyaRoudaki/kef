@@ -16,7 +16,7 @@ gram_matrix <- function(vec_list,
                         kernel_type = "rbf",
                         kernel_params = list(length_scale = 1, degree = 2,
                                              free_add = 0, free_mult = 1,
-                                             nu_matern = 1, centering_param)) {
+                                             nu_matern = 1, centering_param = 5)) {
 
   # Get all combinations of vector pairs
   combinations <- combn(1:length(vec_list), 2, simplify = TRUE)

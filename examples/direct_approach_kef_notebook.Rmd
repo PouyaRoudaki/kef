@@ -348,8 +348,8 @@ ggplot(df_long, aes(x = grid_points, y = estimation, color = type)) +
   theme(panel.grid = element_blank(),  # Remove grid lines
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +  # Axis ticks color
-  scale_color_manual(values = c('blue', 'green', 'green3', 'darkred', 'gray',
-                                'gray', 'orange')) # Customize colors
+  scale_color_manual(values = c('orange', 'green', 'green3', 'darkred', 'gray',
+                                'gray', 'blue')) # Customize colors
 ```
 
 ```{r}
@@ -448,10 +448,10 @@ So we can make equations that only $\theta$'s are unknown, and we can find these
 
 ## Specify the grid and centering grid
 ```{r}
-sampled_x <- sort(normal_mixture(100, means, sds, mixture_weights))
-x_grid <-  seq(-7,7,length.out = 400)
+sampled_x <- vec_fixed_points
+x_grid <-  seq(-7,7,length.out = 800)
 # centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
-centering_grid <- runif(min = -7,max = 7,n = 100)
+centering_grid <- runif(min = -7,max = 7,n = 800)
 ```
 
 ## Find Kernel Matrices:
@@ -517,10 +517,10 @@ estimated_p <- exp(theta + 0.5 * centered_kernel_self_grid)
 
 ```{r}
 # Combine into a data frame
-df <- data.frame(sampled_x, estimated_p)
+df_result <- data.frame(sampled_x, estimated_p)
 
 # Create the ggplot
-ggplot(df, aes(x = sampled_x, y = estimated_p)) +
+ggplot(df_result, aes(x = sampled_x, y = estimated_p)) +
   geom_line() +       # Line plot
   geom_point() +      # Add points
   labs(title = "Estimated P versus Sampled X",
