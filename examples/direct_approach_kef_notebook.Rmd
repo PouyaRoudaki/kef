@@ -32,7 +32,7 @@ Set the mean and standard deviation of normal distribution P
 ## Take Random samples
 ```{r}
 # vector of fixed points
-vec_fixed_points <- rnorm_mixture(n, means, sds, probabilities)
+vec_fixed_points <- sort(rnorm_mixture(n, means, sds, probabilities))
 
 library(ggplot2)
 # Assuming vec_fixed_points is your data
@@ -453,9 +453,9 @@ So we can make equations that only $\theta$'s are unknown, and we can find these
 ## Specify the grid and centering grid
 ```{r}
 sampled_x <- vec_fixed_points
-x_grid <-  seq(-7,7,length.out = 800)
+x_grid <-  seq(-7,7,length.out = 1000)
 # centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
-centering_grid <- runif(min = -7,max = 7,n = 800)
+centering_grid <- runif(min = -7,max = 7,n = 1000)
 ```
 
 ## Find Kernel Matrices:
@@ -479,7 +479,7 @@ centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled
 ## Find the probababilities:
 
 ```{r}
-p <- solve(centered_kernel_mat_at_sampled) %*% df_reg$regularized
+p <- t(solve(centered_kernel_mat_at_sampled)) %*% df_reg$regularized
 ```
 
 ### Find ln(p):
@@ -523,6 +523,11 @@ centered_kernel_self_grid <- diag(centered_kernel_mat_at_sampled)
 
 estimated_p <- exp(theta + 0.5 * centered_kernel_self_grid)
 ```
+
+```{r}
+sum(estimated_p,na.rm = T)
+```
+
 
 ## Show the result:
 
