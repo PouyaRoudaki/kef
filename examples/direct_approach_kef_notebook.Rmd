@@ -32,7 +32,7 @@ Set the mean and standard deviation of normal distribution P
 ## Take Random samples
 ```{r}
 # vector of fixed points
-vec_fixed_points= rnorm_mixture(n, means, sds, probabilities)
+vec_fixed_points <- rnorm_mixture(n, means, sds, probabilities)
 
 library(ggplot2)
 # Assuming vec_fixed_points is your data
@@ -72,12 +72,12 @@ min(eigen(conv_gram)$values)
 ## Bandwidth selection
 Apply the norm to all combinations in order to find median of them and setting the bandwidth equal to that.
 ```{r}
-
+#all_norm_two <- apply(combinations, MARGIN = 1, function(pair) {
+#  norm(x = list_fixed_points[[pair[2]]] - list_fixed_points[[pair[1]]], p=2)^2
+#})
 ```
 
-all_norm_two <- apply(combinations, MARGIN = 1, function(pair) {
-  norm(x = list_fixed_points[[pair[2]]] - list_fixed_points[[pair[1]]], p=2)^2
-})
+
 
  Setting the bandwidth of kernel to be the 1 (In Gretton's paper equal to median of norm 2 distances)
 
@@ -94,7 +94,7 @@ u <- 5
 grid_points <- seq(-u + means[1], u + means[length(means)], length.out = 1000)
 
 # Kernel mean embedding becareful change the mean if change the mean of P
-KME_true <- sapply(grid_points, function(point) {
+KME_true <- sapply(vec_fixed_points, function(point) {
   sum <- 0
   for(i in 1:length(probabilities)) {
     sum <- sum + probabilities[i] * dnorm(point, mean = means[i], sd = sqrt(bandwidth^2 + sds[i]^2))
@@ -103,14 +103,14 @@ KME_true <- sapply(grid_points, function(point) {
 })
 
 # Data frame with true kernel mean embeddings
-true_KME <- data.frame(grid_points, KME_true)
+true_KME <- data.frame(vec_fixed_points, KME_true)
 ```
 
 ## Kernel Mean Embedding Estimation: Standard Estimator
 
 ```{r}
 # Function evaluation on the grid
-results <- sapply(grid_points, function(point) {
+results <- sapply(vec_fixed_points, function(point) {
   std_est_KME(evaluate_at = point,
               list_fixed = list_fixed_points,
               kernel_type = "rbf",
@@ -120,7 +120,7 @@ results <- sapply(grid_points, function(point) {
 
 ```{r}
 # Data frame with estimated kernel mean embedding
-df_std <- data.frame(grid_points, standard = results)
+df_std <- data.frame(vec_fixed_points, standard = results)
 
 # Data frame for fixed points: adding e
 df_fixed_points <- data.frame(x = vec_fixed_points, y = rep(0, length(vec_fixed_points)))
@@ -132,8 +132,8 @@ df_fixed_points <- data.frame(x = vec_fixed_points, y = rep(0, length(vec_fixed_
 library(ggplot2)
 # Create a combined data frame to handle both blue (standard) and orange (true KME) lines
 df_combined <- rbind(
-  data.frame(grid_points = df_std$grid_points, value = df_std$standard, line = "KME Estimator"),
-  data.frame(grid_points = true_KME$grid_points, value = true_KME$KME_true, line = "True KME")
+  data.frame(grid_points = df_std$vec_fixed_points, value = df_std$standard, line = "KME Estimator"),
+  data.frame(grid_points = true_KME$vec_fixed_points, value = true_KME$KME_true, line = "True KME")
 )
 
 ggplot() +
@@ -174,7 +174,7 @@ lambda_reg = n*(rho_with_stroke-rho) / ((n-1)*(n*rho-rho_with_stroke))
 
 ```{r}
 # Function evaluation on the grid
-results <- sapply(grid_points, function(point) {
+results <- sapply(vec_fixed_points, function(point) {
   reg_est_KME(evaluate_at = point,
               list_fixed = list_fixed_points,
               kernel_type = "rbf",
@@ -184,7 +184,7 @@ results <- sapply(grid_points, function(point) {
 
 
 # Data frame with your data
-df_reg <- data.frame(grid_points, regularized = results)
+df_reg <- data.frame(vec_fixed_points, regularized = results)
 ```
 
 ## Shrinkage Estimator of Kernel Mean Embedding ----
@@ -233,6 +233,8 @@ cv_df <- data.frame(lambda = lambda_grid, cv = cv_values)
 
 ### Print the dataframe
 print(cv_df)
+
+save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_1.RData")
 ```
 
 ### Find the best hyper parameter and corresponding beta weights
@@ -257,7 +259,7 @@ beta_s <- sqrt(n) * inverse_regularizer %*% gram %*%  one_n
 
 ```{r}
 # Function evaluation on the grid
-results <- sapply(grid_points, function(point) {
+results <- sapply(vec_fixed_points, function(point) {
   shr_est_KME(evaluate_at = point,
               list_fixed = list_fixed_points,
               lambda_tunner = 1,
@@ -268,7 +270,7 @@ results <- sapply(grid_points, function(point) {
 
 
 # Data frame with your data
-df_shr <- data.frame(grid_points, shrinkage = results)
+df_shr <- data.frame(vec_fixed_points, shrinkage = results)
 
 ```
 
@@ -296,7 +298,7 @@ inverse_regularizer <- solve(R + tau^2/n * diag(n))
 
 
 ### Function evaluation on the grid
-results <- lapply(grid_points, function(point) {
+results <- lapply(vec_fixed_points, function(point) {
   bayesian_est_KME(evaluate_at = point,
                    list_fixed = list_fixed_points,
                    kernel_type = "rbf",
@@ -310,16 +312,18 @@ results <- lapply(grid_points, function(point) {
 post_mean <- sapply(results, function(x) x[1])
 post_var <-sapply(results, function(x) x[2])
 # Data frame with your data
-df_bayes <- data.frame(grid_points, post_mean, upper_conf = post_mean+sqrt(post_var), lower_conf = post_mean - sqrt(post_var))
+df_bayes <- data.frame(vec_fixed_points, post_mean, upper_conf = post_mean+sqrt(post_var), lower_conf = post_mean - sqrt(post_var))
 ```
 
 ## Merge all the KME estimators and plot
 
 ```{r}
-df_all <- merge(df_std,df_reg,by = "grid_points")
-df_all <- merge(df_all,df_shr,by = "grid_points")
-df_all <- merge(df_all,df_bayes,by = "grid_points")
-df_all <- merge(df_all,true_KME,by = "grid_points")
+df_all <- merge(df_std,df_reg,by = "vec_fixed_points")
+df_all <- merge(df_all,df_shr,by = "vec_fixed_points")
+df_all <- merge(df_all,df_bayes,by = "vec_fixed_points")
+df_all <- merge(df_all,true_KME,by = "vec_fixed_points")
+
+save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_2.RData")
 
 
 library(tidyr)
@@ -336,7 +340,7 @@ df_fixed_points <- data.frame(x = vec_fixed_points, y = rep(0, length(vec_fixed_
 ```{r}
 # Plot the results using ggplot
 library(ggplot2)
-ggplot(df_long, aes(x = grid_points, y = estimation, color = type)) +
+ggplot(df_long, aes(x = vec_fixed_points, y = estimation, color = type)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
   geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
   geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
@@ -356,7 +360,7 @@ ggplot(df_long, aes(x = grid_points, y = estimation, color = type)) +
 library(dplyr)
 
 # Plot the results using ggplot
-ggplot(df_long %>% filter(type %in% c("standard","KME_true")), aes(x = grid_points, y = estimation, color = type)) +
+ggplot(df_long %>% filter(type %in% c("standard","KME_true")), aes(x = vec_fixed_points, y = estimation, color = type)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
   geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
   geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
@@ -376,7 +380,7 @@ ggplot(df_long %>% filter(type %in% c("standard","KME_true")), aes(x = grid_poin
 
 ```{r}
 # Plot the results using ggplot
-ggplot(df_long %>% filter(type %in% c("regularized","KME_true")), aes(x = grid_points, y = estimation, color = type)) +
+ggplot(df_long %>% filter(type %in% c("regularized","KME_true")), aes(x = vec_fixed_points, y = estimation, color = type)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
   geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
   geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
@@ -394,7 +398,7 @@ ggplot(df_long %>% filter(type %in% c("regularized","KME_true")), aes(x = grid_p
 
 ```{r}
 # Plot the results using ggplot
-ggplot(df_long %>% filter(type %in% c("shrinkage","KME_true")), aes(x = grid_points, y = estimation, color = type)) +
+ggplot(df_long %>% filter(type %in% c("shrinkage","KME_true")), aes(x = vec_fixed_points, y = estimation, color = type)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
   geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
   geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
@@ -411,7 +415,7 @@ ggplot(df_long %>% filter(type %in% c("shrinkage","KME_true")), aes(x = grid_poi
 
 ```{r}
 # Plot the results using ggplot
-ggplot(df_long %>% filter(type %in% c("post_mean",'upper_conf','lower_conf',"KME_true")), aes(x = grid_points, y = estimation, color = type)) +
+ggplot(df_long %>% filter(type %in% c("post_mean",'upper_conf','lower_conf',"KME_true")), aes(x = vec_fixed_points, y = estimation, color = type)) +
   geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
   geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
   geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
@@ -475,12 +479,16 @@ centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled
 ## Find the probababilities:
 
 ```{r}
-p <- solve(centered_kernel_mat_at_sampled) %*% df_shr$shrinkage 
+p <- solve(centered_kernel_mat_at_sampled) %*% df_reg$regularized
 ```
 
 ### Find ln(p):
 
 ```{r}
+p <- p/sum(p)
+
+
+
 ln_p <- log(p)
 ```
 
@@ -490,25 +498,28 @@ ln_p <- log(p)
 one_n <- rep(1, length(sampled_x))
 one_m <- rep(1, length(x_grid))
 
-u_vec <-  one_m %*% centered_kernel_mat_at_grid %*% solve(centered_kernel_mat_at_sampled)
+u_vec <-  one_m %*% t(centered_kernel_mat_at_grid) %*% solve(centered_kernel_mat_at_sampled)
 ```
 
 # Find the $\theta$'s:
 
 
 ```{r}
+# Function to compute inner product ignoring NAs
+inner_product_no_na <- function(vec1, vec2) {
+  # Remove NA indices from both vectors
+  valid_indices <- !is.na(vec1) & !is.na(vec2)
+  sum(vec1[valid_indices] * vec2[valid_indices])
+}
 
-C <-  - (u_vec %*% ln_p) / (one_n %*% ln_p)
+C <-  - inner_product_no_na(as.vector(u_vec),as.vector(ln_p)) / inner_product_no_na(as.vector(one_n),as.vector(ln_p))
 theta <- ln_p + C
 ```
 
 # Estimate the probabilities:
 
 ```{r}
-centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_grid,
-                                                        second_vec_kernel = x_grid,
-                                                        centering_grid = centering_grid,
-                                                        hurst_coef = 0.5))
+centered_kernel_self_grid <- diag(centered_kernel_mat_at_sampled)
 
 estimated_p <- exp(theta + 0.5 * centered_kernel_self_grid)
 ```
