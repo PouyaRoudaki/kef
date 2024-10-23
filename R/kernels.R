@@ -41,7 +41,7 @@
 # Single Argument Approach
 kernel <- function(x, fixed, type = "rbf", length_scale = 1, degree = 2,
                    free_add = 0, free_mult = 1,
-                   nu_matern = 1, centering_param) {
+                   nu_matern = 1, centering_param = 7) {
   type <- tolower(type)  # Convert type to lowercase for case-insensitivity
 
   switch(type,

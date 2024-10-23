@@ -22,7 +22,7 @@ reg_est_KME <- function(evaluate_at,
                         list_fixed,
                         kernel_type = "rbf",
                         kernel_params = list(length_scale = 1, degree = 2,
-                                             free_add = 0, free_mult = 1, nu_matern = 1),
+                                             free_add = 0, free_mult = 1, nu_matern = 1, centering_param = 7),
                         precomputed = list(gram = NULL, lambda = NULL)) {
 
   # In order to find the shrinkage parameter lambda we need to find "rho" and
@@ -33,7 +33,8 @@ reg_est_KME <- function(evaluate_at,
     if (is.null(precomputed$gram)) {
       gram <- gram_matrix(vec_list = list_fixed,
                           kernel_type = kernel_type,
-                          kernel_params = kernel_params)
+                          kernel_params = kernel_params,
+                          centering_param = centering_param)
     } else {
       gram <- precomputed$gram
     }

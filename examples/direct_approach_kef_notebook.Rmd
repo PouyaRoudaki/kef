@@ -324,8 +324,14 @@ df_all <- merge(df_all,df_bayes,by = "vec_fixed_points")
 df_all <- merge(df_all,true_KME,by = "vec_fixed_points")
 
 save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_2.RData")
+```
+
+```{r}
+load("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_2.RData")
+```
 
 
+```{r}
 library(tidyr)
 
 #gather data from columns 2 and 3
@@ -468,6 +474,27 @@ centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = samp
                                                          hurst_coef = 0.5)
 ```
 
+```{r}
+# Positive Definiteness of centered_kernel_mat_at_sampled
+
+# Get the eigenvalues
+eigenvalues <- eigen(centered_kernel_mat_at_sampled)$values
+
+# Check if all eigenvalues are positive
+is_positive_definite <- all(eigenvalues > 0)
+is_positive_definite
+```
+```{r}
+# Check if the matrix is symmetric
+is_symmetric <- all(centered_kernel_mat_at_sampled == t(centered_kernel_mat_at_sampled))
+
+is_symmetric
+```
+```{r}
+all(df_reg$regularized>0)
+```
+
+
 $\mathbf{H}_{grid}$:
 ```{r}
 centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled_x,
@@ -479,16 +506,20 @@ centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled
 ## Find the probababilities:
 
 ```{r}
-p <- t(solve(centered_kernel_mat_at_sampled)) %*% df_reg$regularized
+p <- solve(centered_kernel_mat_at_sampled) %*% df_reg$regularized
+
+p <- p/sum(p)
+
+plot_data <- data.frame(x = vec_fixed_points, prob = p)
+
+ggplot(plot_data, aes(x,prob)) + geom_point(color = "blue") + theme_bw()
 ```
+
+
 
 ### Find ln(p):
 
 ```{r}
-p <- p/sum(p)
-
-
-
 ln_p <- log(p)
 ```
 
@@ -522,6 +553,8 @@ theta <- ln_p + C
 centered_kernel_self_grid <- diag(centered_kernel_mat_at_sampled)
 
 estimated_p <- exp(theta + 0.5 * centered_kernel_self_grid)
+
+
 ```
 
 ```{r}
@@ -535,12 +568,13 @@ sum(estimated_p,na.rm = T)
 # Combine into a data frame
 df_result <- data.frame(sampled_x, estimated_p)
 
+
 # Create the ggplot
-ggplot(df_result, aes(x = sampled_x, y = estimated_p)) +
-  geom_line() +       # Line plot
-  geom_point() +      # Add points
+ggplot() +
+  geom_point(data = df_result, aes(x = sampled_x, y = estimated_p/sum(estimated_p)), color = "red") +      # Red points for df_result
+  geom_point(data = plot_data, aes(x = x, y = prob), color = "blue") +                    # Blue points for plot_data
   labs(title = "Estimated P versus Sampled X",
        x = "Sampled X", y = "Estimated P") +
-  theme_minimal()     # Optional: Minimal theme
+  theme_bw()
 ```
 

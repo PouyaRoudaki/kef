@@ -1,0 +1,299 @@
+---
+title: "Direct Approach KEF"
+author: "Pouya Roudaki"
+date: "2024-10-21"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Kernel Mean Embedding Estimation
+
+Set the randomness seed.
+```{r}
+# set the seed
+seed <- 7
+set.seed(seed)
+
+```
+
+## Specfiy the True density
+Set the mean and standard deviation of normal distribution P
+```{r}
+# Set the mean and standard deviation of normal distribution P
+ n = 500
+ means = c(-2, 2)
+ sds = c(1, 1.5)
+ probabilities = c(0.3, 0.7)
+```
+
+## Take Random samples
+```{r}
+# vector of fixed points
+vec_fixed_points <- sort(rnorm_mixture(n, means, sds, probabilities))
+
+library(ggplot2)
+# Assuming vec_fixed_points is your data
+df <- data.frame(points = vec_fixed_points)
+
+# Create the histogram with 20 breaks
+ggplot(df, aes(x = points, y = ..density..)) +
+  geom_histogram(bins = 20, fill = "blue", color = "black") +
+  labs(title = "Histogram of sampled points", x = "Values", y = "Frequency")+
+  theme_bw()
+```
+
+## Find Gram Matrix of the sampled points
+```{r}
+# List of fixed points
+list_fixed_points = as.list(vec_fixed_points)
+
+centering_param <- 7
+# Find the Gram matrix
+gram <- gram_matrix(vec_list = list_fixed_points, 
+                    kernel_type = "uniform_centered_brownian",
+                    kernel_params = list(length_scale = 1, degree = 2,
+                                             free_add = 0, free_mult = 1,
+                                             nu_matern = 1, centering_param = centering_param))
+
+
+```
+
+
+
+
+## True Kernel Mean Embeddings
+
+```{r}
+# Grid of 100 points from -10 to 10
+u <- centering_param
+
+
+lambda <- 1
+
+# Kernel mean embedding be careful change the mean if change the mean of P
+
+
+# Define the function f with point as a parameter
+f <- function(x, point, lambda, probabilities, means, sds, centering_param) {
+  base_measure_gaussian_mixture <- 0
+  for (i in 1:length(probabilities)) {
+    base_measure_gaussian_mixture <- base_measure_gaussian_mixture +
+      probabilities[i] / (sqrt(2 * pi) * sds[i]) * exp(- (x - means[i])^2 / (2 * sds[i]^2)) *
+      exp(-lambda/4*(x^2/centering_param + centering_param/3))
+  }
+
+  return ((lambda / 2) * (-abs(x - point) + (x^2 + point^2) / (2 * centering_param) + centering_param / 3) * base_measure_gaussian_mixture)
+}
+
+
+
+# Define a wrapper function to perform integration
+integrate_for_point <- function(point, lambda, probabilities, means, sds, centering_param) {
+  # Calculate the integral part
+  integral_result <- integrate(function(x) f(x, point, lambda, probabilities,
+                                             means, sds, centering_param),
+                               subdivisions = 10000, rel.tol = 1e-10,
+                               abs.tol = 1e-10,lower = -centering_param, upper = centering_param)$value
+
+  additional_terms <- 0
+  for (i in 1:length(probabilities)) {
+    term1 <- probabilities[i] * lambda *
+      (centering_param^2 + 6 * centering_param * point - 3 * point^2) *
+      exp(lambda/24*(12*means[i]+4*centering_param+3*sds[i]^2*lambda))/ (24 * centering_param)
+    term2 <- probabilities[i] * lambda *
+      (centering_param^2 - 6 * centering_param * point - 3 * point^2) *
+      exp(lambda/24*(-12*means[i]+4*centering_param+3*sds[i]^2*lambda))/ (24 * centering_param)
+    erf_component1 <- erfc((2*(means[i] + centering_param)+ sds[i]^2*lambda )/ (2*sqrt(2) * sds[i]))
+    erf_component2 <- erfc((2*(-means[i] + centering_param)+ sds[i]^2*lambda )/ (2*sqrt(2) * sds[i]))
+
+    additional_terms <- additional_terms - (term1 * erf_component1) - (term2 * erf_component2)
+  }
+
+  result <- integral_result + additional_terms
+
+  return(result)
+}
+
+# Apply the integration function to each element of grid_point
+KME_true <- sapply(vec_fixed_points, integrate_for_point,
+                   lambda = lambda,
+                   probabilities = probabilities,
+                   means = means,
+                   sds = sds,
+                   centering_param = centering_param)
+
+
+
+
+
+# Data frame with true kernel mean embeddings
+true_KME <- data.frame(vec_fixed_points, true_KME = KME_true)
+```
+
+## Kernel Mean Embedding Estimation: Standard Estimator
+
+```{r}
+# Data frame with estimated kernel mean embedding
+df_std <- data.frame(vec_fixed_points, standard_KME = colMeans(gram))
+
+# Data frame for fixed points: adding e
+df_fixed_points <- data.frame(x = vec_fixed_points, y = rep(0, length(vec_fixed_points)))
+```
+
+### Kernel Mean Embedding Estimator
+```{r}
+# Plot the results using ggplot
+library(ggplot2)
+# Create a combined data frame to handle both blue (standard) and orange (true KME) lines
+df_combined <- rbind(
+  data.frame(grid_points = df_std$vec_fixed_points, value = df_std$standard, line = "KME Estimator"),
+  data.frame(grid_points = true_KME$vec_fixed_points, value = true_KME$true_KME, line = "True KME")
+)
+
+ggplot() +
+  geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
+  geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
+  geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
+  geom_line(data = df_combined, aes(x = grid_points, y = value, color = line), linewidth = 1.2) + # Plot both lines with color mapped to 'line'
+  labs(x = "x",
+       y = "Standard Estimator $\\hat{\\mu}_{\\mathbb{P}}",
+       title = "Standard Estimator of Kernel Mean Embedding") +
+  theme_bw() +
+  theme(panel.grid = element_blank(),  # Remove grid lines
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  scale_color_manual(values = c("KME Estimator" = "blue", "True KME" = "orange")) +  # Custom colors for the legend
+  guides(color = guide_legend(title = "Type"))  # Add a legend title
+
+
+```
+### Pre calculations:
+
+```{r}
+# Find the Gram matrix
+gram <- gram_matrix(vec_list = list_fixed_points, 
+                    kernel_type = "uniform_centered_brownian",
+                    kernel_params = list(length_scale = 1, degree = 2,
+                                             free_add = 0, free_mult = 1,
+                                             nu_matern = 1, centering_param = centering_param))
+
+n = length(list_fixed_points)
+
+rho = 1/(n^2) * sum(gram)
+
+rho_with_stroke = 1/n * sum(diag(gram))
+
+lambda_reg = n*(rho_with_stroke-rho) / ((n-1)*(n*rho-rho_with_stroke))
+```
+
+### Find the shrinkage estimator of KME:
+
+```{r}
+# Function evaluation on the grid
+results <- sapply(vec_fixed_points, function(point) {
+  reg_est_KME(evaluate_at = point,
+              list_fixed = list_fixed_points,
+              kernel_type = "uniform_centered_brownian",
+              kernel_params = list(length_scale = 1, degree = 2, free_add = 0, free_mult = 1, nu_matern = 1, centering_param = centering_param),
+              precomputed = list(lambda = lambda_reg))
+})
+
+
+# Data frame with your data
+df_reg <- data.frame(vec_fixed_points, regularized = results)
+```
+
+## Shrinkage Estimator of Kernel Mean Embedding ----
+### Pre calculations:
+```{r}
+gram <- gram_matrix(vec_list = list_fixed_points, 
+                    kernel_type = "uniform_centered_brownian",
+                    kernel_params = list(length_scale = 1, degree = 2,
+                                             free_add = 0, free_mult = 1,
+                                             nu_matern = 1, 
+                                         centering_param = centering_param))
+
+n = length(list_fixed_points)
+
+lambda_grid <- 10^seq(-14,10,1)
+
+lambda_n_grid <- 10^seq(-14,10,1) * (n-1)
+
+### Precompute regularized inverses for each lambda_n
+
+regularized_inverse_grid <- lapply(lambda_n_grid, function(lambda_n){solve(gram + lambda_n * diag(n))})
+```
+### LOOCV hyper parameter selection
+```{r}
+loocv_values <- rep(0,length = length(lambda_grid))
+### Use sapply to iterate over lambda_grid
+loocv_values <- sapply(1:length(lambda_grid), function(i) {
+  loocv_shr(gram = gram, lambda = lambda_grid[i], precomp_reg_inv = regularized_inverse_grid[[i]])
+})
+
+### Create a dataframe to store lambda values and their corresponding LOOCV errors
+loocv_df <- data.frame(lambda = lambda_grid, loocv = loocv_values)
+
+### Print the dataframe
+print(loocv_df)
+```
+
+### CV hyper parameter selection
+
+```{r}
+lambda_grid <- c(10^seq(-14,10,1))
+
+cv_values <- rep(0,length = length(lambda_grid))
+### Use sapply to iterate over lambda_grid
+cv_values <- sapply(1:length(lambda_grid), function(i) {
+  cross_validation(gram = gram, lambda = lambda_grid[i], folds_number = nrow(gram),estimator_type = "shrinkage")
+})
+
+### Create a dataframe to store lambda values and their corresponding LOOCV errors
+cv_df <- data.frame(lambda = lambda_grid, cv = cv_values)
+
+### Print the dataframe
+print(cv_df)
+
+save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_brownian_1.RData")
+```
+
+### Find the best hyper parameter and corresponding beta weights
+
+```{r}
+merged_num_anal <- merge(cv_df,loocv_df,by = "lambda")
+
+# Choose the best lambda with lowest loocv
+lambda_shr <- cv_df[which.min(cv_df$cv),"lambda"]
+
+# Calculate inverse of regularizer
+inverse_regularizer <- solve(gram + n * lambda_shr*diag(n))
+
+# 1_n vector
+one_n <- rep(1,n)/n
+
+# Find beta
+beta_s <- sqrt(n) * inverse_regularizer %*% gram %*%  one_n
+```
+
+### Find the shrinkage estimator of KME 
+
+```{r}
+# Function evaluation on the grid
+results <- sapply(vec_fixed_points, function(point) {
+  shr_est_KME(evaluate_at = point,
+              list_fixed = list_fixed_points,
+              lambda_tunner = 1,
+              kernel_type = "uniform_centered_brownian",
+              kernel_params = list(length_scale = bandwidth, degree = 2, free_add = 0, free_mult = 1, nu_matern = 1, centering_param = centering_param),
+              precomputed = list(beta_s = beta_s))
+})
+
+
+# Data frame with your data
+df_shr <- data.frame(vec_fixed_points, shrinkage = results)
+
+```
