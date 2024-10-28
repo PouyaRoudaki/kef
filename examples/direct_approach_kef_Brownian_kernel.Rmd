@@ -11,9 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Kernel Mean Embedding Estimation
 
+```{r}
+setwd("C:/Users/rouda/OneDrive/Research/Codes/R/kef")
+getwd()  # Confirm it points to the package root
+devtools::install(".")
+library("kef")
+library("pracma")
+```
+
+
 Set the randomness seed.
 ```{r}
 # set the seed
+
 seed <- 7
 set.seed(seed)
 
@@ -258,7 +268,7 @@ cv_df <- data.frame(lambda = lambda_grid, cv = cv_values)
 ### Print the dataframe
 print(cv_df)
 
-save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_brownian_1.RData")
+save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_brownian_3.RData")
 ```
 
 ### Find the best hyper parameter and corresponding beta weights
@@ -288,7 +298,7 @@ results <- sapply(vec_fixed_points, function(point) {
               list_fixed = list_fixed_points,
               lambda_tunner = 1,
               kernel_type = "uniform_centered_brownian",
-              kernel_params = list(length_scale = bandwidth, degree = 2, free_add = 0, free_mult = 1, nu_matern = 1, centering_param = centering_param),
+              kernel_params = list(length_scale = 1, degree = 2, free_add = 0, free_mult = 1, nu_matern = 1, centering_param = centering_param),
               precomputed = list(beta_s = beta_s))
 })
 
@@ -297,3 +307,279 @@ results <- sapply(vec_fixed_points, function(point) {
 df_shr <- data.frame(vec_fixed_points, shrinkage = results)
 
 ```
+
+
+## Merge all the KME estimators and plot
+
+```{r}
+df_all <- merge(df_std,df_reg,by = "vec_fixed_points")
+df_all <- merge(df_all,df_shr,by = "vec_fixed_points")
+df_all <- merge(df_all,true_KME,by = "vec_fixed_points")
+
+save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_4.RData")
+```
+
+```{r}
+load("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_4.RData")
+```
+
+
+```{r}
+library(tidyr)
+
+#gather data from columns 2 and 3
+df_long <- gather(df_all, key="type", value="estimation", 2:5)
+
+df_long$type <- factor(df_long$type, levels = colnames(df_all)[-1])
+
+# Data frame for fixed points:
+df_fixed_points <- data.frame(x = vec_fixed_points, y = rep(0, length(vec_fixed_points)))
+```
+
+```{r}
+# Plot the results using ggplot
+library(ggplot2)
+ggplot(df_long, aes(x = vec_fixed_points, y = estimation, color = type)) +
+  geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
+  geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
+  geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
+  geom_line(linewidth = 1.2) + # Plot kernel mean embedding estimator
+  labs(x = "x",
+       y = "Estimator $\\hat{\\mu}_{\\mathbb{P}}(x)",
+       title = "Estimator of Kernel Mean Embedding")+
+  theme_bw()+
+  theme(panel.grid = element_blank(),  # Remove grid lines
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +  # Axis ticks color
+  scale_color_manual(values = c('orange', 'green', 'green3', 'blue')) # Customize colors
+```
+
+```{r}
+library(dplyr)
+
+# Plot the results using ggplot
+ggplot(df_long %>% filter(type %in% c("standard_KME","true_KME")), aes(x = vec_fixed_points, y = estimation, color = type)) +
+  geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
+  geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
+  geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
+  geom_line(linewidth = 1.2) + # Plot kernel mean embedding estimator
+  labs(x = "x",
+       y = "Estimator $\\hat{\\mu}_{P}(x)$",
+       title = "Estimator of Kernel Mean Embedding")+
+  theme_bw()+
+  theme(panel.grid = element_blank(),  # Remove grid lines
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +  # Axis ticks color
+  scale_color_manual(values = c('orange','blue')) # Customize colors
+```
+
+
+
+
+```{r}
+# Plot the results using ggplot
+ggplot(df_long %>% filter(type %in% c("regularized","true_KME")), aes(x = vec_fixed_points, y = estimation, color = type)) +
+  geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
+  geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
+  geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
+  geom_line(linewidth = 1.2) + # Plot kernel mean embedding estimator
+  labs(x = "x",
+       y = "Estimator $\\hat{\\mu}_{\\mathbb{P}}(x)",
+       title = "Estimator of Kernel Mean Embedding")+
+  theme_bw()+
+  theme(panel.grid = element_blank(),  # Remove grid lines
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +  # Axis ticks color
+  scale_color_manual(values = c('green','blue')) # Customize colors
+```
+
+
+```{r}
+# Plot the results using ggplot
+ggplot(df_long %>% filter(type %in% c("shrinkage","true_KME")), aes(x = vec_fixed_points, y = estimation, color = type)) +
+  geom_hline(yintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis y = 0
+  geom_vline(xintercept = 0, color = "gray", linetype = "solid", linewidth = 0.5) +  # Add axis at x = 0
+  geom_point(data = df_fixed_points, aes(x = x, y = y), color = 'red', size = 2 ,shape =3) +  # Plot x points with y = 0 in red
+  geom_line(linewidth = 1.2) + # Plot kernel mean embedding estimator
+  labs(x = "x",
+       y = "Estimator $\\hat{\\mu}_{\\mathbb{P}}(x)",
+       title = "Estimator of Kernel Mean Embedding")+
+  theme_bw()+
+  theme(panel.grid = element_blank(),  # Remove grid lines
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +  # Axis ticks color
+  scale_color_manual(values = c('green3','blue')) # Customize colors
+```
+
+
+# Find the probabilities using KME and centered kernel
+
+ The relationship for $\hat{\mu}(\mathbf{x}_i)$ is given by:
+\[
+    \hat{\mu}(\mathbf{x}_i) = \sum_{j=1}^n h(\mathbf{x}_i, \mathbf{x}_j) p_\theta(\mathbf{x}_j).
+\]
+ Furthermore, we can estimate $\hat{\mu}(\mathbf{x}_i)$ using methods like shrinkage or Bayesian approaches:
+Moreover, we can estimate $\hat{\mu}(\mathbf{x}_i)$ with methods like shrinkage methods \citep{muandet2016kernelmeanshrinkageestimators} and Bayesian method \citep{flaxman2016bayesianlearningkernelembeddings}.
+So we can say $\hat{\mathbf{p}}_\theta = \mathbf{H}_{sample}^{-1} \hat{\boldsymbol{\mu}}$
+
+ This allows us to form equations where only $\theta$'s are unknown:
+So we can make equations that only $\theta$'s are unknown, and we can find these parameters using estimated kernel mean embeddings.
+
+
+
+ Recall that the relationship for $p_\theta(\mathbf{x}_j)$ is:
+\[
+    \hat{p}_\theta(\mathbf{x}_j) = \dfrac{\exp(\hat{\theta}_n(\mathbf{x}_j))}{\sum_{j =1}^n \exp(\hat{\theta}_n(\mathbf{x}_j))}.
+\]
+
+## Specify the grid and centering grid
+```{r}
+sampled_x <- vec_fixed_points
+x_grid <-  seq(-7,7,length.out = 1000)
+# centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
+centering_grid <- runif(min = -7,max = 7,n = 1000)
+```
+
+## Find Kernel Matrices:
+
+$\mathbf{H}_{sample}$:
+```{r}
+centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sampled_x,
+                                                         second_vec_kernel = sampled_x,
+                                                         centering_grid = centering_grid,
+                                                         hurst_coef = 0.5)
+```
+
+```{r}
+library(ggplot2)
+library(reshape2)
+
+# Convert matrix to a data frame
+matrix_df <- melt(centered_kernel_mat_at_sampled)
+
+# Plot using ggplot2
+ggplot(matrix_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red") +
+  theme_minimal() +
+  coord_fixed() +  # Ensures the plot is square
+  labs(title = "Centered Brownian Kernel wrt to uniform samples from -7 to 7", x = "Sampled x", y = "Sampled x")
+```
+
+```{r}
+# Convert matrix to a data frame
+matrix_df <- melt(gram)
+
+# Plot using ggplot2
+ggplot(matrix_df, aes(Var1, Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red") +
+  theme_minimal() +
+  coord_fixed() +  # Ensures the plot is square
+  labs(title = "Initial gram matrix centered wrt a uniform distribution from -7 to 7", x = "Sampled x", y = "Sampled x")
+```
+
+
+```{r}
+# Positive Definiteness of centered_kernel_mat_at_sampled
+
+# Get the eigenvalues
+eigenvalues <- eigen(centered_kernel_mat_at_sampled)$values
+
+# Check if all eigenvalues are positive
+is_positive_definite <- all(eigenvalues > 0)
+is_positive_definite
+```
+```{r}
+# Check if the matrix is symmetric
+is_symmetric <- all(centered_kernel_mat_at_sampled == t(centered_kernel_mat_at_sampled))
+
+is_symmetric
+```
+```{r}
+all(df_reg$regularized>0)
+```
+
+
+$\mathbf{H}_{grid}$:
+```{r}
+centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled_x,
+                                                         second_vec_kernel = x_grid,
+                                                         centering_grid = centering_grid,
+                                                         hurst_coef = 0.5)
+```
+
+## Find the probababilities:
+
+```{r}
+p <- solve(centered_kernel_mat_at_sampled) %*% df_all$regularized
+
+p <- p/sum(p)
+
+plot_data <- data.frame(x = vec_fixed_points, prob = p)
+
+ggplot(plot_data, aes(x,prob)) + geom_point(color = "blue")  + labs(title = "Estimated P using estimated Kernel Mean Embedding approximation",
+       x = "Sampled X", y = "Estimated P") + theme_bw()
+```
+
+
+
+
+### Find ln(p):
+
+```{r}
+ln_p <- log(p - 2* min(p))
+```
+
+# Find U weights:
+
+```{r}
+one_n <- rep(1, length(sampled_x))
+one_m <- rep(1, length(x_grid))
+
+u_vec <-  one_m %*% t(centered_kernel_mat_at_grid) %*% solve(centered_kernel_mat_at_sampled)
+```
+
+# Find the $\theta$'s:
+
+
+```{r}
+
+
+C <-  - as.vector(u_vec %*% ln_p) / as.vector(one_n %*% ln_p)
+
+theta <- ln_p + C
+```
+
+# Estimate the probabilities:
+
+```{r}
+centered_kernel_self_grid <- diag(centered_kernel_mat_at_sampled)
+
+estimated_p <- exp(theta + 0.5 * centered_kernel_self_grid)
+
+
+```
+
+```{r}
+sum(estimated_p,na.rm = T)
+```
+
+
+## Show the result:
+
+```{r}
+# Combine into a data frame
+df_result <- data.frame(sampled_x, estimated_p)
+
+
+# Create the ggplot
+ggplot() +
+  geom_point(data = df_result, aes(x = sampled_x, y = estimated_p/sum(estimated_p)), color = "red") +      # Red points for df_result
+  geom_point(data = plot_data, aes(x = x, y = prob), color = "blue") +                    # Blue points for plot_data
+  labs(title = "Estimated P using estimated weights",
+       x = "Sampled X", y = "Estimated P") +
+  theme_bw()
+```
+
+
