@@ -511,7 +511,10 @@ centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled
 
 ```{r}
 p <- solve(centered_kernel_mat_at_sampled) %*% df_all$regularized
+sum(p)
+```
 
+```{r}
 p <- p/sum(p)
 
 plot_data <- data.frame(x = vec_fixed_points, prob = p)
