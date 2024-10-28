@@ -319,9 +319,7 @@ df_all <- merge(df_all,true_KME,by = "vec_fixed_points")
 save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_4.RData")
 ```
 
-```{r}
-load("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_4.RData")
-```
+
 
 
 ```{r}
@@ -419,7 +417,7 @@ ggplot(df_long %>% filter(type %in% c("shrinkage","true_KME")), aes(x = vec_fixe
     \hat{\mu}(\mathbf{x}_i) = \sum_{j=1}^n h(\mathbf{x}_i, \mathbf{x}_j) p_\theta(\mathbf{x}_j).
 \]
  Furthermore, we can estimate $\hat{\mu}(\mathbf{x}_i)$ using methods like shrinkage or Bayesian approaches:
-Moreover, we can estimate $\hat{\mu}(\mathbf{x}_i)$ with methods like shrinkage methods \citep{muandet2016kernelmeanshrinkageestimators} and Bayesian method \citep{flaxman2016bayesianlearningkernelembeddings}.
+Moreover, we can estimate $\hat{\mu}(\mathbf{x}_i)$ with methods like shrinkage methods provided by Gretton and colleagues.
 So we can say $\hat{\mathbf{p}}_\theta = \mathbf{H}_{sample}^{-1} \hat{\boldsymbol{\mu}}$
 
  This allows us to form equations where only $\theta$'s are unknown:
