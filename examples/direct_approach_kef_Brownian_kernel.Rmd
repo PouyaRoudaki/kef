@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Kernel Mean Embedding Estimation
 
-```{r}
+```{r, include=FALSE}
 setwd("C:/Users/rouda/OneDrive/Research/Codes/R/kef")
 getwd()  # Confirm it points to the package root
 devtools::install(".")
@@ -19,7 +19,9 @@ library("kef")
 library("pracma")
 ```
 
-
+```{r,echo=FALSE}
+load("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_4.RData")
+```
 Set the randomness seed.
 ```{r}
 # set the seed
@@ -237,7 +239,7 @@ lambda_n_grid <- 10^seq(-14,10,1) * (n-1)
 regularized_inverse_grid <- lapply(lambda_n_grid, function(lambda_n){solve(gram + lambda_n * diag(n))})
 ```
 ### LOOCV hyper parameter selection
-```{r}
+```{r, eval = FALSE}
 loocv_values <- rep(0,length = length(lambda_grid))
 ### Use sapply to iterate over lambda_grid
 loocv_values <- sapply(1:length(lambda_grid), function(i) {
@@ -246,14 +248,16 @@ loocv_values <- sapply(1:length(lambda_grid), function(i) {
 
 ### Create a dataframe to store lambda values and their corresponding LOOCV errors
 loocv_df <- data.frame(lambda = lambda_grid, loocv = loocv_values)
+```
 
+```{r}
 ### Print the dataframe
 print(loocv_df)
 ```
 
 ### CV hyper parameter selection
 
-```{r}
+```{r, eval = FALSE}
 lambda_grid <- c(10^seq(-14,10,1))
 
 cv_values <- rep(0,length = length(lambda_grid))
@@ -264,11 +268,13 @@ cv_values <- sapply(1:length(lambda_grid), function(i) {
 
 ### Create a dataframe to store lambda values and their corresponding LOOCV errors
 cv_df <- data.frame(lambda = lambda_grid, cv = cv_values)
+```
 
+```{r}
 ### Print the dataframe
 print(cv_df)
 
-save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_brownian_3.RData")
+#save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_brownian_3.RData")
 ```
 
 ### Find the best hyper parameter and corresponding beta weights
@@ -316,8 +322,9 @@ df_all <- merge(df_std,df_reg,by = "vec_fixed_points")
 df_all <- merge(df_all,df_shr,by = "vec_fixed_points")
 df_all <- merge(df_all,true_KME,by = "vec_fixed_points")
 
-save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_4.RData")
+#save.image("C:/Users/rouda/OneDrive/Research/Codes/R/kef/examples/rdata_direct_4.RData")
 ```
+
 
 
 
@@ -465,6 +472,62 @@ ggplot(matrix_df, aes(Var1, Var2, fill = value)) +
 ```
 
 ```{r}
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+
+# Convert matrix to a data frame
+matrix_df <- melt(solve(centered_kernel_mat_at_sampled))
+
+# Define the color categories based on the absolute value and sign of 'value'
+matrix_df <- matrix_df %>%
+  mutate(category = case_when(
+    abs(value) < 1 ~ "Abs < 1",
+    value > 0 & abs(value) < 10 ~ "Positive Abs < 10",
+    value < 0 & abs(value) < 10 ~ "Negative Abs < 10",
+    value > 0 & abs(value) < 100 ~ "Positive Abs < 100",
+    value < 0 & abs(value) < 100 ~ "Negative Abs < 100",
+    value > 0 & abs(value) < 1000 ~ "Positive Abs < 1000",
+    value < 0 & abs(value) < 1000 ~ "Negative Abs < 1000",
+    value > 0 & abs(value) < 10000 ~ "Positive Abs < 10000",
+    value < 0 & abs(value) < 10000 ~ "Negative Abs < 10000",
+    value > 0 & abs(value) < 100000 ~ "Positive Abs < 100000",
+    value < 0 & abs(value) < 100000 ~ "Negative Abs < 100000",
+    TRUE ~ "Other"
+  ))
+
+# Map the categories to colors
+category_colors <- c(
+  "Abs < 1" = "white",
+  "Positive Abs < 10" = rgb(1, 0, 0, alpha = 0.2),
+  "Negative Abs < 10" = rgb(0, 0, 1, alpha = 0.2),
+  "Positive Abs < 100" = rgb(1, 0, 0, alpha = 0.4),
+  "Negative Abs < 100" = rgb(0, 0, 1, alpha = 0.4),
+  "Positive Abs < 1000" = rgb(1, 0, 0, alpha = 0.6),
+  "Negative Abs < 1000" = rgb(0, 0, 1, alpha = 0.6),
+  "Positive Abs < 10000" = rgb(1, 0, 0, alpha = 0.8),
+  "Negative Abs < 10000" = rgb(0, 0, 1, alpha = 0.8),
+  "Positive Abs < 100000" = rgb(1, 0, 0, alpha = 1),
+  "Negative Abs < 100000" = rgb(0, 0, 1, alpha = 1),
+  "Other" = "black"
+)
+
+# Plot using ggplot2
+ggplot(matrix_df, aes(Var1, Var2, fill = category)) +
+  geom_tile() +
+  scale_fill_manual(values = category_colors, name = "Value Categories") +
+  theme_minimal() +
+  coord_fixed() +  # Ensures the plot is square
+  labs(
+    title = "Inverse Centered Brownian Kernel wrt to uniform samples from -7 to 7",
+    x = "Sampled x", y = "Sampled x"
+  )
+
+
+```
+
+
+```{r}
 # Convert matrix to a data frame
 matrix_df <- melt(gram)
 
@@ -476,6 +539,8 @@ ggplot(matrix_df, aes(Var1, Var2, fill = value)) +
   coord_fixed() +  # Ensures the plot is square
   labs(title = "Initial gram matrix centered wrt a uniform distribution from -7 to 7", x = "Sampled x", y = "Sampled x")
 ```
+
+
 
 
 ```{r}
