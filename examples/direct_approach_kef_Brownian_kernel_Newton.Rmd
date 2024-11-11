@@ -572,170 +572,106 @@ centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled
                                                          hurst_coef = 0.5)
 ```
 
+### Incorporate the constraint $\sum_{j=1}^m \theta(z_j) = 0$
+
+```{r}
+# Initialize the new matrix as a copy of the original matrix
+centered_kernel_mat_at_grid_n_1 <- matrix(0, nrow(centered_kernel_mat_at_grid), ncol(centered_kernel_mat_at_grid))
+
+# Get the number of rows and columns
+n <- nrow(centered_kernel_mat_at_grid)
+m <- ncol(centered_kernel_mat_at_grid)
+
+# Calculate row sums and the sum of the last row
+row_sums <- rowSums(centered_kernel_mat_at_grid)
+last_row_sum <- sum(centered_kernel_mat_at_grid[n,])
+
+# Vectorized calculation for each entry in the matrix
+for (i in 1:n) {
+  centered_kernel_mat_at_grid_n_1[i, ] <- centered_kernel_mat_at_grid[i, ] - 
+    (row_sums[i] / last_row_sum) * centered_kernel_mat_at_grid[n, ]
+}
+
+centered_kernel_mat_at_grid_n_1 <- centered_kernel_mat_at_grid_n_1[-n,]
+
+```
+
+### Initialize w_vec
+
+```{r}
+w_vec <- rep(0, nrow(centered_kernel_mat_at_grid)-1)
+```
+
+
+
 ### Find J matrix:
 
-```{r}
-library(parallel)
-library(pbapply)
 
-# Define the dimensions
-n <- length(vec_fixed_points)
-x_grid_len <- length(x_grid)
-
-# Initialize the matrix and vector
-J <- matrix(0, nrow = n, ncol = n)
-w_vec <- rep(0, n)
-
-# Compute exp_vec and avoid re-computing it
-exp_vec <- exp(t(centered_kernel_mat_at_grid) %*% w_vec)
-
-# Define the function to compute each element of J
-compute_J_element <- function(t, s) {
-  H_s <- centered_kernel_mat_at_grid[s, ]
-  H_t <- centered_kernel_mat_at_grid[t, ]
-  one_m <- rep(1, x_grid_len)
-  
-  exp_sum <- sum(exp_vec)
-  part1 <- (exp_vec * H_t) / exp_sum
-  part2 <- (exp_vec * t(t(one_m) %*% (exp_vec %*% H_t))) / exp_sum^2
-  
-  return(t(H_s) %*% (part1 - part2))
-}
-
-# Create a cluster with the number of available cores
-num_cores <- detectCores() - 1  # Use one less than the total cores to avoid full CPU load
-cl <- makeCluster(num_cores)
-
-# Export variables to the cluster
-clusterExport(cl, c("compute_J_element", "centered_kernel_mat_at_grid", "exp_vec", "x_grid_len","n"))
-
-# Use pbSapply to parallelize with a progress bar
-J <- pbsapply(1:n, function(s) {
-  sapply(1:n, function(t) compute_J_element(t, s))
-}, cl = cl)
-
-# Stop the cluster
-stopCluster(cl)
-
-# Reshape the result to match the dimensions of J
-J <- matrix(J, nrow = n, ncol = n)
-
-```
 
 ```{r}
 library(parallel)
 library(pbapply)
-
 # Define the function to compute J
 compute_J_parallel <- function(w_vec, centered_kernel_mat_at_grid) {
-  # Define the dimensions
-  n <- nrow(centered_kernel_mat_at_grid)
-  x_grid_len <- ncol(centered_kernel_mat_at_grid)
-  
-  # Initialize the matrix
-  J <- matrix(0, nrow = n, ncol = n)
-  
-  # Precompute exp_vec
-  exp_vec <- exp(t(centered_kernel_mat_at_grid) %*% w_vec)
-  
-  # Define the function to compute each element of J
-  compute_J_element <- function(t, s) {
-    H_s <- centered_kernel_mat_at_grid[s, ]
-    H_t <- centered_kernel_mat_at_grid[t, ]
-    one_m <- rep(1, x_grid_len)
+    # Define the dimensions
+    n <- nrow(centered_kernel_mat_at_grid)
+    x_grid_len <- ncol(centered_kernel_mat_at_grid)
     
-    exp_sum <- sum(exp_vec)
-    part1 <- (exp_vec * H_t) / exp_sum
-    part2 <- (exp_vec * t(t(one_m) %*% (exp_vec %*% H_t))) / exp_sum^2
+    # Initialize the matrix
+    J <- matrix(0, nrow = n, ncol = n)
     
-    return(t(H_s) %*% (part1 - part2))
-  }
-  
-  # Create a cluster with the number of available cores
-  num_cores <- detectCores() - 1  # Use one less than total cores to avoid full CPU load
-  cl <- makeCluster(num_cores)
-  
-  # Export variables to the cluster
-  clusterExport(cl, c("compute_J_element", "centered_kernel_mat_at_grid","exp_vec","n"))
-  
-  # Use pbSapply to parallelize with a progress bar
-  
-  J <- pbsapply(1:n, function(s) {
-    sapply(1:n, function(t) compute_J_element(t, s))
-  }, cl = cl)
-  
-  # Stop the cluster
-  stopCluster(cl)
-  
-  # Reshape the result to match the dimensions of J
-  J <- matrix(J, nrow = nrow(centered_kernel_mat_at_grid), ncol = nrow(centered_kernel_mat_at_grid))
-  
-  return(J)
+    # Precompute exp_vec
+    exp_vec <- exp(t(centered_kernel_mat_at_grid) %*% w_vec)
+    
+    # Create a cluster with the number of available cores
+    num_cores <- detectCores() - 1  # Use one less than total cores to avoid full CPU load
+    cl <- makeCluster(num_cores)
+    
+    # Export variables to the cluster, except exp_vec
+    clusterExport(cl, c("centered_kernel_mat_at_grid", "w_vec", "n"))
+    
+    # Use pbSapply to parallelize with a progress bar
+    J <- pbsapply(1:n, function(s) {
+        # Compute exp_vec within the cluster
+        exp_vec <- exp(t(centered_kernel_mat_at_grid) %*% w_vec)
+        
+        sapply(1:n, function(t) {
+            H_s <- centered_kernel_mat_at_grid[s, ]
+            H_t <- centered_kernel_mat_at_grid[t, ]
+            one_m <- rep(1, x_grid_len)
+            
+            exp_sum <- sum(exp_vec)
+            part1 <- (exp_vec * H_t) / exp_sum
+            part2 <- (exp_vec * t(t(one_m) %*% (exp_vec %*% H_t))) / exp_sum^2
+            
+            return(t(H_s) %*% (part1 - part2))
+        })
+    }, cl = cl)
+    
+    # Stop the cluster
+    stopCluster(cl)
+    
+    # Reshape the result to match the dimensions of J
+    J <- matrix(J, nrow = nrow(centered_kernel_mat_at_grid), ncol = nrow(centered_kernel_mat_at_grid))
+    
+    return(J)
 }
 
-# Example of how to call the function
- J_result <- compute_J_parallel(w_vec, centered_kernel_mat_at_grid)
-
-
-
-```
-```{r}
-solve(J_result)
+J_result <- compute_J_parallel(w_vec = w_vec,centered_kernel_mat_at_grid_n_1)
 ```
 
 
 ```{r}
-library(parallel)
-library(pbapply)
-
-# Define the dimensions
-n <- length(vec_fixed_points)
-x_grid_len <- length(x_grid)
-
-# Initialize the result vector
-f <- rep(0, n)
-w_vec <- rep(0, n)
-
-# Compute exp_vec and exp_sum to avoid re-computing them
-exp_vec <- exp(t(centered_kernel_mat_at_grid) %*% w_vec)
-exp_sum <- sum(exp_vec)
-
-# Pre-define any constants
-one_m <- rep(1, x_grid_len)
-kme <- KME_true
-
-# Define the function to compute each element of f
-compute_f_element <- function(s) {
-  H_s <- centered_kernel_mat_at_grid[s, ]
-  part1 <- H_s %*% exp_vec / exp_sum
-  part2 <- kme[s]
-  return(part1 - part2)
-}
-
-# Set up the cluster with available cores
-num_cores <- detectCores() - 1  # Use one less than the total cores to avoid full CPU load
-cl <- makeCluster(num_cores)
-
-# Export necessary variables to the cluster
-clusterExport(cl, c("compute_f_element", "centered_kernel_mat_at_grid", "exp_vec", "exp_sum", "kme"))
-
-# Parallel computation with a progress bar
-f <- pbsapply(1:n, compute_f_element, cl = cl)
-
-# Stop the cluster
-stopCluster(cl)
-
-# Result is stored in f
-f
-
-
+J_result
 ```
+
+
+
 ```{r}
-library(parallel)
-library(pbapply)
+
 
 # Define the function to compute f in parallel
-compute_f_parallel <- function(w_vec,  centered_kernel_mat_at_grid, kme) {
+compute_f_parallel <- function(w_vec, centered_kernel_mat_at_grid, kme) {
   # Define the dimensions
   n <- nrow(centered_kernel_mat_at_grid)
   x_grid_len <- ncol(centered_kernel_mat_at_grid)
@@ -743,24 +679,24 @@ compute_f_parallel <- function(w_vec,  centered_kernel_mat_at_grid, kme) {
   # Initialize the result vector
   f <- rep(0, n)
   
-  # Compute exp_vec and exp_sum to avoid re-computing them
-  exp_vec <- exp(t(centered_kernel_mat_at_grid) %*% w_vec)
-  exp_sum <- sum(exp_vec)
+  # Create a cluster with the number of available cores
+  num_cores <- detectCores() - 1  # Use one less than the total cores to avoid full CPU load
+  cl <- makeCluster(num_cores)
+  
+  # Export necessary variables to the cluster, excluding exp_vec and exp_sum
+  clusterExport(cl, c("centered_kernel_mat_at_grid", "w_vec", "KME_true", "n"))
   
   # Define the function to compute each element of f
   compute_f_element <- function(s) {
+    # Calculate exp_vec and exp_sum within the cluster
+    exp_vec <- exp(t(centered_kernel_mat_at_grid) %*% w_vec)
+    exp_sum <- sum(exp_vec)
+    
     H_s <- centered_kernel_mat_at_grid[s, ]
     part1 <- H_s %*% exp_vec / exp_sum
     part2 <- kme[s]
     return(part1 - part2)
   }
-  
-  # Create a cluster with the number of available cores
-  num_cores <- detectCores() - 1  # Use one less than the total cores to avoid full CPU load
-  cl <- makeCluster(num_cores)
-  
-  # Export necessary variables to the cluster
-  clusterExport(cl, c("compute_f_element", "centered_kernel_mat_at_grid", "exp_vec", "exp_sum", "KME_true"))
   
   # Parallel computation with a progress bar
   f <- pbsapply(1:n, compute_f_element, cl = cl)
@@ -772,9 +708,10 @@ compute_f_parallel <- function(w_vec,  centered_kernel_mat_at_grid, kme) {
 }
 
 # Example of how to call the function
- f_result <- compute_f_parallel(w_vec, centered_kernel_mat_at_grid, KME_true)
+f_result <- compute_f_parallel(w_vec, centered_kernel_mat_at_grid_n_1, KME_true[-n])
 
- f_result
+f_result
+
 ```
 
 ## Newton-Raphson
@@ -783,16 +720,30 @@ compute_f_parallel <- function(w_vec,  centered_kernel_mat_at_grid, kme) {
 
 library(MASS)
 max_iter <- 20
-w_vec <- rep(0, length(vec_fixed_points))
+w_vec <- rep(1, length(vec_fixed_points)-1)
 
 for (counter in 1:max_iter) {
   w_vec_old <- w_vec
   
-  J_result <- compute_J_parallel(w_vec, centered_kernel_mat_at_grid)
-  f_result <- compute_f_parallel(w_vec,centered_kernel_mat_at_grid,KME_true)
+  print("J is under calculation:")
   
-  w_vec <- w_vec - ginv(J_result) %*% f_result
+  J_result <- compute_J_parallel(w_vec, centered_kernel_mat_at_grid_n_1)
   
+  print("J summary:")
+  print(summary(as.vector(J_result)))
+  
+  print("f is under calculation:")
+  
+  f_result <- compute_f_parallel(w_vec,centered_kernel_mat_at_grid_n_1,KME_true[-n])
+  
+  print("f summary:")
+  print(summary(f_result))
+  
+  w_vec <- w_vec - 0.001 * ginv(J_result) %*% f_result
+  
+  w_vec <- as.numeric(w_vec)
+  
+  print(dim(w_vec))
   
   print(paste("Iteration:", counter,", Norm:", norm(w_vec - w_vec_old)))
 }
