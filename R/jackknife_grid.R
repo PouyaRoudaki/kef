@@ -144,12 +144,6 @@ jackknife_weight_error_grid <- function(centered_kernel_mat_at_sampled,
                          method_of_p_calculation)
   }))
 
-
-
-
-
-
-
   # Stop the cluster
   parallel::stopCluster(cl)
 
