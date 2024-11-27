@@ -666,6 +666,42 @@ J_result
 ```
 
 
+```{r}
+a <- 0
+w_vec <- rep(0, nrow(centered_kernel_mat_at_grid)-1)
+
+exponents_vec <- rep(0, ncol(centered_kernel_mat_at_grid_n_1))
+
+for (j in 1:ncol(centered_kernel_mat_at_grid_n_1)) {
+  for (k in 1: nrow(centered_kernel_mat_at_grid_n_1)) {
+    exponents_vec[j] <- exponents_vec[j] + centered_kernel_mat_at_grid_n_1[k,j] * w_vec[k]
+  }
+}
+
+for (j in 1:ncol(centered_kernel_mat_at_grid_n_1)) {
+  a <- a + centered_kernel_mat_at_grid_n_1[1,j] * 
+    (centered_kernel_mat_at_grid_n_1[1,j] * exp(exponents_vec[j])/sum(exp(exponents_vec)) - exp(exponents_vec[j]) *(sum(exp(exponents_vec) * centered_kernel_mat_at_grid_n_1[1,j]))/sum(exp(exponents_vec))^2)
+}
+
+print(a)
+
+J_manual <- matrix(0,nrow(centered_kernel_mat_at_grid_n_1),nrow(centered_kernel_mat_at_grid_n_1))
+
+for (s in 1:nrow(centered_kernel_mat_at_grid_n_1)) {
+  for (t in 1:nrow(centered_kernel_mat_at_grid_n_1)) {
+    for (j in 1:ncol(centered_kernel_mat_at_grid_n_1)) {
+  J_manual[s,t] <- J_manual[s,t] + centered_kernel_mat_at_grid_n_1[s,j] * 
+    (centered_kernel_mat_at_grid_n_1[t,j] * exp(exponents_vec[j])/sum(exp(exponents_vec)) - exp(exponents_vec[j]) *(sum(exp(exponents_vec) * centered_kernel_mat_at_grid_n_1[t,j]))/sum(exp(exponents_vec))^2)
+    }
+  }
+  print(paste("row:",s))
+}
+
+
+```
+
+
+
 
 ```{r}
 
