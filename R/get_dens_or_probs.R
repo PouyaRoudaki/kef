@@ -122,7 +122,7 @@ get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
   dens_grid <- density_at_grid(centered_kernel_mat_at_grid, centered_kernel_self_grid, lambda_hat, weight_hat_vec)
 
   # Normalize the density by the integral over the grid
-  normalizing_cte <- trapz(x_grid, dens_grid)  # trapz is from pracma package
+  normalizing_cte <- pracma::trapz( x_grid, dens_grid)  # trapz is from pracma package
 
   # Prepare the output as a list of normalized probabilities
   dens_list <- list()

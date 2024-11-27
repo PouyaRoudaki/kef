@@ -104,7 +104,7 @@ centered_kernel_matrix <- function(first_vec_kernel, second_vec_kernel, centerin
 #' result <- centered_kernel_matrix_parallel(first_vec_kernel, second_vec_kernel, centering_grid, hurst_coef)
 #' print(result)
 
-library(parallel)
+
 centered_kernel_matrix_parallel <- function(first_vec_kernel, second_vec_kernel, centering_grid, hurst_coef) {
   # Lengths of input vectors
   n0 <- length(first_vec_kernel)
@@ -112,11 +112,11 @@ centered_kernel_matrix_parallel <- function(first_vec_kernel, second_vec_kernel,
   n2 <- length(centering_grid)
 
   # Create a cluster
-  num_cores <- detectCores() - 1
-  cl <- makeCluster(num_cores)
+  num_cores <- parallel::detectCores() - 1
+  cl <- parallel::makeCluster(num_cores)
 
   # Export necessary variables and functions to the cluster
-  clusterExport(cl, c("first_vec_kernel", "second_vec_kernel", "centering_grid", "hurst_coef"), envir = environment())
+  parallel::clusterExport(cl, c("first_vec_kernel", "second_vec_kernel", "centering_grid", "hurst_coef"), envir = environment())
 
   # Define helper functions for each matrix computation
   compute_term1_chunk <- function(indices) {
@@ -137,23 +137,21 @@ centered_kernel_matrix_parallel <- function(first_vec_kernel, second_vec_kernel,
 
   # Compute term1_matrix in parallel
   chunk_indices1 <- split(seq_len(n0), cut(seq_len(n0), num_cores, labels = FALSE))
-  term1_chunks <- parLapply(cl, chunk_indices1, compute_term1_chunk)
+  term1_chunks <- parallel::parLapply(cl, chunk_indices1, compute_term1_chunk)
   term1_matrix <- do.call(rbind, term1_chunks)
 
   # Compute term2_matrix in parallel
-  term2_chunks <- parLapply(cl, chunk_indices1, compute_term2_chunk)
+  term2_chunks <- parallel::parLapply(cl, chunk_indices1, compute_term2_chunk)
   term2_matrix <- do.call(rbind, term2_chunks)
 
   # Compute term3_matrix in parallel
   chunk_indices2 <- split(seq_len(n1), cut(seq_len(n1), num_cores, labels = FALSE))
-  term3_chunks <- parLapply(cl, chunk_indices2, function(indices) {
-    outer(second_vec_kernel[indices], centering_grid, FUN = function(x, y) abs(x - y)^(2 * hurst_coef))
-  })
+  term3_chunks <- parallel::parLapply(cl, chunk_indices2, compute_term3_chunk)
   term3_matrix <- do.call(rbind, term3_chunks)
 
   # Compute term4_matrix in parallel
   chunk_indices3 <- split(seq_len(n2), cut(seq_len(n2), num_cores, labels = FALSE))
-  term4_chunks <- parLapply(cl, chunk_indices3, compute_term4_chunk)
+  term4_chunks <- parallel::parLapply(cl, chunk_indices3, compute_term4_chunk)
   term4_matrix <- do.call(rbind, term4_chunks)
 
   # Final calculations
@@ -165,7 +163,7 @@ centered_kernel_matrix_parallel <- function(first_vec_kernel, second_vec_kernel,
   )
 
   # Stop the cluster
-  stopCluster(cl)
+  parallel::stopCluster(cl)
 
   return(result_matrix)
 }

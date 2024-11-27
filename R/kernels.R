@@ -42,6 +42,7 @@
 kernel <- function(x, fixed, type = "rbf", length_scale = 1, degree = 2,
                    free_add = 0, free_mult = 1,
                    nu_matern = 1, centering_param = 7) {
+  library(pracma)
   type <- tolower(type)  # Convert type to lowercase for case-insensitivity
 
   switch(type,
@@ -51,7 +52,7 @@ kernel <- function(x, fixed, type = "rbf", length_scale = 1, degree = 2,
            # x vector dim
            d =  length(x)
 
-           z = 2 * (norm(x - fixed, p = Inf)) / length_scale
+           z = 2 * (Norm(x - fixed, p = Inf)) / length_scale
 
            result_uni <- (abs(z) <= 1)
 
@@ -79,7 +80,7 @@ kernel <- function(x, fixed, type = "rbf", length_scale = 1, degree = 2,
            # Implementation for the rational quadratic (RQ) kernel
            # Required parameters are the degree of the polynomial and the length scale
 
-           result_rq <- (1 + norm(x - fixed, p = 2)^2 / (2 * degree * (length_scale^2)))^(-degree)
+           result_rq <- (1 + Norm(x - fixed, p = 2)^2 / (2 * degree * (length_scale^2)))^(-degree)
 
            return(result_rq)
          },
@@ -87,7 +88,7 @@ kernel <- function(x, fixed, type = "rbf", length_scale = 1, degree = 2,
            # Implementation for the radial basis function (RBF) kernel
            # Required parameter is the length scale
 
-           result_rbf <- free_mult * exp(-norm(x - fixed, p = 2)^2 / (2 * length_scale^2))
+           result_rbf <- free_mult * exp(-Norm(x - fixed, p = 2)^2 / (2 * length_scale^2))
 
            return(result_rbf)
          },
@@ -114,14 +115,14 @@ kernel <- function(x, fixed, type = "rbf", length_scale = 1, degree = 2,
            # Implementation for the periodic (PER) kernel
            # Required parameter is the length scale
 
-           result_per <- free_mult * exp(-2 * (sin(norm(x - fixed, p = 1)))^2 / (length_scale^2))
+           result_per <- free_mult * exp(-2 * (sin(Norm(x - fixed, p = 1)))^2 / (length_scale^2))
 
            return(result_per)
          },
          ou = {
            # Implementation for the Ornstein-Uhlenbeck kernel (OU) kernel
            # Required parameter is the length scale
-           result_ou <- exp(-norm(x - fixed, p = 2) / length_scale)
+           result_ou <- exp(-Norm(x - fixed, p = 2) / length_scale)
 
            return(result_ou)
          },
@@ -136,7 +137,7 @@ kernel <- function(x, fixed, type = "rbf", length_scale = 1, degree = 2,
            # where $K_\nu$ is a modified Bessel function.
            #
 
-           aux <- sqrt(2 * nu_matern) * norm(x - fixed, p = 1) / length_scale
+           aux <- sqrt(2 * nu_matern) * Norm(x - fixed, p = 1) / length_scale
 
            result_matern <- (2^(1 - nu_matern)) / gamma(nu_matern) *
              (aux)^nu_matern * besselK(aux, nu = nu_matern, expon.scaled = FALSE)
@@ -146,7 +147,7 @@ kernel <- function(x, fixed, type = "rbf", length_scale = 1, degree = 2,
          brownian = {
            # Implementation for the Brownian kernel
            # No parameter is required!
-           result_brownian <- length_scale * 1/2 * (norm(x,1) + norm(fixed,1) - norm(x - fixed,1))
+           result_brownian <- length_scale * 1/2 * (Norm(x,1) + Norm(fixed,1) - Norm(x - fixed,1))
            #result_brownian <- length_scale^2 * min(x, fixed)
 
            return(result_brownian)
@@ -155,7 +156,7 @@ kernel <- function(x, fixed, type = "rbf", length_scale = 1, degree = 2,
            # Implementation for the Brownian kernel
            # No parameter is required!
            result_centered_brownian <- length_scale * 1/2 *
-             (-norm(x - fixed)
+             (-Norm(x - fixed)
               -sqrt(2/pi) * (1- exp(-x^2/2)) + x*(1-2*pnorm(x))
               -sqrt(2/pi) * (1- exp(-fixed^2/2)) + fixed*(1-2*pnorm(fixed)))
            + length_scale * (-1 + sqrt(2))/sqrt(pi)

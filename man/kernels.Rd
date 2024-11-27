@@ -14,7 +14,7 @@ kernel(
   free_add = 0,
   free_mult = 1,
   nu_matern = 1,
-  centering_param
+  centering_param = 7
 )
 }
 \arguments{

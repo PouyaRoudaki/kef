@@ -12,7 +12,7 @@
 #' @param free_add  Kernel parameters, free additive parameter
 #' @param free_mult   Kernel parameters, free multiplicative parameter
 #' @param nu_matern  Kernel parameters, nu_matern for matern kernel
-#' @param dom_measure_type Character string indicating the dominated finite measure for convolution (default: "gaussian").
+#' @param dom_measure_type Character stype = "2"tring indicating the dominated finite measure for convolution (default: "gaussian").
 #' @param dom_measure_eta List of parameters for the dominated finite measure, with 'eta' as an example.
 #'
 #' @return The convolution of the kernel with itself under the specified dominated finite measure.

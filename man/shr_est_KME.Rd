@@ -9,7 +9,7 @@ shr_est_KME(
   list_fixed,
   kernel_type = "rbf",
   kernel_params = list(length_scale = 1, degree = 2, free_add = 0, free_mult = 1,
-    nu_matern = 1),
+    nu_matern = 1, centering_param = 7),
   lambda_tunner = 1,
   precomputed = list(gram = NULL, lambda = NULL, inverse_regularizer = NULL, beta_s =
     NULL)

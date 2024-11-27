@@ -15,6 +15,7 @@
 #' @param x_grid A vector representing the grid points.
 #'
 #' @return A numeric vector of length n representing the estimated weight vector.
+#'
 #' @export
 #'
 #' @examples
@@ -29,9 +30,13 @@
 #' x_grid <- seq(0, 1, length.out = m)
 #' weights <- get_weights(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
 #'                        centered_kernel_mat_at_grid, centered_kernel_self_grid, x_grid)
-get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
-                        centered_kernel_mat_at_grid, centered_kernel_self_grid,
-                        sampled_x, x_grid,
+get_weights <- function(lambda_hat,
+                        tau_hat,
+                        centered_kernel_mat_at_sampled,
+                        centered_kernel_mat_at_grid,
+                        centered_kernel_self_grid,
+                        sampled_x,
+                        x_grid,
                         type_of_p_is_prob=TRUE,
                         type_of_q_is_prob=TRUE,
                         method_of_p_calculation="ordinary") {
@@ -46,7 +51,8 @@ get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
   #while ((norm(s, p = 2) > 10^(-10)) & (norm(weight_hat_change, p = 2) > 10^(-10))) {
   for (i in 1:max_iteration) {
     # Calculate probabilities for sampled and grid points
-    probs <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+    probs <- get_dens_or_prob(centered_kernel_mat_at_sampled,
+                              centered_kernel_mat_at_grid,
                        centered_kernel_self_grid,
                        sampled_x,
                        x_grid,
@@ -89,7 +95,7 @@ get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
 
     # Print progress every 10% of the iterations or at the first iteration
     if (i %% round(max_iteration / 10) == 0 || i == 1) {
-      print(paste("Iteration", i, ": ||s||_2 =", format_number(norm(s, p = 2))))
+      print(paste("Iteration", i, ": ||s||_2 =", pracma::Norm(s)))
     }
     #counter = counter + 1
   }

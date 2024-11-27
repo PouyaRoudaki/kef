@@ -34,7 +34,7 @@ r_conv_kernel(
 
 \item{nu_matern}{Kernel parameters, nu_matern for matern kernel}
 
-\item{dom_measure_type}{Character string indicating the dominated finite measure for convolution (default: "gaussian").}
+\item{dom_measure_type}{Character stype = "2"tring indicating the dominated finite measure for convolution (default: "gaussian").}
 
 \item{dom_measure_eta}{List of parameters for the dominated finite measure, with 'eta' as an example.}
 }

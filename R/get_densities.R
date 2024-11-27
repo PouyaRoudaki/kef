@@ -1,5 +1,3 @@
-library(pracma)
-
 #' Compute Densities at Sampled Points
 #'
 #' This function computes the densities at sampled points based on a centered kernel matrix,
@@ -91,7 +89,7 @@ get_densities <- function(centered_kernel_mat_at_sampled, centered_kernel_mat_at
   den_grid <- density_at_grid(centered_kernel_mat_at_grid, centered_kernel_self_grid, lambda_hat, weight_hat_vec)
 
   # Normalize the density by the integral over the grid
-  normalizing_cte <- trapz(x_grid, den_grid)  # trapz is from pracma package
+  normalizing_cte <- pracma::trapz(x_grid, den_grid)  # trapz is from pracma package
 
   # Prepare the output as a list of normalized probabilities
   den_list <- list()

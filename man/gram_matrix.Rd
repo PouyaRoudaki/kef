@@ -8,7 +8,7 @@ gram_matrix(
   vec_list,
   kernel_type = "rbf",
   kernel_params = list(length_scale = 1, degree = 2, free_add = 0, free_mult = 1,
-    nu_matern = 1, centering_param = 5)
+    nu_matern = 1, centering_param = 7)
 )
 }
 \arguments{
