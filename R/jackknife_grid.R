@@ -149,7 +149,6 @@ jackknife_weight_error_grid <- function(centered_kernel_mat_at_sampled,
   # Combine the results into a data frame
   results <- data.frame(lambda_hat = grid$lambda_hat, tau_hat = grid$tau_hat,
                         jackknife_err = err)
-
   return(results)
 }
 
