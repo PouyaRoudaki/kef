@@ -128,7 +128,6 @@ jackknife_weight_error_grid <- function(centered_kernel_mat_at_sampled,
   # Source or reload the updated function in each worker to avoid stale versions
   parallel::clusterEvalQ(cl, devtools::load_all())
 
-
   # Compute jackknife error for each combination in the grid using parallelization
   err <- unlist(parallel::parLapply(cl, seq_len(nrow(grid)), function(idx) {
     lambda_hat <- grid$lambda_hat[idx]
