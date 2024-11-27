@@ -185,3 +185,72 @@ get_grid_approx_dens_or_probs <- function(sample, grid, dens_list){
 
   return(approx_dens_or_prob)
 }
+
+
+
+
+#' Compute Approximate Probabilities and Densities on a Grid
+#'
+#' This function calculates approximate probabilities and densities for given sample points
+#' based on a specified grid and a list of densities or probabilities on that grid.
+#'
+#' @param sample A numeric vector of sample points for which the probabilities or densities need to be approximated.
+#' @param grid A numeric vector representing the grid points on which the densities or probabilities are defined.
+#' @param dens_list A list containing the grid probabilities or densities.
+#'        It must include an element `grid_x`, which is a numeric vector of probabilities or densities corresponding to the grid points.
+#'
+#' @return A list containing two elements:
+#' \describe{
+#'   \item{`prob`}{A numeric vector of approximate probabilities for the sample points, normalized to sum to 1.}
+#'   \item{`dens`}{A numeric vector of approximate densities for the sample points, based on interval lengths.}
+#' }
+#'
+#' @export
+#'
+#' @examples
+#' # Example 1: Compute probabilities and densities
+#' sample <- c(1, 3, 5)
+#' grid <- c(0, 2, 4, 6)
+#' dens_list <- list(grid_x = c(0.1, 0.4, 0.3, 0.2))
+#'
+#' result <- get_grid_approx_dens_or_probs(sample, grid, dens_list)
+#'
+#' # Access the approximate probabilities
+#' print(result$prob)
+#'
+#' # Access the approximate densities
+#' print(result$dens)
+get_grid_approx_dens_or_probs_vectorized <- function(sample, grid, dens_list) {
+  # Step 1: Get corresponding grid information
+  list_of_corresponding_grid <- get_corresponding_grids_and_their_weights(sample, grid)
+
+  # Step 2: Normalize the densities or probabilities
+  q <- dens_list$grid_x
+  q_normalized <- q / sum(q)
+
+  # Step 3: Parse the grid indices for all samples
+  grid_indices <- lapply(list_of_corresponding_grid$corresponding_grid$grid, function(x) as.numeric(unlist(strsplit(x, ","))))
+
+  # Step 4: Compute weights for all grid indices
+  weights <- list_of_corresponding_grid$grid_weights
+  weight_map <- setNames(weights$weight, weights$grid_index_freq_of_duplication)
+
+  # Vectorize probability calculation
+  approx_prob <- sapply(grid_indices, function(indices) sum(weight_map[indices] * q_normalized[indices]))
+
+  # Step 5: Calculate densities based on interval lengths
+  interval_lengths <- list_of_corresponding_grid$corresponding_grid$interval_length
+  approx_dens <- approx_prob / interval_lengths
+
+  # Step 6: Normalize probabilities
+  approx_prob_normalized <- approx_prob / sum(approx_prob)
+
+  # Step 7: Construct the result list
+  approx_dens_or_prob <- list(
+    prob = approx_prob_normalized,
+    dens = approx_dens
+  )
+
+  return(approx_dens_or_prob)
+}
+

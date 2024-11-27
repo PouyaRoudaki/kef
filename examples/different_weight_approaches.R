@@ -69,14 +69,13 @@ probs <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at
 
 kef_df <- data.frame(grid = x_grid, kef_pdf = probs$grid_x)
 
-true_density <- sapply(x_grid, function(x){
-  result <- mixture_weights[1] * dnorm(x, mean = means[1], sd = sds[1]) +
-    mixture_weights[2] * dnorm(x, mean = means[2], sd = sds[2]) +
-    mixture_weights[3] * dnorm(x, mean = means[3], sd = sds[3]) +
-    mixture_weights[4] * dnorm(x, mean = means[4], sd = sds[4])
-
-  return(result)
+# Define a matrix of normal densities for each mean and standard deviation
+density_matrix <- sapply(seq_along(means), function(i) {
+  dnorm(x_grid, mean = means[i], sd = sds[i])
 })
+
+# Calculate the true density by taking the weighted sum of the columns
+true_density <- density_matrix %*% mixture_weights
 
 
 true_density_df <- data.frame(grid = x_grid, true_pdf = true_density)

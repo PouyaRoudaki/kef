@@ -43,7 +43,7 @@ get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
   #s <- rep(1000, n)
   #weight_hat_change <- rep(1000, n)
   #counter <- 1
-  #while ((norm(s, type = "2") > 10^(-10)) & (norm(weight_hat_change, type = "2") > 10^(-10))) {
+  #while ((norm(s, p = 2) > 10^(-10)) & (norm(weight_hat_change, p = 2) > 10^(-10))) {
   for (i in 1:max_iteration) {
     # Calculate probabilities for sampled and grid points
     probs <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
@@ -89,7 +89,7 @@ get_weights <- function(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
 
     # Print progress every 10% of the iterations or at the first iteration
     if (i %% round(max_iteration / 10) == 0 || i == 1) {
-      print(paste("Iteration", i, ": ||s||_2 =", format_number(norm(s, type = "2"))))
+      print(paste("Iteration", i, ": ||s||_2 =", format_number(norm(s, p = 2))))
     }
     #counter = counter + 1
   }

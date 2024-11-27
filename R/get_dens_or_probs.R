@@ -136,7 +136,7 @@ get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
   #print(paste("inside get_dens_or_probs",length(prob_list$grid_x)))
   if(method_of_p_calculation == "neighborhood_grid"){
 
-    approx_dens_or_prob <- get_grid_approx_dens_or_probs(sampled_x, x_grid, dens_list)
+    approx_dens_or_prob <- get_grid_approx_dens_or_probs_vectorized(sampled_x, x_grid, dens_list)
 
     dens_list$sampled_x <- approx_dens_or_prob$dens
 

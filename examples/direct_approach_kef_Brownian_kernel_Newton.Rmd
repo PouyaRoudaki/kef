@@ -630,7 +630,7 @@ compute_J_parallel <- function(w_vec, centered_kernel_mat_at_grid) {
     # Export variables to the cluster, except exp_vec
     clusterExport(cl, c("centered_kernel_mat_at_grid", "w_vec", "n"))
     
-    # Use pbSapply to parallelize with a progress bar
+    # Use pbsapply to parallelize with a progress bar
     J <- pbsapply(1:n, function(s) {
         # Compute exp_vec within the cluster
         exp_vec <- exp(t(centered_kernel_mat_at_grid) %*% w_vec)
