@@ -39,7 +39,8 @@ get_weights <- function(lambda_hat,
                         x_grid,
                         type_of_p_is_prob=TRUE,
                         type_of_q_is_prob=TRUE,
-                        method_of_p_calculation="ordinary") {
+                        method_of_p_calculation="ordinary",
+                        print_trace = FALSE) {
 
   max_iteration <- 2000  # Maximum number of iterations for the Newton-Raphson method
   NRstepsize <- 0.1  # Step size for the Newton-Raphson update
@@ -94,7 +95,7 @@ get_weights <- function(lambda_hat,
     weight_hat_vec <- weight_hat_vec + NRstepsize * s %*% Hessian_inv
 
     # Print progress every 10% of the iterations or at the first iteration
-    if (i %% round(max_iteration / 10) == 0 || i == 1) {
+    if ((i %% round(max_iteration / 10) == 0 || i == 1) & print_trace == TRUE) {
       print(paste("Iteration", i, ": ||s||_2 =", pracma::Norm(s)))
     }
     #counter = counter + 1

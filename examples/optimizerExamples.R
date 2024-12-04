@@ -7,10 +7,10 @@ mixture_weights <- c(1/2, 1/6, 1/6, 1/6)
 means <- c(0, -1, 0, 1)
 sds <- c(1, 0.1, 0.1, 0.1)
 
-sampled_x <- sort(normal_mixture(10, means, sds, mixture_weights))
-x_grid <-  seq(-3.1,3.1,length.out = 40)
+sampled_x <- sort(normal_mixture(100, means, sds, mixture_weights))
+x_grid <-  seq(-3.1,3.1,length.out = 400)
 # centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
-centering_grid <- runif(min = -3.1,max = 3.1,n = 100)
+centering_grid <- runif(min = -3.1,max = 3.1,n = 1000)
 
 
 centered_kernel_mat_at_sampled <- centered_kernel_matrix_parallel(first_vec_kernel = sampled_x,
@@ -28,8 +28,7 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix_parallel(first_vec_kern
 
 # Save the entire global environment to a file
 #save.image(file = "my_environment.RData")
-lambda_hat <- 40
-tau_hat <- 1
+
 
 
 lambda_hat_grid <- c(1)
