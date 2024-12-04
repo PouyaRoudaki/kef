@@ -1,35 +1,31 @@
 #' Estimate Weights Using the Newton-Raphson Method
 #'
 #' This function estimates the weight vector using an iterative Newton-Raphson method.
-#' The weights are updated based on the provided kernel matrices, regularization parameters,
-#' and grid points.
+#' The method updates weights based on the provided kernel matrices, regularization
+#' parameters, sampled points, and grid points.
 #'
-#' @param lambda_hat A scalar representing the estimated lambda parameter.
-#' @param tau_hat A scalar representing the estimated tau parameter.
-#' @param centered_kernel_mat_at_sampled A square matrix (n x n) representing the centered kernel matrix
-#'        evaluated at the sampled points.
-#' @param centered_kernel_mat_at_grid A matrix (n x m) representing the centered kernel matrix evaluated
-#'        at the grid points, where n is the number of sampled points and m is the number of grid points.
-#' @param centered_kernel_self_grid A vector of length m representing the diagonal of the centered kernel
-#'        matrix evaluated at the grid points.
-#' @param x_grid A vector representing the grid points.
+#' @param lambda_hat A scalar representing the estimated lambda parameter, which
+#'        controls the contribution of the kernel matrices to the weight estimation.
+#' @param tau_hat A scalar representing the estimated tau parameter, which
+#'        determines the regularization strength applied to the weights.
+#' @param centered_kernel_mat_at_sampled A square matrix (n x n) representing the centered
+#'        kernel matrix evaluated at the sampled points, where n is the number of sampled points.
+#' @param centered_kernel_mat_at_grid A matrix (n x m) representing the centered kernel
+#'        matrix evaluated at the grid points, where n is the number of sampled points
+#'        and m is the number of grid points.
+#' @param centered_kernel_self_grid A vector of length m representing the diagonal of
+#'        the centered kernel matrix evaluated at the grid points.
+#' @param sampled_x A vector of sampled points for which the weights are to be estimated.
+#' @param x_grid A vector of grid points that define the evaluation domain for the kernel.
+#' @param type_of_p_is_prob Logical; if TRUE, treats the "p" function as a probability density.
+#' @param type_of_q_is_prob Logical; if TRUE, treats the "q" function as a probability density.
+#' @param method_of_p_calculation A string indicating the method used to calculate probabilities
+#'        for the "p" function. Default is "ordinary".
+#' @param print_trace Logical; if TRUE, prints progress updates during the Newton-Raphson iterations.
 #'
-#' @return A numeric vector of length n representing the estimated weight vector.
+#' @return A numeric vector of length n representing the estimated weight vector for the sampled points.
 #'
 #' @export
-#'
-#' @examples
-#' # Example usage:
-#' lambda_hat <- 1
-#' tau_hat <- 0.5
-#' n <- 10
-#' m <- 20
-#' centered_kernel_mat_at_sampled <- matrix(runif(n * n), n, n)
-#' centered_kernel_mat_at_grid <- matrix(runif(n * m), n, m)
-#' centered_kernel_self_grid <- runif(m)
-#' x_grid <- seq(0, 1, length.out = m)
-#' weights <- get_weights(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
-#'                        centered_kernel_mat_at_grid, centered_kernel_self_grid, x_grid)
 get_weights <- function(lambda_hat,
                         tau_hat,
                         centered_kernel_mat_at_sampled,
@@ -104,74 +100,4 @@ get_weights <- function(lambda_hat,
   return(weight_hat_vec)
 }
 
-
-#dim(centered_kernel_mat_at_grid %*% diag(prob_grid_x) %*%  t(centered_kernel_mat_at_grid))
-#dim(diag(prob_grid_x))
-#dim(centered_kernel_mat_at_grid)
-# Example usage
-# Define the weights for the mixture distribution
-#mixture_weights <- c(1/2, 1/6, 1/6, 1/6)
-
-# Define the parameters for the normal distributions
-# First distribution: N(0, 1)
-#means <- c(0, -1, 0, 1)
-#sds <- c(1, 0.1, 0.1, 0.1)
-
-
-#sampled_x <- sort(normal_mixture(1000, means, sds, mixture_weights))
-#x_grid <-  seq(-4,4,length.out =2000)
-#centering_grid <- sort(runif(1000, min = -4, max =4))
-
-#centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sampled_x,
-#                                                         second_vec_kernel = sampled_x,
-#                                                         centering_grid = centering_grid,
-#                                                         hurst_coef = 0.5)
-#centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled_x,
-#                                                         second_vec_kernel = x_grid,
-#                                                         centering_grid = centering_grid,
-#                                                         hurst_coef = 0.5)
-#centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_grid,
-#                                                        second_vec_kernel = x_grid,
-#                                                        centering_grid = centering_grid,
-#                                                        hurst_coef = 0.5))
-
-
-
-
-# Save the entire global environment to a file
-#save.image(file = "my_environment.RData")
-#lambda_hat <- 10
-#tau_hat <- 10
-
-#weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
-#                      centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-#                      centered_kernel_self_grid, x_grid = x_grid)
-
-#plot(sampled_x,weights_hat[1,])
-
-
-#probs <- get_probs(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-#                   centered_kernel_self_grid, x_grid, lambda_hat, weights_hat)
-
-
-
-
-
-# Plot the histogram of the samples
-#hist(sampled_x, breaks = 50, probability = TRUE, main = paste("Density estimation", "lambda =", lambda_hat, "tau =", tau_hat), xlab = "Value")
-
-# Add density lines for each of the component distributions
-#curve((mixture_weights[1] * dnorm(x, mean = means[1], sd = sds[1]) +
-#         mixture_weights[2] * dnorm(x, mean = means[2], sd = sds[2]) +
-#         mixture_weights[3] * dnorm(x, mean = means[3], sd = sds[3]) +
-#         mixture_weights[4] * dnorm(x, mean = means[4], sd = sds[4])) , add = TRUE, col = "red",lwd = 2)
-
-
-# Perform KDE with adaptive bandwidth
-#kde_result <- kde(sampled_x)
-
-# Overlay the KDE plot on the histogram
-#lines(kde_result$eval.points, kde_result$estimate, col = "blue", lwd  =2)
-
-#lines(x_grid, probs$grid_x, col = "orange", lwd  =2)
 

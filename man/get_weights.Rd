@@ -14,43 +14,45 @@ get_weights(
   x_grid,
   type_of_p_is_prob = TRUE,
   type_of_q_is_prob = TRUE,
-  method_of_p_calculation = "ordinary"
+  method_of_p_calculation = "ordinary",
+  print_trace = FALSE
 )
 }
 \arguments{
-\item{lambda_hat}{A scalar representing the estimated lambda parameter.}
+\item{lambda_hat}{A scalar representing the estimated lambda parameter, which
+controls the contribution of the kernel matrices to the weight estimation.}
 
-\item{tau_hat}{A scalar representing the estimated tau parameter.}
+\item{tau_hat}{A scalar representing the estimated tau parameter, which
+determines the regularization strength applied to the weights.}
 
-\item{centered_kernel_mat_at_sampled}{A square matrix (n x n) representing the centered kernel matrix
-evaluated at the sampled points.}
+\item{centered_kernel_mat_at_sampled}{A square matrix (n x n) representing the centered
+kernel matrix evaluated at the sampled points, where n is the number of sampled points.}
 
-\item{centered_kernel_mat_at_grid}{A matrix (n x m) representing the centered kernel matrix evaluated
-at the grid points, where n is the number of sampled points and m is the number of grid points.}
+\item{centered_kernel_mat_at_grid}{A matrix (n x m) representing the centered kernel
+matrix evaluated at the grid points, where n is the number of sampled points
+and m is the number of grid points.}
 
-\item{centered_kernel_self_grid}{A vector of length m representing the diagonal of the centered kernel
-matrix evaluated at the grid points.}
+\item{centered_kernel_self_grid}{A vector of length m representing the diagonal of
+the centered kernel matrix evaluated at the grid points.}
 
-\item{x_grid}{A vector representing the grid points.}
+\item{sampled_x}{A vector of sampled points for which the weights are to be estimated.}
+
+\item{x_grid}{A vector of grid points that define the evaluation domain for the kernel.}
+
+\item{type_of_p_is_prob}{Logical; if TRUE, treats the "p" function as a probability density.}
+
+\item{type_of_q_is_prob}{Logical; if TRUE, treats the "q" function as a probability density.}
+
+\item{method_of_p_calculation}{A string indicating the method used to calculate probabilities
+for the "p" function. Default is "ordinary".}
+
+\item{print_trace}{Logical; if TRUE, prints progress updates during the Newton-Raphson iterations.}
 }
 \value{
-A numeric vector of length n representing the estimated weight vector.
+A numeric vector of length n representing the estimated weight vector for the sampled points.
 }
 \description{
 This function estimates the weight vector using an iterative Newton-Raphson method.
-The weights are updated based on the provided kernel matrices, regularization parameters,
-and grid points.
-}
-\examples{
-# Example usage:
-lambda_hat <- 1
-tau_hat <- 0.5
-n <- 10
-m <- 20
-centered_kernel_mat_at_sampled <- matrix(runif(n * n), n, n)
-centered_kernel_mat_at_grid <- matrix(runif(n * m), n, m)
-centered_kernel_self_grid <- runif(m)
-x_grid <- seq(0, 1, length.out = m)
-weights <- get_weights(lambda_hat, tau_hat, centered_kernel_mat_at_sampled,
-                       centered_kernel_mat_at_grid, centered_kernel_self_grid, x_grid)
+The method updates weights based on the provided kernel matrices, regularization
+parameters, sampled points, and grid points.
 }
