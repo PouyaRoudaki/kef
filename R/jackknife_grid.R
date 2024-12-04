@@ -405,17 +405,62 @@ jackknife_weight_error_grid_nested_parallel <- function(centered_kernel_mat_at_s
 }
 
 
+#' Compute Jackknife Weight Errors on a Grid (Parallelized)
+#'
+#' This function calculates jackknife weight errors for a given grid of lambda and tau values using parallelization.
+#'
+#' @param centered_kernel_mat_at_sampled A numeric matrix of centered kernel values for sampled data points.
+#' @param centered_kernel_mat_at_grid A numeric matrix of centered kernel values for the grid points.
+#' @param centered_kernel_self_grid A numeric matrix representing the self-centered kernel values for grid points.
+#' @param sampled_x A numeric vector of sampled data points.
+#' @param x_grid A numeric vector of grid points.
+#' @param lambda_hat_grid A numeric vector of lambda values for the grid.
+#' @param tau_hat_grid A numeric vector of tau values for the grid.
+#' @param type_of_p_is_prob Logical; if `TRUE`, `p` is interpreted as probabilities. Default is `TRUE`.
+#' @param type_of_q_is_prob Logical; if `TRUE`, `q` is interpreted as probabilities. Default is `TRUE`.
+#' @param method_of_p_calculation A character string specifying the method for calculating `p`. Default is "ordinary".
+#' @param cloud_computing Logical; if `TRUE`, all available cores are used for parallelization. Default is `FALSE`.
+#'
+#' @return A data frame containing:
+#'   - `lambda_hat`: The lambda values from the grid.
+#'   - `tau_hat`: The tau values from the grid.
+#'   - `jackknife_err`: The computed jackknife errors.
+#'
+#' @export
+#'
+#' @examples
+#' # Example usage:
+#' lambda_grid <- seq(0.1, 1, by = 0.1)
+#' tau_grid <- seq(0.1, 1, by = 0.1)
+#' sampled_data <- rnorm(100)
+#' grid_points <- seq(-3, 3, length.out = 50)
+#'
+#' # Assume kernel matrices are precomputed:
+#' centered_kernel_sampled <- matrix(runif(10000), ncol = 100)
+#' centered_kernel_grid <- matrix(runif(5000), ncol = 50)
+#' self_centered_grid <- matrix(runif(2500), ncol = 50)
+#'
+#' result <- jackknife_weight_error_grid_inner_parallelized(
+#'   centered_kernel_mat_at_sampled = centered_kernel_sampled,
+#'   centered_kernel_mat_at_grid = centered_kernel_grid,
+#'   centered_kernel_self_grid = self_centered_grid,
+#'   sampled_x = sampled_data,
+#'   x_grid = grid_points,
+#'   lambda_hat_grid = lambda_grid,
+#'   tau_hat_grid = tau_grid,
+#'   cloud_computing = FALSE
+#' )
 jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_at_sampled,
-                                        centered_kernel_mat_at_grid,
-                                        centered_kernel_self_grid,
-                                        sampled_x,
-                                        x_grid,
-                                        lambda_hat_grid,
-                                        tau_hat_grid,
-                                        type_of_p_is_prob = TRUE,
-                                        type_of_q_is_prob = TRUE,
-                                        method_of_p_calculation = "ordinary",
-                                        cloud_computing = FALSE) {
+                                                           centered_kernel_mat_at_grid,
+                                                           centered_kernel_self_grid,
+                                                           sampled_x,
+                                                           x_grid,
+                                                           lambda_hat_grid,
+                                                           tau_hat_grid,
+                                                           type_of_p_is_prob = TRUE,
+                                                           type_of_q_is_prob = TRUE,
+                                                           method_of_p_calculation = "ordinary",
+                                                           cloud_computing = FALSE) {
   # Create a grid of lambda_hat and tau_hat values
   grid <- expand.grid(lambda_hat = lambda_hat_grid, tau_hat = tau_hat_grid)
 
@@ -466,19 +511,6 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
     # Perform leave-one-out computations in parallel
     jackknife_err <- sum(unlist(parallel::parLapply(cl_inner, seq_len(nrow(centered_kernel_mat_at_sampled)), function(i) {
 
-      # Define a log file for this worker
-      log_file <- paste0("log_outer_", outer_index, "_inner_", i, ".txt")
-
-      # Open a sink to write logs
-      #sink(log_file, append = TRUE)
-
-      # Log details
-      #cat("Processing leave-one-out index:", i, "\n")
-      #cat("Connected to outer index:", outer_index, "\n")
-      #cat(paste("Process ID:", Sys.getpid(), "\n"))
-
-      #sink()
-
       temp_centered_kernel_mat_at_sampled <- centered_kernel_mat_at_sampled[-i, -i]
       temp_centered_kernel_mat_at_grid <- centered_kernel_mat_at_grid[-i, ]
       temp_sampled_x <- sampled_x[-i]
@@ -512,4 +544,3 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
                         jackknife_err = err)
   return(results)
 }
-
