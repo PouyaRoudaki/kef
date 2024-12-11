@@ -46,6 +46,8 @@ get_weights <- function(lambda_hat,
   #weight_hat_change <- rep(1000, n)
   #counter <- 1
   #while ((norm(s, p = 2) > 10^(-10)) & (norm(weight_hat_change, p = 2) > 10^(-10))) {
+
+
   for (i in 1:max_iteration) {
     # Calculate probabilities for sampled and grid points
     probs <- get_dens_or_prob(centered_kernel_mat_at_sampled,
@@ -132,27 +134,33 @@ get_weights_wo_grid <- function(lambda_hat,
                         max_x,
                         print_trace = FALSE) {
 
-  max_iteration <- 4000  # Maximum number of iterations for the Newton-Raphson method
-  NRstepsize <- 0.01  # Step size for the Newton-Raphson update
+  max_iteration <- 2000  # Maximum number of iterations for the Newton-Raphson method
+  NRstepsize <- 0.1  # Step size for the Newton-Raphson update
   n <- nrow(centered_kernel_mat_at_sampled)  # Number of sampled points
   weight_hat_vec <- rep(0,n)  # Initialize the weight vector with zeros
 
   #print(summary(base_measure_weights))
   for (i in 1:max_iteration) {
     # Calculate probabilities for sampled and grid points
-    probs <- get_dens_or_prob_wo_grid(centered_kernel_mat_at_sampled,
+    dens <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
                               min_x,
                               max_x,
                               sampled_x,
                               lambda_hat,
-                              weight_hat_vec,
-                              type_of_p_is_prob = T)
+                              weight_hat_vec)
 
-    prob_sampled_base <- probs$sampled_x
+    # Find the base measure of samples
+    sample_mid_points <- get_middle_points_grid(x_grid[1], sampled_x, x_grid[length(x_grid)])
+    base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
+
+    dens_sampled_base <- dens * base_measure_weights
+
+    prob_sampled_base <- dens_sampled_base / sum(dens_sampled_base)
+    prob_sampled <- dens / sum(dens)
 
     s <- lambda_hat * (colSums(centered_kernel_mat_at_sampled) -
                          n * (prob_sampled_base) %*% t(centered_kernel_mat_at_sampled)) -
-      tau_hat * weight_hat_vec / prob_sampled_base
+      tau_hat * weight_hat_vec / prob_sampled
 
     # Compute the inverse of the Hessian matrix
 
@@ -161,7 +169,7 @@ get_weights_wo_grid <- function(lambda_hat,
                                                  t(centered_kernel_mat_at_sampled) -
                                                  (centered_kernel_mat_at_sampled %*% prob_sampled_base) %*%
                                                  t(centered_kernel_mat_at_sampled %*% prob_sampled_base)) +
-                                                 diag(tau_hat / prob_sampled_base)
+                                                 diag(tau_hat / prob_sampled)
 
 
 
@@ -326,7 +334,7 @@ get_weights_gd <- function(lambda_hat,
 
   # Find the base measure of samples
   sample_mid_points <- get_middle_points_grid(x_grid[1], sampled_x, x_grid[length(x_grid)])
-  base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
+  #base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
 
 
   weight_hat_change <- rep(1000, n)

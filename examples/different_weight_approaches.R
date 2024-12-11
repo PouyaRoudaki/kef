@@ -16,28 +16,32 @@ sds <- c(1, 0.1, 0.1, 0.1)
 sampled_x <- sort(normal_mixture(100, means, sds, mixture_weights))
 x_grid <-  seq(-3.1,3.1,length.out = 400)
 # centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
-centering_grid <- runif(min = -3.1,max = 3.1,n = 100)
+centering_grid <- runif(min = -3.1,max = 3.1,n = 400)
 
 centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sampled_x,
                                                          second_vec_kernel = sampled_x,
-                                                         centering_grid = centering_grid,
+                                                         centering_grid = x_grid,
                                                          hurst_coef = 0.5)
 centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled_x,
                                                          second_vec_kernel = x_grid,
-                                                         centering_grid = centering_grid,
+                                                         centering_grid = x_grid,
                                                          hurst_coef = 0.5)
 centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_grid,
                                                         second_vec_kernel = x_grid,
-                                                        centering_grid = centering_grid,
+                                                        centering_grid = x_grid,
                                                         hurst_coef = 0.5))
 
 
 # Save the entire global environment to a file
 #save.image(file = "my_environment.RData")
-lambda_hat <- 40
-tau_hat <- 1
+#lambda_hat <- 30
+#tau_hat <- 0.4
 
-weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,                      centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+lambda_hat <- 40
+tau_hat <- 10
+
+weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
+                      centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
                       centered_kernel_self_grid,
                       sampled_x = sampled_x,
                       x_grid = x_grid,
@@ -97,9 +101,11 @@ p <- ggplot(plot_data, aes(x = sampled_x, y = weights_hat)) +
 print(p)
 
 
-probs <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-                   centered_kernel_self_grid, sampled_x,
-                   x_grid, lambda_hat, weights_hat,
+probs <- get_dens_or_prob(centered_kernel_mat_at_sampled,
+                          centered_kernel_mat_at_grid,
+                          centered_kernel_self_grid,
+                                  sampled_x,x_grid,
+                   lambda_hat, weights_hat,
                    type_of_p_is_prob = FALSE,
                    type_of_q_is_prob = FALSE,
                    method_of_p_calculation = "neighborhood_grid")
@@ -111,24 +117,35 @@ density_matrix <- sapply(seq_along(means), function(i) {
   dnorm(x_grid, mean = means[i], sd = sds[i])
 })
 
+# Define a matrix of normal densities for each mean and standard deviation
+density_matrix_sampled <- sapply(seq_along(means), function(i) {
+  dnorm(sampled_x, mean = means[i], sd = sds[i])
+})
+
 # Calculate the true density by taking the weighted sum of the columns
 true_density <- density_matrix %*% mixture_weights
 
+# Calculate the true density by taking the weighted sum of the columns
+true_density_sampled <- density_matrix_sampled %*% mixture_weights
 
 true_density_df <- data.frame(grid = x_grid, true_pdf = true_density)
-
+true_density_df_sampled <- data.frame(grid = sampled_x, true_pdf = true_density_sampled,
+                              base = base_measure_weights,
+                              weights_var = base_measure_weights * as.vector(true_density_sampled))
 
 # Perform the adaptive KDE
 kde_adaptive <- akj(sampled_x,x_grid,kappa = 0.35,alpha = 0.9)
 kde_adaptive_df <- data.frame(grid = x_grid, kde_adaptive_pdf = kde_adaptive$dens)
 
 
+
 ggplot() +
   geom_histogram(aes(x = sampled_x, y = ..density..), bins = 60, fill = 'gray', alpha = 1, color = 'black') +
   geom_line(data = true_density_df, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 1) +
+  geom_point(data = true_density_df_sampled, aes(x = grid, y = weights_var, color = 'Weights Var'), size = 1) +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue', 'KEF' = 'orange')) +
+  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue', 'KEF' = 'orange', 'Weights Var' = 'springgreen4')) +
   ggtitle(paste('Histogram and Kernel Density Estimate for lambda_hat',
                 round(lambda_hat,2),'and tau_hat',round(tau_hat,2))) +
   xlab('Value') +
