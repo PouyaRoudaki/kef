@@ -1,7 +1,10 @@
 library(quantreg)
 library(ggplot2)
 library(dplyr)
+library(MASS)
 # Example usage
+
+set.seed(7)
 # Define the weights for the mixture distribution
 mixture_weights <- c(1/2, 1/6, 1/6, 1/6)
 
@@ -34,19 +37,53 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_gr
 lambda_hat <- 40
 tau_hat <- 1
 
-weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
-                      centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,                      centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
                       centered_kernel_self_grid,
                       sampled_x = sampled_x,
                       x_grid = x_grid,
                       type_of_p_is_prob=TRUE,
                       type_of_q_is_prob=TRUE,
-                      method_of_p_calculation="neighborhood_grid"
+                      method_of_p_calculation="neighborhood_grid",
+                      print_trace = T
                       )
 
+weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
+                                           tau_hat = tau_hat,
+                                   centered_kernel_mat_at_sampled,
+                                   sampled_x = sampled_x,
+                                   min_x = min(x_grid),
+                                   max_x = max(x_grid),
+                                   print_trace = T
+)
+
+
+
+#weights_hat_fixed_point <- get_weights_fixed_point(lambda_hat =lambda_hat, tau_hat = tau_hat,
+#                                           centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+#                                           centered_kernel_self_grid,
+#                                           sampled_x = sampled_x,
+#                                           x_grid = x_grid,
+#                                           type_of_p_is_prob=TRUE,
+#                                           type_of_q_is_prob=TRUE,
+#                                           method_of_p_calculation="ordinary",
+#                                           print_trace = T
+#)
+
+#weights_hat_gd <- get_weights_gd(lambda_hat =lambda_hat, tau_hat = tau_hat,
+#                                                   centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
+#                                                   centered_kernel_self_grid,
+#                                                   sampled_x = sampled_x,
+#                                                   x_grid = x_grid,
+#                                                   type_of_p_is_prob=TRUE,
+#                                                   type_of_q_is_prob=TRUE,
+#                                                   method_of_p_calculation="ordinary",
+#                                                   print_trace = T
+#)
+
+weights_hat <- weights_hat_wo_grid
 
 # Convert the data to a data frame for use with ggplot2
-plot_data <- data.frame(sampled_x = sampled_x, weights_hat = weights_hat[1,])
+plot_data <- data.frame(sampled_x = sampled_x, weights_hat = as.vector(weights_hat))
 
 # Create the ggplot
 p <- ggplot(plot_data, aes(x = sampled_x, y = weights_hat)) +
