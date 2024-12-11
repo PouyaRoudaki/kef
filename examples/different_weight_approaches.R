@@ -37,8 +37,8 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_gr
 #lambda_hat <- 30
 #tau_hat <- 0.4
 
-lambda_hat <- 40
-tau_hat <- 10
+lambda_hat <- 45
+tau_hat <- 1.2
 
 weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
                       centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
@@ -142,10 +142,10 @@ kde_adaptive_df <- data.frame(grid = x_grid, kde_adaptive_pdf = kde_adaptive$den
 ggplot() +
   geom_histogram(aes(x = sampled_x, y = ..density..), bins = 60, fill = 'gray', alpha = 1, color = 'black') +
   geom_line(data = true_density_df, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 1) +
-  geom_point(data = true_density_df_sampled, aes(x = grid, y = weights_var, color = 'Weights Var'), size = 1) +
+  #geom_point(data = true_density_df_sampled, aes(x = grid, y = weights_var, color = 'Weights Var'), size = 1) +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue', 'KEF' = 'orange', 'Weights Var' = 'springgreen4')) +
+  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue', 'KEF' = 'orange')) +
   ggtitle(paste('Histogram and Kernel Density Estimate for lambda_hat',
                 round(lambda_hat,2),'and tau_hat',round(tau_hat,2))) +
   xlab('Value') +
