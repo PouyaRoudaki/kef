@@ -6,38 +6,27 @@
 \usage{
 jackknife_weight_error_grid_inner_parallelized(
   centered_kernel_mat_at_sampled,
-  centered_kernel_mat_at_grid,
-  centered_kernel_self_grid,
   sampled_x,
-  x_grid,
+  min_x,
+  max_x,
   lambda_hat_grid,
   tau_hat_grid,
-  type_of_p_is_prob = TRUE,
-  type_of_q_is_prob = TRUE,
-  method_of_p_calculation = "ordinary",
   cloud_computing = FALSE
 )
 }
 \arguments{
-\item{centered_kernel_mat_at_sampled}{A numeric matrix of centered kernel values for sampled data points.}
+\item{centered_kernel_mat_at_sampled}{A square matrix (n x n) representing the centered
+kernel matrix evaluated at the sampled points, where n is the number of sampled points.}
 
-\item{centered_kernel_mat_at_grid}{A numeric matrix of centered kernel values for the grid points.}
+\item{sampled_x}{A vector of sampled points for which the weights are to be estimated.}
 
-\item{centered_kernel_self_grid}{A numeric matrix representing the self-centered kernel values for grid points.}
+\item{min_x}{A scalar representing the minimum value of the domain.}
 
-\item{sampled_x}{A numeric vector of sampled data points.}
-
-\item{x_grid}{A numeric vector of grid points.}
+\item{max_x}{A scalar representing the maximum value of the domain.}
 
 \item{lambda_hat_grid}{A numeric vector of lambda values for the grid.}
 
 \item{tau_hat_grid}{A numeric vector of tau values for the grid.}
-
-\item{type_of_p_is_prob}{Logical; if `TRUE`, `p` is interpreted as probabilities. Default is `TRUE`.}
-
-\item{type_of_q_is_prob}{Logical; if `TRUE`, `q` is interpreted as probabilities. Default is `TRUE`.}
-
-\item{method_of_p_calculation}{A character string specifying the method for calculating `p`. Default is "ordinary".}
 
 \item{cloud_computing}{Logical; if `TRUE`, all available cores are used for parallelization. Default is `FALSE`.}
 }
@@ -64,10 +53,9 @@ self_centered_grid <- matrix(runif(2500), ncol = 50)
 
 result <- jackknife_weight_error_grid_inner_parallelized(
   centered_kernel_mat_at_sampled = centered_kernel_sampled,
-  centered_kernel_mat_at_grid = centered_kernel_grid,
-  centered_kernel_self_grid = self_centered_grid,
   sampled_x = sampled_data,
-  x_grid = grid_points,
+  min_x = min(grid_points),
+  max_x = max(grid_points),
   lambda_hat_grid = lambda_grid,
   tau_hat_grid = tau_grid,
   cloud_computing = FALSE

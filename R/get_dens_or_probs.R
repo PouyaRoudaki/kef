@@ -174,7 +174,6 @@ get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
 #' @param max_x A scalar value representing the maximum of x domain.
 #' @param lambda_hat A scalar value representing the estimated lambda.
 #' @param weight_hat_vec A vector of weights (length n) corresponding to the sampled points.
-#' @param type_of_p_is_prob A Boolean that specifies if the type of p is probability (TRUE) or it is density (FALSE).
 #'
 #' @return A list containing an element:
 #'         \item{sampled_x}{A vector of densities or normalized probabilities at the sampled points.}
@@ -182,7 +181,7 @@ get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
 #'
 #' @examples
 #' # Example usage (assuming inputs are defined):
-#' probs <- get_dens_or_prob_wo_grid(centered_kernel_mat_at_sampled,
+#' probs <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
 #'                                   sampled_x,
 #'                    x_grid, lambda_hat, weight_hat_vec)
 get_dens_wo_grid <- function(centered_kernel_mat_at_sampled,

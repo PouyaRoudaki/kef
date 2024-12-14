@@ -26,23 +26,11 @@ kernel matrix evaluated at the sampled points, where n is the number of sampled 
 
 \item{sampled_x}{A vector of sampled points for which the weights are to be estimated.}
 
+\item{min_x}{A scalar representing the minimum value of the domain.}
+
+\item{max_x}{A scalar representing the maximum value of the domain.}
+
 \item{print_trace}{Logical; if TRUE, prints progress updates during the Newton-Raphson iterations.}
-
-\item{centered_kernel_mat_at_grid}{A matrix (n x m) representing the centered kernel
-matrix evaluated at the grid points, where n is the number of sampled points
-and m is the number of grid points.}
-
-\item{centered_kernel_self_grid}{A vector of length m representing the diagonal of
-the centered kernel matrix evaluated at the grid points.}
-
-\item{x_grid}{A vector of grid points that define the evaluation domain for the kernel.}
-
-\item{type_of_p_is_prob}{Logical; if TRUE, treats the "p" function as a probability density.}
-
-\item{method_of_p_calculation}{A string indicating the method used to calculate probabilities
-for the "p" function. Default is "ordinary".}
-
-\item{weights_hat}{vector of weights.}
 }
 \value{
 A numeric vector of length n representing the estimated weight vector for the sampled points.

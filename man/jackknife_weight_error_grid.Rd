@@ -6,37 +6,26 @@
 \usage{
 jackknife_weight_error_grid(
   centered_kernel_mat_at_sampled,
-  centered_kernel_mat_at_grid,
-  centered_kernel_self_grid,
   sampled_x,
-  x_grid,
+  min_x,
+  max_x,
   lambda_hat_grid,
-  tau_hat_grid,
-  type_of_p_is_prob = TRUE,
-  type_of_q_is_prob = TRUE,
-  method_of_p_calculation = "ordinary"
+  tau_hat_grid
 )
 }
 \arguments{
-\item{centered_kernel_mat_at_sampled}{Centered kernel matrix at sampled points.}
+\item{centered_kernel_mat_at_sampled}{A square matrix (n x n) representing the centered
+kernel matrix evaluated at the sampled points, where n is the number of sampled points.}
 
-\item{centered_kernel_mat_at_grid}{Centered kernel matrix at grid points.}
+\item{sampled_x}{A vector of sampled points for which the weights are to be estimated.}
 
-\item{centered_kernel_self_grid}{Centered kernel matrix for the grid points themselves.}
+\item{min_x}{A scalar representing the minimum value of the domain.}
 
-\item{sampled_x}{Sampled x values.}
-
-\item{x_grid}{Grid of x values where the function is evaluated.}
+\item{max_x}{A scalar representing the maximum value of the domain.}
 
 \item{lambda_hat_grid}{A v}
 
 \item{tau_hat_grid}{A vector of tau hat values.}
-
-\item{type_of_p_is_prob}{Logical. If TRUE, p is treated as probabilities.}
-
-\item{type_of_q_is_prob}{Logical. If TRUE, q is treated as probabilities.}
-
-\item{method_of_p_calculation}{Character. Method for p calculation.}
 }
 \value{
 A data frame containing lambda_hat, tau_hat, and the corresponding Jackknife error (Jackknife_err).

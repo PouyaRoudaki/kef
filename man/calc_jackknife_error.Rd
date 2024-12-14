@@ -8,13 +8,9 @@ calc_jackknife_error(
   lambda_hat,
   tau_hat,
   centered_kernel_mat_at_sampled,
-  centered_kernel_mat_at_grid,
-  centered_kernel_self_grid,
   sampled_x,
-  x_grid,
-  type_of_p_is_prob,
-  type_of_q_is_prob,
-  method_of_p_calculation
+  min_x,
+  max_x
 )
 }
 \arguments{
@@ -22,21 +18,14 @@ calc_jackknife_error(
 
 \item{tau_hat}{Numeric. Regularization parameter for controlling smoothness.}
 
-\item{centered_kernel_mat_at_sampled}{Centered kernel matrix at sampled points.}
+\item{centered_kernel_mat_at_sampled}{A square matrix (n x n) representing the centered
+kernel matrix evaluated at the sampled points, where n is the number of sampled points.}
 
-\item{centered_kernel_mat_at_grid}{Centered kernel matrix at grid points.}
+\item{sampled_x}{A vector of sampled points for which the weights are to be estimated.}
 
-\item{centered_kernel_self_grid}{Centered kernel matrix for the grid points themselves.}
+\item{min_x}{A scalar representing the minimum value of the domain.}
 
-\item{sampled_x}{Sampled x values.}
-
-\item{x_grid}{Grid of x values where the function is evaluated.}
-
-\item{type_of_p_is_prob}{Logical. If TRUE, p is treated as probabilities.}
-
-\item{type_of_q_is_prob}{Logical. If TRUE, q is treated as probabilities.}
-
-\item{method_of_p_calculation}{Character. Method for p calculation.}
+\item{max_x}{A scalar representing the maximum value of the domain.}
 }
 \value{
 Numeric. The calculated jackknife error for the given parameter pair.

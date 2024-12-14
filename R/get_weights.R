@@ -118,9 +118,8 @@ get_weights <- function(lambda_hat,
 #' @param centered_kernel_mat_at_sampled A square matrix (n x n) representing the centered
 #'        kernel matrix evaluated at the sampled points, where n is the number of sampled points.
 #' @param sampled_x A vector of sampled points for which the weights are to be estimated.
-#' @param type_of_p_is_prob Logical; if TRUE, treats the "p" function as a probability density.
-#' @param method_of_p_calculation A string indicating the method used to calculate probabilities
-#'        for the "p" function. Default is "ordinary".
+#' @param min_x A scalar representing the minimum value of the domain.
+#' @param max_x A scalar representing the maximum value of the domain.
 #' @param print_trace Logical; if TRUE, prints progress updates during the Newton-Raphson iterations.
 #'
 #' @return A numeric vector of length n representing the estimated weight vector for the sampled points.
@@ -134,7 +133,7 @@ get_weights_wo_grid <- function(lambda_hat,
                         max_x,
                         print_trace = FALSE) {
 
-  max_iteration <- 2000  # Maximum number of iterations for the Newton-Raphson method
+  max_iteration <- 1000  # Maximum number of iterations for the Newton-Raphson method
   NRstepsize <- 0.1  # Step size for the Newton-Raphson update
   n <- nrow(centered_kernel_mat_at_sampled)  # Number of sampled points
   weight_hat_vec <- rep(0,n)  # Initialize the weight vector with zeros
@@ -150,7 +149,7 @@ get_weights_wo_grid <- function(lambda_hat,
                               weight_hat_vec)
 
     # Find the base measure of samples
-    sample_mid_points <- get_middle_points_grid(x_grid[1], sampled_x, x_grid[length(x_grid)])
+    sample_mid_points <- get_middle_points_grid(min_x, sampled_x, max_x)
     base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
 
     dens_sampled_base <- dens * base_measure_weights

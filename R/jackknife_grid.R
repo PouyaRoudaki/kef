@@ -5,14 +5,11 @@
   #'
   #' @param lambda_hat Numeric. Regularization parameter for weight estimation.
   #' @param tau_hat Numeric. Regularization parameter for controlling smoothness.
-  #' @param centered_kernel_mat_at_sampled Centered kernel matrix at sampled points.
-  #' @param centered_kernel_mat_at_grid Centered kernel matrix at grid points.
-  #' @param centered_kernel_self_grid Centered kernel matrix for the grid points themselves.
-  #' @param sampled_x Sampled x values.
-  #' @param x_grid Grid of x values where the function is evaluated.
-  #' @param type_of_p_is_prob Logical. If TRUE, p is treated as probabilities.
-  #' @param type_of_q_is_prob Logical. If TRUE, q is treated as probabilities.
-  #' @param method_of_p_calculation Character. Method for p calculation.
+  #' @param centered_kernel_mat_at_sampled A square matrix (n x n) representing the centered
+  #'        kernel matrix evaluated at the sampled points, where n is the number of sampled points.
+  #' @param sampled_x A vector of sampled points for which the weights are to be estimated.
+  #' @param min_x A scalar representing the minimum value of the domain.
+  #' @param max_x A scalar representing the maximum value of the domain.
   #'
   #' @return Numeric. The calculated jackknife error for the given parameter pair.
   #' @export
@@ -23,42 +20,30 @@
   calc_jackknife_error <- function(lambda_hat,
                                    tau_hat,
                                    centered_kernel_mat_at_sampled,
-                                   centered_kernel_mat_at_grid,
-                                   centered_kernel_self_grid,
                                    sampled_x,
-                                   x_grid,
-                                   type_of_p_is_prob,
-                                   type_of_q_is_prob,
-                                   method_of_p_calculation) {
+                                   min_x,
+                                   max_x) {
 
-    weights_hat <- get_weights(lambda_hat =lambda_hat,
-                               tau_hat = tau_hat,
+    weights_hat <- get_weights_wo_grid(lambda_hat,
+                               tau_hat,
                                centered_kernel_mat_at_sampled,
-                               centered_kernel_mat_at_grid,
-                               centered_kernel_self_grid,
-                               sampled_x = sampled_x,
-                               x_grid = x_grid,
-                               type_of_p_is_prob,
-                               type_of_q_is_prob,
-                               method_of_p_calculation)
+                               sampled_x,
+                               min_x,
+                               max_x)
 
     jackknife_err <- sum(sapply(1:nrow(centered_kernel_mat_at_sampled), function(i) {
       # Remove the i-th sample
       temp_centered_kernel_mat_at_sampled <- centered_kernel_mat_at_sampled[-i, -i]
-      temp_centered_kernel_mat_at_grid <- centered_kernel_mat_at_grid[-i, ]
+      #temp_centered_kernel_mat_at_grid <- centered_kernel_mat_at_grid[-i, ]
       temp_sampled_x <- sampled_x[-i]
 
       # Get jackknife estimated weights
       w_hat_jackknife <- as.numeric(get_weights(lambda_hat = lambda_hat,
                                                 tau_hat = tau_hat,
                                                 temp_centered_kernel_mat_at_sampled,
-                                                temp_centered_kernel_mat_at_grid,
-                                                centered_kernel_self_grid,
                                                 sampled_x = temp_sampled_x,
-                                                x_grid = x_grid,
-                                                type_of_p_is_prob = type_of_p_is_prob,
-                                                type_of_q_is_prob = type_of_q_is_prob,
-                                                method_of_p_calculation = method_of_p_calculation))
+                                                min_x,
+                                                max_x))
 
       # Compute jackknife error for the i-th sample
       one_out_err <- t(w_hat_jackknife - weights_hat[-i]) %*%
@@ -77,16 +62,13 @@
   #'
   #' Computes jackknife error for a grid of lambda_hat and tau_hat values.
   #'
-  #' @param centered_kernel_mat_at_sampled Centered kernel matrix at sampled points.
-  #' @param centered_kernel_mat_at_grid Centered kernel matrix at grid points.
-  #' @param centered_kernel_self_grid Centered kernel matrix for the grid points themselves.
-  #' @param sampled_x Sampled x values.
-  #' @param x_grid Grid of x values where the function is evaluated.
+  #' @param centered_kernel_mat_at_sampled A square matrix (n x n) representing the centered
+  #'        kernel matrix evaluated at the sampled points, where n is the number of sampled points.
+  #' @param sampled_x A vector of sampled points for which the weights are to be estimated.
+  #' @param min_x A scalar representing the minimum value of the domain.
+  #' @param max_x A scalar representing the maximum value of the domain.
   #' @param lambda_hat_grid A v
   #' @param tau_hat_grid A vector of tau hat values.
-  #' @param type_of_p_is_prob Logical. If TRUE, p is treated as probabilities.
-  #' @param type_of_q_is_prob Logical. If TRUE, q is treated as probabilities.
-  #' @param method_of_p_calculation Character. Method for p calculation.
   #'
   #' @return A data frame containing lambda_hat, tau_hat, and the corresponding Jackknife error (Jackknife_err).
   #' @export
@@ -95,15 +77,11 @@
   #' # Example usage:
   #' # jackknife_weight_error_grid(...)
   jackknife_weight_error_grid <- function(centered_kernel_mat_at_sampled,
-                                          centered_kernel_mat_at_grid,
-                                          centered_kernel_self_grid,
                                           sampled_x,
-                                          x_grid,
+                                          min_x,
+                                          max_x,
                                           lambda_hat_grid,
-                                          tau_hat_grid,
-                                          type_of_p_is_prob = TRUE,
-                                          type_of_q_is_prob = TRUE,
-                                          method_of_p_calculation = "ordinary") {
+                                          tau_hat_grid) {
     # Create a grid of lambda_hat and tau_hat values
     grid <- expand.grid(lambda_hat = lambda_hat_grid, tau_hat = tau_hat_grid)
 
@@ -116,13 +94,11 @@
     #print(func_code)
     # Export necessary objects and functions to the cluster
     parallel::clusterExport(cl,
-                            varlist = c("get_weights", "calc_jackknife_error",
+                            varlist = c("get_weights_wo_grid", "calc_jackknife_error",
                                         "centered_kernel_mat_at_sampled",
-                                        "centered_kernel_mat_at_grid",
-                                        "centered_kernel_self_grid",
-                                        "sampled_x", "x_grid",
-                                        "type_of_p_is_prob", "type_of_q_is_prob",
-                                        "method_of_p_calculation"),
+                                        "sampled_x",
+                                        "min_x",
+                                        "max_x"),
                             envir = environment())
 
     # Source or reload the updated function in each worker to avoid stale versions
@@ -133,14 +109,12 @@
       lambda_hat <- grid$lambda_hat[idx]
       tau_hat <- grid$tau_hat[idx]
 
-      calc_jackknife_error(lambda_hat, tau_hat,
+      calc_jackknife_error(lambda_hat,
+                           tau_hat,
                            centered_kernel_mat_at_sampled,
-                           centered_kernel_mat_at_grid,
-                           centered_kernel_self_grid,
-                           sampled_x, x_grid,
-                           type_of_p_is_prob,
-                           type_of_q_is_prob,
-                           method_of_p_calculation)
+                           sampled_x,
+                           min_x,
+                           max_x)
     }))
 
     # Stop the cluster
@@ -409,16 +383,13 @@ jackknife_weight_error_grid_nested_parallel <- function(centered_kernel_mat_at_s
 #'
 #' This function calculates jackknife weight errors for a given grid of lambda and tau values using parallelization.
 #'
-#' @param centered_kernel_mat_at_sampled A numeric matrix of centered kernel values for sampled data points.
-#' @param centered_kernel_mat_at_grid A numeric matrix of centered kernel values for the grid points.
-#' @param centered_kernel_self_grid A numeric matrix representing the self-centered kernel values for grid points.
-#' @param sampled_x A numeric vector of sampled data points.
-#' @param x_grid A numeric vector of grid points.
+#' @param centered_kernel_mat_at_sampled A square matrix (n x n) representing the centered
+#'        kernel matrix evaluated at the sampled points, where n is the number of sampled points.
+#' @param sampled_x A vector of sampled points for which the weights are to be estimated.
+#' @param min_x A scalar representing the minimum value of the domain.
+#' @param max_x A scalar representing the maximum value of the domain.
 #' @param lambda_hat_grid A numeric vector of lambda values for the grid.
 #' @param tau_hat_grid A numeric vector of tau values for the grid.
-#' @param type_of_p_is_prob Logical; if `TRUE`, `p` is interpreted as probabilities. Default is `TRUE`.
-#' @param type_of_q_is_prob Logical; if `TRUE`, `q` is interpreted as probabilities. Default is `TRUE`.
-#' @param method_of_p_calculation A character string specifying the method for calculating `p`. Default is "ordinary".
 #' @param cloud_computing Logical; if `TRUE`, all available cores are used for parallelization. Default is `FALSE`.
 #'
 #' @return A data frame containing:
@@ -442,24 +413,19 @@ jackknife_weight_error_grid_nested_parallel <- function(centered_kernel_mat_at_s
 #'
 #' result <- jackknife_weight_error_grid_inner_parallelized(
 #'   centered_kernel_mat_at_sampled = centered_kernel_sampled,
-#'   centered_kernel_mat_at_grid = centered_kernel_grid,
-#'   centered_kernel_self_grid = self_centered_grid,
 #'   sampled_x = sampled_data,
-#'   x_grid = grid_points,
+#'   min_x = min(grid_points),
+#'   max_x = max(grid_points),
 #'   lambda_hat_grid = lambda_grid,
 #'   tau_hat_grid = tau_grid,
 #'   cloud_computing = FALSE
 #' )
 jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_at_sampled,
-                                                           centered_kernel_mat_at_grid,
-                                                           centered_kernel_self_grid,
                                                            sampled_x,
-                                                           x_grid,
+                                                           min_x,
+                                                           max_x,
                                                            lambda_hat_grid,
                                                            tau_hat_grid,
-                                                           type_of_p_is_prob = TRUE,
-                                                           type_of_q_is_prob = TRUE,
-                                                           method_of_p_calculation = "ordinary",
                                                            cloud_computing = FALSE) {
   # Create a grid of lambda_hat and tau_hat values
   grid <- expand.grid(lambda_hat = lambda_hat_grid, tau_hat = tau_hat_grid)
@@ -476,30 +442,22 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
     tau_hat <- grid$tau_hat[outer_index]
 
     # Compute the weights for the entire dataset
-    weights_hat <- get_weights(lambda_hat = lambda_hat,
+    weights_hat <- get_weights_wo_grid(lambda_hat = lambda_hat,
                                tau_hat = tau_hat,
                                centered_kernel_mat_at_sampled,
-                               centered_kernel_mat_at_grid,
-                               centered_kernel_self_grid,
                                sampled_x = sampled_x,
-                               x_grid = x_grid,
-                               type_of_p_is_prob,
-                               type_of_q_is_prob,
-                               method_of_p_calculation)
+                               min_x = min_x,
+                               max_x = max_x)
 
     # Create a cluster for the inner loop
     cl_inner <- parallel::makeCluster(num_cores_inner)
 
     # Export necessary variables to the cluster
     parallel::clusterExport(cl_inner,
-                            varlist = c("get_weights","weights_hat",
+                            varlist = c("get_weights_wo_grid","weights_hat",
                                         "centered_kernel_mat_at_sampled",
-                                        "centered_kernel_mat_at_grid",
-                                        "centered_kernel_self_grid",
-                                        "sampled_x", "x_grid",
-                                        "lambda_hat", "tau_hat",
-                                        "type_of_p_is_prob", "type_of_q_is_prob",
-                                        "method_of_p_calculation"),
+                                        "sampled_x", "min_x","max_x",
+                                        "lambda_hat", "tau_hat"),
                             envir = environment())
 
     # Source or reload the updated function in each worker
@@ -512,19 +470,14 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
     jackknife_err <- sum(unlist(parallel::parLapply(cl_inner, seq_len(nrow(centered_kernel_mat_at_sampled)), function(i) {
 
       temp_centered_kernel_mat_at_sampled <- centered_kernel_mat_at_sampled[-i, -i]
-      temp_centered_kernel_mat_at_grid <- centered_kernel_mat_at_grid[-i, ]
       temp_sampled_x <- sampled_x[-i]
 
-      w_hat_jackknife <- as.numeric(get_weights(lambda_hat = lambda_hat,
+      w_hat_jackknife <- as.numeric(get_weights_wo_grid(lambda_hat = lambda_hat,
                                                 tau_hat = tau_hat,
                                                 temp_centered_kernel_mat_at_sampled,
-                                                temp_centered_kernel_mat_at_grid,
-                                                centered_kernel_self_grid,
                                                 temp_sampled_x,
-                                                x_grid,
-                                                type_of_p_is_prob,
-                                                type_of_q_is_prob,
-                                                method_of_p_calculation))
+                                                min_x,
+                                                max_x))
 
       one_out_err <- t(w_hat_jackknife - weights_hat[-i]) %*%
         temp_centered_kernel_mat_at_sampled %*%
