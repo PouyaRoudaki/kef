@@ -1,4 +1,4 @@
-
+set.seed(7)
 
 mixture_weights <- c(1/2, 1/6, 1/6, 1/6)
 
@@ -15,7 +15,7 @@ x_grid <-  seq(-3.1,3.1,length.out = 400)
 
 centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sampled_x,
                                                          second_vec_kernel = sampled_x,
-                                                         centering_grid = centering_grid,
+                                                         centering_grid = x_grid,
                                                          hurst_coef = 0.5)
 
 # Save the entire global environment to a file
