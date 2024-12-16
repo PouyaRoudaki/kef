@@ -34,7 +34,8 @@ kernel matrix evaluated at the sampled points, where n is the number of sampled 
 A data frame containing:
   - `lambda_hat`: The lambda values from the grid.
   - `tau_hat`: The tau values from the grid.
-  - `jackknife_err`: The computed jackknife errors.
+  - `jackknife_err_mean`: The computed jackknife errors mean.
+  - `jackknife_err_se`: The computed jackknife errors standard error.
 }
 \description{
 This function calculates jackknife weight errors for a given grid of lambda and tau values using parallelization.

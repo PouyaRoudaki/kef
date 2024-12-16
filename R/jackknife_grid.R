@@ -395,8 +395,8 @@ jackknife_weight_error_grid_nested_parallel <- function(centered_kernel_mat_at_s
 #' @return A data frame containing:
 #'   - `lambda_hat`: The lambda values from the grid.
 #'   - `tau_hat`: The tau values from the grid.
-#'   - `jackknife_err`: The computed jackknife errors.
-#'
+#'   - `jackknife_err_mean`: The computed jackknife errors mean.
+#'   - `jackknife_err_se`: The computed jackknife errors standard error.
 #' @export
 #'
 #' @examples
