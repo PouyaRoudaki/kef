@@ -431,7 +431,8 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
   grid <- expand.grid(lambda_hat = lambda_hat_grid, tau_hat = tau_hat_grid)
 
   # Initialize results
-  err <- numeric(nrow(grid))
+  err_mean <- numeric(nrow(grid))
+  err_se <- numeric(nrow(grid))
 
   # Number of cores for inner parallelization
   num_cores_inner <- if (cloud_computing) parallel::detectCores() else max(1, parallel::detectCores() - 2)
@@ -467,7 +468,7 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
     })
 
     # Perform leave-one-out computations in parallel
-    jackknife_err <- sum(unlist(parallel::parLapply(cl_inner, seq_len(nrow(centered_kernel_mat_at_sampled)), function(i) {
+    jackknife_err_vec <- unlist(parallel::parLapply(cl_inner, seq_len(nrow(centered_kernel_mat_at_sampled)), function(i) {
 
       temp_centered_kernel_mat_at_sampled <- centered_kernel_mat_at_sampled[-i, -i]
       temp_sampled_x <- sampled_x[-i]
@@ -483,10 +484,14 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
         temp_centered_kernel_mat_at_sampled %*%
         (w_hat_jackknife - weights_hat[-i])
       return(one_out_err)
-    })))
+    }))
 
     # Store the error for the current outer index
-    err[outer_index] <- jackknife_err
+    err_mean[outer_index] <- mean(jackknife_err)
+
+    # Store the error for the current outer index
+    err_se[outer_index] <- sqrt(var(jackknife_err))
+
 
     # Stop the cluster
     parallel::stopCluster(cl_inner)
@@ -494,6 +499,7 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
 
   # Combine the results into a data frame
   results <- data.frame(lambda_hat = grid$lambda_hat, tau_hat = grid$tau_hat,
-                        jackknife_err = err)
+                        jackknife_err_mean = err_mean,
+                        jackknife_err_se = err_se)
   return(results)
 }
