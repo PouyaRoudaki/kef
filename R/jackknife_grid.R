@@ -487,10 +487,10 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
     }))
 
     # Store the error for the current outer index
-    err_mean[outer_index] <- mean(jackknife_err)
+    err_mean[outer_index] <- mean(jackknife_err_vec)
 
     # Store the error for the current outer index
-    err_se[outer_index] <- sqrt(var(jackknife_err))
+    err_se[outer_index] <- sqrt(var(jackknife_err_vec))
 
 
     # Stop the cluster
