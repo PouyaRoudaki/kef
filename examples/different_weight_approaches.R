@@ -13,7 +13,7 @@ mixture_weights <- c(1/2, 1/6, 1/6, 1/6)
 means <- c(0, -1, 0, 1)
 sds <- c(1, 0.1, 0.1, 0.1)
 
-sampled_x <- sort(normal_mixture(100, means, sds, mixture_weights))
+sampled_x <- sort(normal_mixture(400, means, sds, mixture_weights))
 x_grid <-  seq(-3.1,3.1,length.out = 400)
 # centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
 centering_grid <- runif(min = -3.1,max = 3.1,n = 400)
@@ -38,18 +38,9 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_gr
 #tau_hat <- 0.4
 
 lambda_hat <- 45
-tau_hat <- 1.2
+tau_hat <- 1.5
 
-weights_hat <- get_weights(lambda_hat =lambda_hat, tau_hat = tau_hat,
-                      centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-                      centered_kernel_self_grid,
-                      sampled_x = sampled_x,
-                      x_grid = x_grid,
-                      type_of_p_is_prob=TRUE,
-                      type_of_q_is_prob=TRUE,
-                      method_of_p_calculation="neighborhood_grid",
-                      print_trace = T
-                      )
+
 
 weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
                                            tau_hat = tau_hat,
@@ -60,34 +51,8 @@ weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
                                    print_trace = T
 )
 
-
-
-#weights_hat_fixed_point <- get_weights_fixed_point(lambda_hat =lambda_hat, tau_hat = tau_hat,
-#                                           centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-#                                           centered_kernel_self_grid,
-#                                           sampled_x = sampled_x,
-#                                           x_grid = x_grid,
-#                                           type_of_p_is_prob=TRUE,
-#                                           type_of_q_is_prob=TRUE,
-#                                           method_of_p_calculation="ordinary",
-#                                           print_trace = T
-#)
-
-#weights_hat_gd <- get_weights_gd(lambda_hat =lambda_hat, tau_hat = tau_hat,
-#                                                   centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
-#                                                   centered_kernel_self_grid,
-#                                                   sampled_x = sampled_x,
-#                                                   x_grid = x_grid,
-#                                                   type_of_p_is_prob=TRUE,
-#                                                   type_of_q_is_prob=TRUE,
-#                                                   method_of_p_calculation="ordinary",
-#                                                   print_trace = T
-#)
-
-weights_hat <- weights_hat_wo_grid
-
 # Convert the data to a data frame for use with ggplot2
-plot_data <- data.frame(sampled_x = sampled_x, weights_hat = as.vector(weights_hat))
+plot_data <- data.frame(sampled_x = sampled_x, weights_hat = as.vector(weights_hat_wo_grid))
 
 # Create the ggplot
 p <- ggplot(plot_data, aes(x = sampled_x, y = weights_hat)) +
@@ -105,10 +70,10 @@ probs <- get_dens_or_prob(centered_kernel_mat_at_sampled,
                           centered_kernel_mat_at_grid,
                           centered_kernel_self_grid,
                                   sampled_x,x_grid,
-                   lambda_hat, weights_hat,
+                   lambda_hat, as.vector(weights_hat_wo_grid),
                    type_of_p_is_prob = FALSE,
                    type_of_q_is_prob = FALSE,
-                   method_of_p_calculation = "neighborhood_grid")
+                   method_of_p_calculation = "ordinary")
 
 kef_df <- data.frame(grid = x_grid, kef_pdf = probs$grid_x)
 
@@ -129,9 +94,7 @@ true_density <- density_matrix %*% mixture_weights
 true_density_sampled <- density_matrix_sampled %*% mixture_weights
 
 true_density_df <- data.frame(grid = x_grid, true_pdf = true_density)
-true_density_df_sampled <- data.frame(grid = sampled_x, true_pdf = true_density_sampled,
-                              base = base_measure_weights,
-                              weights_var = base_measure_weights * as.vector(true_density_sampled))
+true_density_df_sampled <- data.frame(grid = sampled_x, true_pdf = true_density_sampled)
 
 # Perform the adaptive KDE
 kde_adaptive <- akj(sampled_x,x_grid,kappa = 0.35,alpha = 0.9)
@@ -152,6 +115,8 @@ ggplot() +
   ylab('Density') +
   theme_bw() +
   theme(legend.position = "bottom")
+
+
 
 # Define the range and number of points
 lambda_hat_min <- 1

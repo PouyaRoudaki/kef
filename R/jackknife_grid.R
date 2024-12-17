@@ -480,7 +480,7 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
                                                 min_x,
                                                 max_x))
 
-      one_out_err <- t(w_hat_jackknife - weights_hat[-i]) %*%
+      one_out_err <- lambda_hat * t(w_hat_jackknife - weights_hat[-i]) %*%
         temp_centered_kernel_mat_at_sampled %*%
         (w_hat_jackknife - weights_hat[-i])
       return(one_out_err)

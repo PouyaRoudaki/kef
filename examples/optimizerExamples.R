@@ -37,4 +37,65 @@ jackknife_weight_error_grid_inner_parallelized(centered_kernel_mat_at_sampled,
                                               cloud_computing = F
                                               )
 
+# Load libraries
+library(ggplot2)
+library(dplyr)
 
+
+# Replace 'data' with your dataset name
+data <- result
+
+# Calculate threshold (min mean + corresponding se)
+min_mean <- min(data$jackknife_err_mean)
+corresponding_se <- data$jackknife_err_se[which.min(data$jackknife_err_mean)]
+threshold <- min_mean + corresponding_se
+
+
+
+# Add a column to flag cells for highlighting
+data <- data %>%
+  mutate(
+    highlight = jackknife_err_mean > threshold,
+    is_min = jackknife_err_mean == min_mean,  # Identify the minimum value
+  )
+
+
+
+selected_tau <- data[which.min(data$jackknife_err_mean[which(data$highlight==T)]),"tau_hat"]
+selected_lambda <- data[which.min(data$jackknife_err_mean[which(data$highlight==T)]),"lambda_hat"]
+
+data <- data %>%
+  mutate( selected = (tau_hat == selected_tau) & (lambda_hat == selected_lambda))
+
+# Heatmap with highlights
+ggplot(data, aes(x = tau_hat, y = lambda_hat)) +
+  # Heatmap of mean values
+  geom_tile(aes(fill = jackknife_err_mean)) +
+  scale_fill_gradient(low = "blue", high = "red", name = "Mean Value") +
+
+  # Highlight cells above threshold with yellow border
+  geom_tile(data = subset(data, highlight == TRUE),
+            aes(x = tau_hat, y = lambda_hat),
+            fill = NA,color = "yellow", linewidth = 0.1) +
+
+  # Highlight the tile with the minimum value using geom_point
+  geom_point(data = subset(data, is_min == TRUE),
+             aes(x = tau_hat, y = lambda_hat),
+             fill= NA,color = "green", shape = 15, size = 2) +
+
+  # Highlight the tile with the minimum value using geom_point
+  geom_point(data = subset(data, selected == TRUE),
+             aes(x = tau_hat, y = lambda_hat),
+             fill= NA,color = "green", shape = 15, size = 2) +
+
+  # Add labels and theme
+  labs(
+    title = "Heatmap of mean jackknife error",
+    x = "tau_hat",
+    y = "lambda_hat"
+  ) +
+  theme_minimal()
+
+
+min_1se <- min(data$jackknife_err_mean[which(data$highlight==T)])
+data[which.min(data$jackknife_err_mean[which(data$highlight==T)]),]
