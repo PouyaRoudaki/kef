@@ -37,6 +37,15 @@ jackknife_weight_error_grid_inner_parallelized(centered_kernel_mat_at_sampled,
                                               cloud_computing = F
                                               )
 
+loocv_error_grid_inner_parallelized(centered_kernel_mat_at_sampled,
+                                               sampled_x,
+                                               min_x=-3.1,
+                                               max_x=+3.1,
+                                               lambda_hat_grid,
+                                               tau_hat_grid,
+                                               cloud_computing = F
+)
+
 # Load libraries
 library(ggplot2)
 library(dplyr)
