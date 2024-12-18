@@ -58,10 +58,10 @@ loocv_error_grid_inner_parallelized <- function(centered_kernel_mat_at_sampled,
   num_cores_inner <- if (cloud_computing) parallel::detectCores() else max(1, parallel::detectCores() - 2)
 
   for (outer_index in seq_len(nrow(grid))) {
-    print(paste0("outer_index = ",outer_index))
+
     lambda_hat <- grid$lambda_hat[outer_index]
     tau_hat <- grid$tau_hat[outer_index]
-
+    print(paste0("outer_index = ",outer_index, " lambda = ",lambda_hat, " tau = ", tau_hat))
 
     # Create a cluster for the inner loop
     cl_inner <- parallel::makeCluster(num_cores_inner)
@@ -80,34 +80,39 @@ loocv_error_grid_inner_parallelized <- function(centered_kernel_mat_at_sampled,
       library(pracma)
     })
 
-    # Perform leave-one-out computations in parallel
+    # Perform leave-one-out computations in parallel with tryCatch
     loocv_err_vec <- unlist(parallel::parLapply(cl_inner, seq_len(nrow(centered_kernel_mat_at_sampled)), function(i) {
+      tryCatch({
+        temp_centered_kernel_mat_at_sampled <- centered_kernel_mat_at_sampled[-i, -i]
+        temp_sampled_x <- sampled_x[-i]
 
-      temp_centered_kernel_mat_at_sampled <- centered_kernel_mat_at_sampled[-i, -i]
-      temp_sampled_x <- sampled_x[-i]
+        w_wo_i <- as.numeric(get_weights_wo_grid(lambda_hat = lambda_hat,
+                                                 tau_hat = tau_hat,
+                                                 temp_centered_kernel_mat_at_sampled,
+                                                 temp_sampled_x,
+                                                 min_x,
+                                                 max_x))
 
-      w_wo_i <- as.numeric(get_weights_wo_grid(lambda_hat = lambda_hat,
-                                                        tau_hat = tau_hat,
-                                                        temp_centered_kernel_mat_at_sampled,
-                                                        temp_sampled_x,
-                                                        min_x,
-                                                        max_x))
+        dens_wo_i <- get_dens_wo_grid(temp_centered_kernel_mat_at_sampled,
+                                      min_x,
+                                      max_x,
+                                      temp_sampled_x,
+                                      lambda_hat,
+                                      w_wo_i)
 
-      dens_wo_i <- get_dens_wo_grid(temp_centered_kernel_mat_at_sampled,
-                       min_x,
-                       max_x,
-                       temp_sampled_x,
-                       lambda_hat,
-                       w_wo_i)
+        prob_wo_i <- dens_wo_i / sum(dens_wo_i)
 
-      prob_wo_i <- dens_wo_i/sum(dens_wo_i)
+        one_out_err <- centered_kernel_mat_at_sampled[i, i] -
+          2 * lambda_hat * prob_wo_i %*% centered_kernel_mat_at_sampled[-i, i] +
+          lambda_hat^2 * prob_wo_i %*% centered_kernel_mat_at_sampled[-i, -i] %*% prob_wo_i
 
-      one_out_err <- centered_kernel_mat_at_sampled[i,i] -
-        2 * lambda_hat * prob_wo_i %*% centered_kernel_mat_at_sampled[-i, i] +
-        lambda_hat^2 * prob_wo_i %*% centered_kernel_mat_at_sampled[-i, -i] %*% prob_wo_i
-
-      return(one_out_err)
+        return(one_out_err)
+      }, error = function(e) {
+        message(sprintf("Non-invertible Hessian for iteration = %d, lambda_hat = %f, tau_hat = %f: %s", i, lambda_hat, tau_hat, e$message))
+        return(NA) # Return NA if an error occurs
+      })
     }))
+
 
     # Store the error for the current outer index
     err_mean[outer_index] <- mean(loocv_err_vec)

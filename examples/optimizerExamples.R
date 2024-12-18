@@ -23,8 +23,8 @@ centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = samp
 
 
 
-lambda_hat_grid <- c(1)
-tau_hat_grid <- c(1,2)
+lambda_hat_grid <- sort(c(10^seq(1,-2,length=4), 5*10^seq(1,-2,length=4)))
+tau_hat_grid <- sort(c(10^seq(1,-1,length=3), 5*10^seq(1,-1,length=3)))
 
 library(pracma)
 
