@@ -61,7 +61,7 @@ loocv_error_grid_inner_parallelized <- function(centered_kernel_mat_at_sampled,
 
     lambda_hat <- grid$lambda_hat[outer_index]
     tau_hat <- grid$tau_hat[outer_index]
-    print(paste0("outer_index = ",outer_index, " lambda = ",lambda_hat, " tau = ", tau_hat))
+    print(paste0("outer_index = ",outer_index))
 
     # Create a cluster for the inner loop
     cl_inner <- parallel::makeCluster(num_cores_inner)
@@ -108,7 +108,6 @@ loocv_error_grid_inner_parallelized <- function(centered_kernel_mat_at_sampled,
 
         return(one_out_err)
       }, error = function(e) {
-        message(sprintf("Non-invertible Hessian for iteration = %d, lambda_hat = %f, tau_hat = %f: %s", i, lambda_hat, tau_hat, e$message))
         return(NA) # Return NA if an error occurs
       })
     }))
