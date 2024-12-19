@@ -162,7 +162,6 @@ get_weights_wo_grid <- function(lambda_hat,
       tau_hat * weight_hat_vec / prob_sampled
 
     # Compute the inverse of the Hessian matrix
-
     Hessian <- lambda_hat^2 * n * (centered_kernel_mat_at_sampled %*%
                                                  diag(prob_sampled_base) %*%
                                                  t(centered_kernel_mat_at_sampled) -

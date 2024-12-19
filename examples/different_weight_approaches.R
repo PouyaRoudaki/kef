@@ -13,7 +13,7 @@ mixture_weights <- c(1/2, 1/6, 1/6, 1/6)
 means <- c(0, -1, 0, 1)
 sds <- c(1, 0.1, 0.1, 0.1)
 
-sampled_x <- sort(normal_mixture(400, means, sds, mixture_weights))
+sampled_x <- sort(normal_mixture(100, means, sds, mixture_weights))
 x_grid <-  seq(-3.1,3.1,length.out = 400)
 # centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
 centering_grid <- runif(min = -3.1,max = 3.1,n = 400)
@@ -40,6 +40,14 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_gr
 lambda_hat <- 45
 tau_hat <- 1.5
 
+lambda_hat <- 0.45
+tau_hat <- 0.00015
+
+lambda_hat <- 1
+tau_hat <- 0.0003333333
+
+lambda_hat <- 4.5
+tau_hat <- 0.015
 
 
 weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
