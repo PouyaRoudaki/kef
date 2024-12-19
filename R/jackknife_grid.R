@@ -602,7 +602,6 @@ jackknife_normalised_weight_error_grid_inner_parallelized <- function(centered_k
       # Store the error for the current outer index
       err_se[outer_index] <- NA
 
-      next
     })
 
     # Create a cluster for the inner loop

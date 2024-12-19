@@ -23,12 +23,12 @@ centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = samp
 
 
 
-lambda_hat_grid <- sort(c(10, 5*10))
-tau_hat_grid <- sort(c(10^seq(1,-1,length=3), 5*10^seq(1,-1,length=3)))
+lambda_hat_grid <- c(1,2,80,3)
+tau_hat_grid <- c(1)
 
 library(pracma)
 
-jackknife_weight_error_grid_inner_parallelized(centered_kernel_mat_at_sampled,
+jackknife_normalised_weight_error_grid_inner_parallelized(centered_kernel_mat_at_sampled,
                                                sampled_x,
                                               min_x=-3.1,
                                               max_x=+3.1,
