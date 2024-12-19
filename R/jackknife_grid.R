@@ -469,7 +469,7 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
 
     # Perform leave-one-out computations in parallel
     jackknife_err_vec <- unlist(parallel::parLapply(cl_inner, seq_len(nrow(centered_kernel_mat_at_sampled)), function(i) {
-
+      tryCatch({
       temp_centered_kernel_mat_at_sampled <- centered_kernel_mat_at_sampled[-i, -i]
       temp_sampled_x <- sampled_x[-i]
 
@@ -484,7 +484,10 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
         temp_centered_kernel_mat_at_sampled %*%
         (w_hat_jackknife - weights_hat[-i])
       return(one_out_err)
-    }))
+    }, error = function(e) {
+      return(NA) # Return NA if an error occurs
+    })
+  }))
 
     # Store the error for the current outer index
     err_mean[outer_index] <- mean(jackknife_err_vec)
@@ -597,6 +600,7 @@ jackknife_normalised_weight_error_grid_inner_parallelized <- function(centered_k
 
     # Perform leave-one-out computations in parallel
     jackknife_err_vec <- unlist(parallel::parLapply(cl_inner, seq_len(nrow(centered_kernel_mat_at_sampled)), function(i) {
+      tryCatch({
 
       temp_centered_kernel_mat_at_sampled <- centered_kernel_mat_at_sampled[-i, -i]
       temp_sampled_x <- sampled_x[-i]
@@ -614,6 +618,9 @@ jackknife_normalised_weight_error_grid_inner_parallelized <- function(centered_k
         temp_centered_kernel_mat_at_sampled %*%
         (w_hat_jackknife_norm - weights_hat_norm[-i])
       return(one_out_err)
+      }, error = function(e) {
+        return(NA) # Return NA if an error occurs
+      })
     }))
 
     # Store the error for the current outer index
