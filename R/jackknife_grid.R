@@ -441,7 +441,7 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
     print(paste0("outer_index = ",outer_index))
     lambda_hat <- grid$lambda_hat[outer_index]
     tau_hat <- grid$tau_hat[outer_index]
-
+    tryCatch({
     # Compute the weights for the entire dataset
     weights_hat <- get_weights_wo_grid(lambda_hat = lambda_hat,
                                tau_hat = tau_hat,
@@ -449,6 +449,16 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
                                sampled_x = sampled_x,
                                min_x = min_x,
                                max_x = max_x)
+    },error = function(e) {
+
+      # Store the error for the current outer index
+      err_mean[outer_index] <- NA
+
+      # Store the error for the current outer index
+      err_se[outer_index] <- NA
+
+      next
+    })
 
     # Create a cluster for the inner loop
     cl_inner <- parallel::makeCluster(num_cores_inner)
@@ -484,10 +494,10 @@ jackknife_weight_error_grid_inner_parallelized <- function(centered_kernel_mat_a
         temp_centered_kernel_mat_at_sampled %*%
         (w_hat_jackknife - weights_hat[-i])
       return(one_out_err)
-    }, error = function(e) {
+      }, error = function(e) {
       return(NA) # Return NA if an error occurs
-    })
-  }))
+      })
+    }))
 
     # Store the error for the current outer index
     err_mean[outer_index] <- mean(jackknife_err_vec)
