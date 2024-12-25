@@ -6,21 +6,21 @@
 \usage{
 compute_marginal_likelihood_grid(
   centered_kernel_mat_at_sampled,
-  centered_kernel_mat_at_grid,
-  centered_kernel_self_grid,
+  min_x,
+  max_x,
   sampled_x,
-  x_grid,
-  p_vec = rep(1, nrow(centered_kernel_mat_at_sampled)),
   lambda_grid,
-  tau_grid,
-  MC_iterations,
-  type_of_p_is_prob = FALSE,
-  type_of_q_is_prob = FALSE,
-  method_of_p_calculation = "ordinary"
+  tau_hat,
+  initial_lambda_hat = 1,
+  MC_iterations
 )
 }
 \arguments{
 \item{centered_kernel_mat_at_sampled}{A matrix of centered kernel values at sampled points.}
+
+\item{lambda_grid}{A grid of lambda values to be evaluated.}
+
+\item{MC_iterations}{Number of Monte Carlo iterations to perform.}
 
 \item{centered_kernel_mat_at_grid}{A matrix of centered kernel values at grid points.}
 
@@ -30,11 +30,7 @@ compute_marginal_likelihood_grid(
 
 \item{p_vec}{A vector of initial probabilities (default is a vector of 1's).}
 
-\item{lambda_grid}{A grid of lambda values to be evaluated.}
-
 \item{tau_grid}{A grid of tau values to be evaluated.}
-
-\item{MC_iterations}{Number of Monte Carlo iterations to perform.}
 }
 \value{
 A data frame containing lambda, tau, and their corresponding marginal log likelihoods.

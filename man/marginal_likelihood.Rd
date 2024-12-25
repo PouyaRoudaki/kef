@@ -6,27 +6,17 @@
 \usage{
 marginal_likelihood(
   centered_kernel_mat_at_sampled,
-  centered_kernel_mat_at_grid,
-  centered_kernel_self_grid,
   sampled_x,
-  x_grid,
+  min_x,
+  max_x,
   p_vec = rep(1, nrow(centered_kernel_mat_at_sampled)),
   lambda_hat,
   tau_hat,
-  MC_iterations,
-  type_of_p_is_prob = FALSE,
-  type_of_q_is_prob = FALSE,
-  method_of_p_calculation = "ordinary"
+  MC_iterations
 )
 }
 \arguments{
 \item{centered_kernel_mat_at_sampled}{A matrix of centered kernel values at sampled points.}
-
-\item{centered_kernel_mat_at_grid}{A matrix of centered kernel values at grid points.}
-
-\item{centered_kernel_self_grid}{A matrix of centered kernel self-values at grid points.}
-
-\item{x_grid}{A grid of x values where the function is evaluated.}
 
 \item{p_vec}{A vector of initial probabilities (default is a vector of 1's).}
 
@@ -35,6 +25,12 @@ marginal_likelihood(
 \item{tau_hat}{A scalar parameter, tau, to be used in the likelihood computation.}
 
 \item{MC_iterations}{Number of Monte Carlo iterations to perform.}
+
+\item{centered_kernel_mat_at_grid}{A matrix of centered kernel values at grid points.}
+
+\item{centered_kernel_self_grid}{A matrix of centered kernel self-values at grid points.}
+
+\item{x_grid}{A grid of x values where the function is evaluated.}
 }
 \value{
 The log of the marginal likelihood.

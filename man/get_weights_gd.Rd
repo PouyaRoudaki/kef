@@ -17,6 +17,20 @@ get_weights_gd(
   method_of_p_calculation = "ordinary",
   print_trace = FALSE
 )
+
+get_weights_gd(
+  lambda_hat,
+  tau_hat,
+  centered_kernel_mat_at_sampled,
+  centered_kernel_mat_at_grid,
+  centered_kernel_self_grid,
+  sampled_x,
+  x_grid,
+  type_of_p_is_prob = TRUE,
+  type_of_q_is_prob = TRUE,
+  method_of_p_calculation = "ordinary",
+  print_trace = FALSE
+)
 }
 \arguments{
 \item{lambda_hat}{A scalar representing the estimated lambda parameter, which
@@ -50,8 +64,14 @@ for the "p" function. Default is "ordinary".}
 }
 \value{
 A numeric vector of length n representing the estimated weight vector for the sampled points.
+
+A numeric vector of length n representing the estimated weight vector for the sampled points.
 }
 \description{
+This function estimates the weight vector using an iterative gradient descent method.
+The method updates weights based on the provided kernel matrices, regularization
+parameters, sampled points, and grid points.
+
 This function estimates the weight vector using an iterative gradient descent method.
 The method updates weights based on the provided kernel matrices, regularization
 parameters, sampled points, and grid points.

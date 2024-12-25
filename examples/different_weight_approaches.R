@@ -36,18 +36,34 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_gr
 #save.image(file = "my_environment.RData")
 #lambda_hat <- 30
 #tau_hat <- 0.4
+# lambda^2/tau
+#> 0.45^2/0.00015
+#[1] 1350
+#> 45^2/1.5
+#[1] 1350
+#> 4.5^2/0.015
+#[1] 1350
+#> 1^2/0.000333333
 
 lambda_hat <- 45
 tau_hat <- 1.5
 
+lambda_hat <- 4.5
+tau_hat <- 0.015
+
+lambda_hat <- 1
+tau_hat <- 1/1350
+
 lambda_hat <- 0.45
 tau_hat <- 0.00015
 
-lambda_hat <- 1
-tau_hat <- 0.0003333333
+lambda_hat <- sqrt(1350)
+tau_hat <- 1
 
-lambda_hat <- 4.5
-tau_hat <- 0.015
+
+
+
+
 
 
 weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
@@ -59,6 +75,8 @@ weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
                                    print_trace = T
 )
 
+
+
 # Convert the data to a data frame for use with ggplot2
 plot_data <- data.frame(sampled_x = sampled_x, weights_hat = as.vector(weights_hat_wo_grid))
 
@@ -66,9 +84,10 @@ plot_data <- data.frame(sampled_x = sampled_x, weights_hat = as.vector(weights_h
 p <- ggplot(plot_data, aes(x = sampled_x, y = weights_hat)) +
   geom_point(color  = "black") +
   geom_line(color = "blue") +
-  labs(title = "Weights Hat vs Sampled x",
-       x = "Sampled x",
+  labs(x = "Sampled x",
        y = "Weights Hat")+
+  ggtitle(paste('Weights Hat vs Sampled x for lambda_hat =',
+                format(lambda_hat,digits = 3,scientific = T),'and tau_hat =',format(tau_hat,digits = 3,scientific = T))) +
   theme_bw()
 
 print(p)
@@ -83,7 +102,15 @@ probs <- get_dens_or_prob(centered_kernel_mat_at_sampled,
                    type_of_q_is_prob = FALSE,
                    method_of_p_calculation = "ordinary")
 
+
+#probs <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
+#                          -3.1,3.1,
+#                          sampled_x,
+#                          lambda_hat, as.vector(weights_hat_wo_grid))
+
+
 kef_df <- data.frame(grid = x_grid, kef_pdf = probs$grid_x)
+#kef_df <- data.frame(grid = sampled_x, kef_pdf = probs)
 
 # Define a matrix of normal densities for each mean and standard deviation
 density_matrix <- sapply(seq_along(means), function(i) {
@@ -117,8 +144,8 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
   scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue', 'KEF' = 'orange')) +
-  ggtitle(paste('Histogram and Kernel Density Estimate for lambda_hat',
-                round(lambda_hat,2),'and tau_hat',round(tau_hat,2))) +
+  ggtitle(paste('Histogram and Kernel Density Estimate for lambda_hat =',
+                format(lambda_hat,digits = 3,scientific = T),'and tau_hat =',format(tau_hat,digits = 3,scientific = T))) +
   xlab('Value') +
   ylab('Density') +
   theme_bw() +
