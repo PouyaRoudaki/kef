@@ -134,7 +134,7 @@ get_weights_wo_grid <- function(lambda_hat,
                         print_trace = FALSE) {
 
   max_iteration <- 1000  # Maximum number of iterations for the Newton-Raphson method
-  NRstepsize <- 0.1  # Step size for the Newton-Raphson update
+  NRstepsize <- 0.5  # Step size for the Newton-Raphson update
   n <- nrow(centered_kernel_mat_at_sampled)  # Number of sampled points
   weight_hat_vec <- rep(0,n)  # Initialize the weight vector with zeros
 
@@ -191,6 +191,96 @@ get_weights_wo_grid <- function(lambda_hat,
   }
 
   return(weight_hat_vec)
+}
+
+#' Estimate Weights Using the Newton-Raphson Method for Monte Carlo Approach.
+#'
+#' This function estimates the weight vector using an iterative Newton-Raphson method.
+#' The method updates weights based on the provided kernel matrices, regularization
+#' parameters, sampled points, and grid points.
+#'
+#' @param lambda_t A scalar representing the estimated lambda parameter, which
+#'        controls the contribution of the kernel matrices to the weight estimation.
+#' @param tau_t A scalar representing the estimated tau parameter, which
+#'        determines the regularization strength applied to the weights.
+#' @param centered_kernel_mat_at_sampled A square matrix (n x n) representing the centered
+#'        kernel matrix evaluated at the sampled points, where n is the number of sampled points.
+#' @param sampled_x A vector of sampled points for which the weights are to be estimated.
+#' @param min_x A scalar representing the minimum value of the domain.
+#' @param max_x A scalar representing the maximum value of the domain.
+#' @param p_vec_t_1 A vector representing the probabilities of step t-1
+#' @param print_trace Logical; if TRUE, prints progress updates during the Newton-Raphson iterations.
+#'
+#' @return A numeric vector of length n representing the estimated weight vector for the sampled points.
+#'
+#' @export
+get_weights_wo_grid_mll <- function(lambda_t,
+                                tau_t,
+                                centered_kernel_mat_at_sampled,
+                                sampled_x,
+                                min_x,
+                                max_x,
+                                p_vec_t_1,
+                                print_trace = FALSE) {
+
+  max_iteration <- 1000  # Maximum number of iterations for the Newton-Raphson method
+  NRstepsize <- 0.5  # Step size for the Newton-Raphson update
+  n <- nrow(centered_kernel_mat_at_sampled)  # Number of sampled points
+  weight_t_vec <- rep(0,n)  # Initialize the weight vector with zeros
+
+  #print(summary(base_measure_weights))
+  for (i in 1:max_iteration) {
+    # Calculate probabilities for sampled and grid points
+    dens <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
+                             min_x,
+                             max_x,
+                             sampled_x,
+                             lambda_t,
+                             weight_t_vec)
+
+    # Find the base measure of samples
+    sample_mid_points <- get_middle_points_grid(min_x, sampled_x, max_x)
+    base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
+
+    dens_sampled_base <- dens * base_measure_weights
+
+    prob_sampled_base <- dens_sampled_base / sum(dens_sampled_base)
+    prob_sampled <- p_vec_t_1
+
+    s <- lambda_t * (colSums(centered_kernel_mat_at_sampled) -
+                         n * (prob_sampled_base) %*% t(centered_kernel_mat_at_sampled)) -
+      tau_t * weight_t_vec / prob_sampled
+
+    # Compute the inverse of the Hessian matrix
+    Hessian <- lambda_t^2 * n * (centered_kernel_mat_at_sampled %*%
+                                     diag(prob_sampled_base) %*%
+                                     t(centered_kernel_mat_at_sampled) -
+                                     (centered_kernel_mat_at_sampled %*% prob_sampled_base) %*%
+                                     t(centered_kernel_mat_at_sampled %*% prob_sampled_base)) +
+      diag(tau_t / prob_sampled)
+
+
+
+    Hessian_inv <- solve(Hessian)
+    #print(summary(as.vector(Hessian_inv)))
+
+    #print(s)
+    #print(Hessian_inv)
+    # Update the weight vector using the Newton-Raphson method
+    #weight_hat_change <- NRstepsize * s %*% Hessian_inv
+    weight_t_vec <- weight_t_vec + NRstepsize * s %*% Hessian_inv
+
+    # Print progress every 10% of the iterations or at the first iteration
+    if ((i %% round(max_iteration / 10) == 0 || i == 1) & print_trace == TRUE) {
+
+      print(paste("Iteration", i, ": ||s||_2 =", pracma::Norm(s)))
+      #print(summary(as.vector(Hessian)))
+      #print(summary(as.vector(solve(Hessian))))
+    }
+    #counter = counter + 1
+  }
+
+  return(weight_t_vec)
 }
 
 

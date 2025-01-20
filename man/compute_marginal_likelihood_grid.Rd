@@ -10,8 +10,9 @@ compute_marginal_likelihood_grid(
   max_x,
   sampled_x,
   lambda_grid,
-  tau_hat,
-  initial_lambda_hat = 1,
+  tau_grid,
+  initial_lambda = 1,
+  initial_w = rep(0, length(sampled_x)),
   MC_iterations
 )
 }
@@ -19,6 +20,8 @@ compute_marginal_likelihood_grid(
 \item{centered_kernel_mat_at_sampled}{A matrix of centered kernel values at sampled points.}
 
 \item{lambda_grid}{A grid of lambda values to be evaluated.}
+
+\item{tau_grid}{A grid of tau values to be evaluated.}
 
 \item{MC_iterations}{Number of Monte Carlo iterations to perform.}
 
@@ -29,8 +32,6 @@ compute_marginal_likelihood_grid(
 \item{x_grid}{A grid of x values where the function is evaluated.}
 
 \item{p_vec}{A vector of initial probabilities (default is a vector of 1's).}
-
-\item{tau_grid}{A grid of tau values to be evaluated.}
 }
 \value{
 A data frame containing lambda, tau, and their corresponding marginal log likelihoods.
