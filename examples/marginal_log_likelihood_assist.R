@@ -16,7 +16,7 @@ sds <- c(1,0.1,0.1,0.1)
 
 sampled_x <- sort(normal_mixture(100, means, sds, mixture_weights))
 x_grid <-  seq(-3.1,3.1,length.out = 400)
-x_grid <-  rep(0,400)
+
 # centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
 #centering_grid <- runif(min = -3.1,max = 3.1,n = 4000)
 

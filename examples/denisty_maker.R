@@ -4,6 +4,8 @@ n_grid <- 4000
 n_fixed_x <- 500
 lambda_true <- 1
 
+set.seed(7)
+
 fixed_u_vec <- seq(-3.1, 3.1,length.out = n_fixed_u)
 #x_grid <-  seq(-4,4,length.out =40)
 x_grid_cv <- seq(-3.1, 3.1,length.out = n_grid)
@@ -174,8 +176,8 @@ ggplot() +
 
 ################################################################################
 
-lambda_hat <- 1
-tau_hat <- 1/1350
+lambda_hat <- 0.055
+tau_hat <- 0.055^2/1350
 
 x_grid <- seq(-3.1, 3.1,length.out = 400)
 
@@ -205,8 +207,6 @@ weights_hat <- get_weights_wo_grid(lambda_hat =lambda_hat,
                                    sampled_x = sampled_x_vec,
                                    min_x = min(x_grid),
                                    max_x = max(x_grid),
-                                   max_iteration = 1000,
-                                   NRstepsize = 0.1,
                                    print_trace = T
 )
 
@@ -286,6 +286,26 @@ summary(s3_new)
 plot(x = sampled_x_vec, s3_new)
 summary(s12t_new)
 
-summary(s3_new)[1]/summary(s12t_new)[1] * lambda_hat
+summary(s3_new)/summary(s12t_new)
 
 plot(x = sampled_x_vec,s12t_new * lambda_hat - s3_new*tau_hat)
+
+################################################################################
+output <- vector("numeric",length = length(sampled_x_vec))
+# Find the base measure of samples
+sample_mid_points <- get_middle_points_grid(-3.1, sampled_x_vec, 3.1)
+base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
+
+n_x <- length(sampled_x_vec)
+dens <- probs_n_cv$sampled_x
+dens_sampled_base <- dens * base_measure_weights
+prob_sampled_base <- dens_sampled_base / sum(dens_sampled_base)
+prob_sampled <- dens / sum(dens)
+
+
+for( i in 1: length(sampled_x_vec)){
+  output[i] <- w_x_vec[i]/
+    (probs_n_cv$sampled_x[i] *
+       (colSums(centered_kernel_mat_at_sampled)[i] - n_x * (prob_sampled_base %*% centered_kernel_mat_at_sampled)[1,i] ))
+}
+which(abs(output)>10)

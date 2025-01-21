@@ -74,6 +74,8 @@ lambda_hat <- 10
 tau_hat <- 0.05
 
 
+
+
 weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
                                            tau_hat = tau_hat,
                                    centered_kernel_mat_at_sampled,

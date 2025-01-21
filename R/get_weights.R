@@ -183,7 +183,7 @@ get_weights_wo_grid <- function(lambda_hat,
     # Print progress every 10% of the iterations or at the first iteration
     if ((i %% round(max_iteration / 10) == 0 || i == 1) & print_trace == TRUE) {
 
-      print(paste("Iteration", i, ": ||s||_2 =", pracma::Norm(s)))
+      print(paste("Iteration", i, ": ||s||_2 =", format(pracma::Norm(s), digits = 3, scientific = T) ))
       #print(summary(as.vector(Hessian)))
       #print(summary(as.vector(solve(Hessian))))
     }

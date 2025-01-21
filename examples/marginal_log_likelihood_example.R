@@ -34,40 +34,6 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_gr
                                                          hurst_coef = 0.5))
 
 
-# Save the entire global environment to a file
-#save.image(file = "my_environment.RData")
-#lambda_hat <- 30
-#tau_hat <- 0.4
-# lambda^2/tau
-#> 0.45^2/0.00015
-#[1] 1350
-#> 45^2/1.5
-#[1] 1350
-#> 4.5^2/0.015
-#[1] 1350
-#> 1^2/0.000333333
-
-lambda_hat <- 45
-tau_hat <- 1.5
-
-lambda_hat <- 4.5
-tau_hat <- 0.015
-
-lambda_hat <- 1
-tau_hat <- 1/1350
-
-lambda_hat <- 0.45
-tau_hat <- 0.00015
-
-lambda_hat <- sqrt(1350)
-tau_hat <- 1
-
-
-lambda_hat <- sqrt(13.5)
-tau_hat <- 0.01
-
-lambda_hat <- 3
-tau_hat <- 9/(1350)
 
 lambda_hat <- 1
 tau_hat <- 1/1350
@@ -163,54 +129,94 @@ ggplot() +
 
 ################################################################################
 
-lambda_grid <- as.vector(outer(seq(1,9.5,1), 10^c(-1:1), "*"))
-lambda_grid_trimmed <- lambda_grid[lambda_grid<20]
+lambda_grid <- 10^(seq(-1,1,by=0.1))
+tau_grid <- 10^(seq(-6,1,by=0.1))
 
-tau_grid <- as.vector(outer(seq(1,9.5,1), 10^c(-4:0), "*"))
-tau_grid_trimmed <- tau_grid[tau_grid<10]
+lambda_grid <- lambda_grid[lambda_grid < 11]
+
 
 #lambda_grid_trimmed <- seq(30,60,by =1)
 library(ggplot2)
 # Specify the PDF output file
 #pdf("output3.pdf")  # Adjust width and height as needed
 #dev.off()
+library(doParallel)
+library(foreach)
 
-res_df <- compute_marginal_likelihood_grid(centered_kernel_mat_at_sampled,
-                                 min_x = -6.1,
-                                 max_x = 6.1,
+lst_df <- compute_marginal_likelihood_grid_parallel(centered_kernel_mat_at_sampled,
+                                 min_x = -3.1,
+                                 max_x = 3.1,
                                  sampled_x,
-                                 lambda_grid = lambda_grid_trimmed,
-                                 tau_grid = tau_grid_trimmed,
+                                 lambda_grid = lambda_grid,
+                                 tau_grid = tau_grid,
                                  initial_lambda = 1,
                                  initial_w = rep(0, length(sampled_x)),
                                  MC_iterations = 1000,
                                  max.iterations = 4)
 
+my_df <- lst_df[[1]]
 
+head_df <- my_df %>% arrange(desc(mll)) %>% head(200)
+
+
+
+# Fit the linear model
+model <- lm(log10(tau) ~ log10(lambda), data = head_df)
+
+# Extract coefficients
+coeffs <- coef(model)
+intercept <- round(coeffs[1], 4)
+slope <- round(coeffs[2], 4)
+
+# Create equation text
+eqn <- paste0("log10(tau) = ", intercept, " + ", slope, " * log10(lambda)")
+
+# Plot
+ggplot(head_df, aes(x = log10(lambda), y = log10(tau))) +
+  geom_point(colour = "blue") +  # Scatter points
+  geom_smooth(method = "lm", se = FALSE, colour = "red") +  # Regression line
+  annotate("text", x = max(log10(head_df$lambda)), y = max(log10(head_df$tau)),
+           label = eqn, hjust = 1, vjust = 1, size = 5, colour = "black") +
+  labs(title = "Scatter Plot with Linear Fit",
+       x = "log10(lambda)",
+       y = "log10(tau)") +
+  theme_minimal()
+
+
+df_max_mll_lambda <- my_df %>%
+  group_by(lambda) %>%
+  slice_max(mll, n = 5, with_ties = FALSE) %>%
+  ungroup()
+
+# View the result
+View(df_max_mll_tau)
 # Find the row with max MLL for each lambda
-max_mll_per_lambda <- res_df %>%
+max_mll_per_lambda <- my_df %>%
   group_by(tau) %>%
   slice_max(order_by = mll, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
-  mutate(prop1 = lambda^2/tau, prop2 = lambda/tau, prop3 = log10(lambda)/log10(tau),
+  mutate(prop1 = lambda^2/tau, prop2 = lambda/tau, prop3 = log10(lambda)/log10(tau), prop4 = log10(lambda)/(log10(tau)+log10(1350)),
          suggested_lambda = sqrt(tau*1350))
 
 # Print results
 print(max_mll_per_lambda)
 
 best_hyperparams <- res_df %>% arrange(-mll) %>% head(1)
-
-best_weights <- get_weights_wo_grid(lambda_hat =best_hyperparams$lambda,
-                                           tau_hat = best_hyperparams$tau,
-                                           centered_kernel_mat_at_sampled,
-                                           sampled_x = sampled_x,
-                                           min_x = min(x_grid),
-                                           max_x = max(x_grid),
-                                           print_trace = T
-)
-
-best_weights <- get_weights_wo_grid(lambda_hat = 0.2,
-                                    tau_hat = 0.0004,
+print(best_hyperparams)
+#best_weights <- get_weights_wo_grid(lambda_hat =best_hyperparams$lambda,
+#                                           tau_hat = best_hyperparams$tau,
+#                                           centered_kernel_mat_at_sampled,
+#                                           sampled_x = sampled_x,
+#                                           min_x = min(x_grid),
+#                                           max_x = max(x_grid),
+#                                           print_trace = T
+#)
+lambda_hat  <- best_hyperparams$lambda
+tau_hat <- best_hyperparams$tau
+lambda_hat <- 0.1
+tau_hat <- 0.0003
+best_weights <- get_weights_wo_grid(lambda_hat = lambda_hat,
+                                    tau_hat = tau_hat,
                                     centered_kernel_mat_at_sampled,
                                     sampled_x = sampled_x,
                                     min_x = min(x_grid),
@@ -240,14 +246,14 @@ ggplot() +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
   scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue', 'KEF' = 'orange')) +
   ggtitle(paste('Histogram and Kernel Density Estimate for lambda_hat =',
-                format(best_hyperparams$lambda,digits = 3,scientific = T),'and tau_hat =',format(best_hyperparams$tau,digits = 3,scientific = T))) +
+                format(lambda_hat,digits = 3,scientific = T),'and tau_hat =',format(tau_hat,digits = 3,scientific = T))) +
   xlab('Value') +
   ylab('Density') +
   theme_bw() +
   theme(legend.position = "bottom")
 
 # Close the PDF device
-dev.off()
+#dev.off()
 
 #sample_mid_points <- get_middle_points_grid(-3.1, sampled_x, 3.1)
 #base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
@@ -263,3 +269,4 @@ plot_ml <- rbind(plot_ml, data.frame(
   lambda = 6,
   marginal_log_likelihood = 7
 ))
+
