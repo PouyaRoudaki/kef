@@ -10,6 +10,7 @@
 #' @param lambda A scalar parameter, lambda, to be used in the likelihood computation.
 #' @param tau A scalar parameter, tau, to be used in the likelihood computation.
 #' @param MC_iterations Number of Monte Carlo iterations to perform.
+#' @param censoring True if the margnials is censored.
 #'
 #' @return The log of the marginal likelihood.
 #' @export
@@ -22,7 +23,8 @@ marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
                                 lambda,
                                 tau,
                                 std_rnorm_matrix,
-                                MC_iterations){
+                                MC_iterations,
+                                censoring = T){
 
   # Get the number of sampled points
   n <- nrow(centered_kernel_mat_at_sampled)
@@ -61,13 +63,20 @@ marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
   # Compute the likelihood vector by taking the mean across Monte Carlo iterations
   likelihood_vector <- rowMeans(densities_for_given_weights, na.rm = TRUE)
 
+  if(censoring){
+    likelihood_vector_trimmed <- likelihood_vector[(5):(length(likelihood_vector)-4)]
+    sampled_x_trimmed <- sampled_x[(5):(length(sampled_x)-4)]
+    # Normalize the density by the integral over the grid
+    normalizing_cte <- pracma::trapz( sampled_x_trimmed, likelihood_vector_trimmed)  # trapz is from pracma package
 
-  likelihood_vector_trimmed <- likelihood_vector[(5):(length(likelihood_vector)-4)]
-  sampled_x_trimmed <- sampled_x[(5):(length(sampled_x)-4)]
-  # Normalize the density by the integral over the grid
-  normalizing_cte <- pracma::trapz( sampled_x_trimmed, likelihood_vector_trimmed)  # trapz is from pracma package
+    norm_likelihood_vector <- likelihood_vector_trimmed/normalizing_cte
 
-  norm_likelihood_vector <- likelihood_vector_trimmed/normalizing_cte
+    sampled_x <- sampled_x_trimmed
+  }else{
+    normalizing_cte <- pracma::trapz( sampled_x, likelihood_vector)  # trapz is from pracma package
+
+    norm_likelihood_vector <- likelihood_vector/normalizing_cte
+  }
 
   #normalizing_cte <- pracma::trapz( sampled_x, likelihood_vector)  # trapz is from pracma package
 
@@ -82,7 +91,7 @@ marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
   #print(plot(sampled_x,likelihood_vector))
 
   # Create a data frame with your data
-  plot_data <- data.frame(x = sampled_x_trimmed, likelihood = norm_likelihood_vector)
+  plot_data <- data.frame(x = sampled_x, likelihood = norm_likelihood_vector)
 
   log_lambda <- log10(lambda)
   log_tau <- log10(tau)
@@ -121,6 +130,7 @@ marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
 #' @param lambda_grid A grid of lambda values to be evaluated.
 #' @param tau_grid A grid of tau values to be evaluated.
 #' @param MC_iterations Number of Monte Carlo iterations to perform.
+#' @param censoring True if the margnials is censored.
 #'
 #' @return A data frame containing lambda, tau, and their corresponding marginal log likelihoods.
 #' @export
@@ -134,7 +144,8 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
                                              initial_lambda = 1,
                                              initial_w = rep(0,length(sampled_x)),
                                              MC_iterations,
-                                             max.iterations = 1) {
+                                             max.iterations = 1,
+                                             censoring = T) {
 
 
   # Compute the marginal likelihood for each combination in the grid using mapply
@@ -184,7 +195,8 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
           lambda,
           tau,
           std_rnorm_matrix,
-          MC_iterations)
+          MC_iterations,
+          censoring)
 
         #print(lambda_hat)
         #print(marginal_log_likelihood)
@@ -318,6 +330,7 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
 #' @param lambda_grid A grid of lambda values to be evaluated.
 #' @param tau_grid A grid of tau values to be evaluated.
 #' @param MC_iterations Number of Monte Carlo iterations to perform.
+#' @param censoring True if the margnials is censored.
 #'
 #' @return A data frame containing lambda, tau, and their corresponding marginal log likelihoods.
 #' @export
@@ -332,7 +345,8 @@ compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sam
                                              initial_lambda = 1,
                                              initial_w = rep(0, length(sampled_x)),
                                              MC_iterations,
-                                             max.iterations = 1) {
+                                             max.iterations = 1,
+                                             censoring = T) {
 
   t <- 1
   n <- length(sampled_x)
@@ -370,7 +384,8 @@ compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sam
           lambda,
           tau,
           std_rnorm_matrix,
-          MC_iterations
+          MC_iterations,
+          censoring
         )
 
         data.frame(lambda = lambda, tau = tau, mll = marginal_log_likelihood)
@@ -387,7 +402,7 @@ compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sam
     dens_vec <- get_dens_wo_grid(centered_kernel_mat_at_sampled, min_x, max_x, sampled_x, lambda, w_vec)
     p_vec <- dens_vec / sum(dens_vec)
 
-    cat("\nIteration:", t, "lambda_hat:", lambda, "tau_hat:", tau, "max_mll:", round(max_marginal_log_likelihood, 2), "\n")
+    cat("\nIteration:", t, ",lambda_hat:", lambda, ",tau_hat:", tau, ",max_mll:", round(max_marginal_log_likelihood, 2), "\n")
 
     plot_ml <- plot_ml %>% filter( mll > -200)
     #cat(min(log10(plot_ml$lambda)))

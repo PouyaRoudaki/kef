@@ -14,7 +14,8 @@ compute_marginal_likelihood_grid_parallel(
   initial_lambda = 1,
   initial_w = rep(0, length(sampled_x)),
   MC_iterations,
-  max.iterations = 1
+  max.iterations = 1,
+  censoring = T
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ compute_marginal_likelihood_grid_parallel(
 \item{tau_grid}{A grid of tau values to be evaluated.}
 
 \item{MC_iterations}{Number of Monte Carlo iterations to perform.}
+
+\item{censoring}{True if the margnials is censored.}
 
 \item{centered_kernel_mat_at_grid}{A matrix of centered kernel values at grid points.}
 

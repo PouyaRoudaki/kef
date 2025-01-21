@@ -13,7 +13,8 @@ marginal_log_likelihood(
   lambda,
   tau,
   std_rnorm_matrix,
-  MC_iterations
+  MC_iterations,
+  censoring = T
 )
 }
 \arguments{
@@ -24,6 +25,8 @@ marginal_log_likelihood(
 \item{tau}{A scalar parameter, tau, to be used in the likelihood computation.}
 
 \item{MC_iterations}{Number of Monte Carlo iterations to perform.}
+
+\item{censoring}{True if the margnials is censored.}
 
 \item{centered_kernel_mat_at_grid}{A matrix of centered kernel values at grid points.}
 

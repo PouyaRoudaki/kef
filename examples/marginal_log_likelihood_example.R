@@ -152,7 +152,8 @@ lst_df <- compute_marginal_likelihood_grid_parallel(centered_kernel_mat_at_sampl
                                  initial_lambda = 1,
                                  initial_w = rep(0, length(sampled_x)),
                                  MC_iterations = 1000,
-                                 max.iterations = 4)
+                                 max.iterations = 4,
+                                 censoring = F)
 
 my_df <- lst_df[[1]]
 
