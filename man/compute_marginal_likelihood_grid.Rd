@@ -9,8 +9,7 @@ compute_marginal_likelihood_grid(
   min_x,
   max_x,
   sampled_x,
-  lambda_grid,
-  tau_grid,
+  hyperparam_grid,
   initial_lambda = 1,
   initial_w = rep(0, length(sampled_x)),
   MC_iterations,
@@ -21,9 +20,7 @@ compute_marginal_likelihood_grid(
 \arguments{
 \item{centered_kernel_mat_at_sampled}{A matrix of centered kernel values at sampled points.}
 
-\item{lambda_grid}{A grid of lambda values to be evaluated.}
-
-\item{tau_grid}{A grid of tau values to be evaluated.}
+\item{hyperparam_grid}{A dataframe including pairs of lambda and tau values.}
 
 \item{MC_iterations}{Number of Monte Carlo iterations to perform.}
 

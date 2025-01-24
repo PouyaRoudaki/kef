@@ -127,8 +127,7 @@ marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
 #' @param centered_kernel_self_grid A matrix of centered kernel self-values at grid points.
 #' @param x_grid A grid of x values where the function is evaluated.
 #' @param p_vec A vector of initial probabilities (default is a vector of 1's).
-#' @param lambda_grid A grid of lambda values to be evaluated.
-#' @param tau_grid A grid of tau values to be evaluated.
+#' @param hyperparam_grid A dataframe including pairs of lambda and tau values.
 #' @param MC_iterations Number of Monte Carlo iterations to perform.
 #' @param censoring True if the margnials is censored.
 #'
@@ -139,8 +138,7 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
                                              min_x,
                                              max_x,
                                              sampled_x,
-                                             lambda_grid,
-                                             tau_grid,
+                                             hyperparam_grid,
                                              initial_lambda = 1,
                                              initial_w = rep(0,length(sampled_x)),
                                              MC_iterations,
@@ -180,44 +178,46 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
 
     max_marginal_log_likelihood <- -Inf
 
-    for (lambda in lambda_grid) {
-      for (tau in tau_grid) {
-        cat(paste0("-"))
+    for (i in (1:dim(hyperparam_grid)[1])) {
 
+      lambda <- hyperparam_grid[i,1]
+      tau <- hyperparam_grid[i,2]
 
-        #print(length(p_vec))
-        marginal_log_likelihood <- marginal_log_likelihood(
-          centered_kernel_mat_at_sampled,
-          sampled_x,
-          min_x,
-          max_x,
-          p_vec,
-          lambda,
-          tau,
-          std_rnorm_matrix,
-          MC_iterations,
-          censoring)
+      cat(paste0("-"))
 
-        #print(lambda_hat)
-        #print(marginal_log_likelihood)
-        #print(max_marginal_log_likelihood)
+      #print(length(p_vec))
+      marginal_log_likelihood <- marginal_log_likelihood(
+        centered_kernel_mat_at_sampled,
+        sampled_x,
+        min_x,
+        max_x,
+        p_vec,
+        lambda,
+        tau,
+        std_rnorm_matrix,
+        MC_iterations,
+        censoring)
 
-        #print(paste(lambda_hat,",",marginal_log_likelihood))
+      #print(lambda_hat)
+      #print(marginal_log_likelihood)
+      #print(max_marginal_log_likelihood)
 
-        plot_ml <- rbind(plot_ml, data.frame(
-          lambda = lambda,
-          tau = tau,
-          mll = marginal_log_likelihood
-        ))
+      #print(paste(lambda_hat,",",marginal_log_likelihood))
 
-        #print(plot_ml)
+      plot_ml <- rbind(plot_ml, data.frame(
+        lambda = lambda,
+        tau = tau,
+        mll = marginal_log_likelihood
+      ))
 
-        if(marginal_log_likelihood > max_marginal_log_likelihood & (!is.nan(marginal_log_likelihood))) {
-          max_marginal_log_likelihood <- marginal_log_likelihood
-          max_likelihood_lambda <- lambda
-          max_likelihood_tau <- tau
-        }
+      #print(plot_ml)
+
+      if(marginal_log_likelihood > max_marginal_log_likelihood & (!is.nan(marginal_log_likelihood))) {
+        max_marginal_log_likelihood <- marginal_log_likelihood
+        max_likelihood_lambda <- lambda
+        max_likelihood_tau <- tau
       }
+
     }
 
     lambda <- max_likelihood_lambda
@@ -299,7 +299,7 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
       marker = list(size = 4, color = ~mll, colorscale = 'Viridis')
     ) %>%
       layout(
-        title =  paste0("Scatter plot Marginal Log Likelihood-Iteration:", t),
+        title =  paste0("Scatter plot Marginal Log Likelihood-Iteration:", t,", Censored:",censoring),,
         scene = list(
           xaxis = list(title = "log(λ)"),
           yaxis = list(title = "log(τ)"),
@@ -327,8 +327,7 @@ compute_marginal_likelihood_grid <- function(centered_kernel_mat_at_sampled,
 #' @param centered_kernel_self_grid A matrix of centered kernel self-values at grid points.
 #' @param x_grid A grid of x values where the function is evaluated.
 #' @param p_vec A vector of initial probabilities (default is a vector of 1's).
-#' @param lambda_grid A grid of lambda values to be evaluated.
-#' @param tau_grid A grid of tau values to be evaluated.
+#' @param hyperparam_grid A dataframe including pairs of lambda and tau values.
 #' @param MC_iterations Number of Monte Carlo iterations to perform.
 #' @param censoring True if the margnials is censored.
 #'
@@ -340,8 +339,7 @@ compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sam
                                              min_x,
                                              max_x,
                                              sampled_x,
-                                             lambda_grid,
-                                             tau_grid,
+                                             hyperparam_grid,
                                              initial_lambda = 1,
                                              initial_w = rep(0, length(sampled_x)),
                                              MC_iterations,
@@ -372,24 +370,27 @@ compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sam
     plot_ml <- data.frame(lambda = numeric(), tau = numeric(), mll = numeric())
     max_marginal_log_likelihood <- -Inf
 
-    results <- foreach::foreach(lambda = lambda_grid, .combine = 'rbind', .packages = c("dplyr","ggplot2","plotly")) %:%
-      foreach::foreach(tau = tau_grid, .combine = 'rbind') %dopar% {
+    results <- foreach::foreach(i = 1:nrow(hyperparam_grid), .combine = 'rbind',
+                                .packages = c("dplyr","ggplot2","plotly")) %dopar% {
 
-        marginal_log_likelihood <- marginal_log_likelihood(
-          centered_kernel_mat_at_sampled,
-          sampled_x,
-          min_x,
-          max_x,
-          p_vec,
-          lambda,
-          tau,
-          std_rnorm_matrix,
-          MC_iterations,
-          censoring
-        )
+      lambda <- hyperparam_grid[i,1]
+      tau <- hyperparam_grid[i,2]
+
+      marginal_log_likelihood <- marginal_log_likelihood(
+        centered_kernel_mat_at_sampled,
+        sampled_x,
+        min_x,
+        max_x,
+        p_vec,
+        lambda,
+        tau,
+        std_rnorm_matrix,
+        MC_iterations,
+        censoring
+      )
 
         data.frame(lambda = lambda, tau = tau, mll = marginal_log_likelihood)
-      }
+    }
 
     plot_ml <- results
 
@@ -398,11 +399,13 @@ compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sam
     tau <- best$tau
     max_marginal_log_likelihood <- best$mll
 
+    cat("\nIteration:", t, ",lambda_hat:", lambda, ",tau_hat:", tau, ",max_mll:", round(max_marginal_log_likelihood, 2), "\n")
+
     w_vec <- get_weights_wo_grid_mll(lambda, tau, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, p_vec, FALSE)
     dens_vec <- get_dens_wo_grid(centered_kernel_mat_at_sampled, min_x, max_x, sampled_x, lambda, w_vec)
     p_vec <- dens_vec / sum(dens_vec)
 
-    cat("\nIteration:", t, ",lambda_hat:", lambda, ",tau_hat:", tau, ",max_mll:", round(max_marginal_log_likelihood, 2), "\n")
+
 
     plot_ml <- plot_ml %>% filter( mll > -200)
     #cat(min(log10(plot_ml$lambda)))
@@ -416,7 +419,7 @@ compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sam
 
     p_ml <- plotly::plot_ly() %>%
       plotly::add_surface(x = interp_data$x, y = interp_data$y, z = matrix(interp_df$z, nrow = length(interp_data$x), ncol = length(interp_data$y), byrow = TRUE), colorscale = 'Viridis') %>%
-      plotly::layout(title = paste0("Marginal Log Likelihood-Iteration:", t),
+      plotly::layout(title = paste0("Marginal Log Likelihood-Iteration:", t, ", Censored:",censoring),
                      scene = list(xaxis = list(title = "log(λ)"), yaxis = list(title = "log(τ)"), zaxis = list(title = "MLL")))
 
     print(p_ml)
