@@ -1,0 +1,1249 @@
+---
+title: "Comparsion Experiment"
+author: "Pouya Roudaki"
+date: "2025-02-03"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Density Estimation Packages
+
+In this notebook, we compare the density estimation results of our `kef` approach with other methods available in CRAN. We use the list of packages reviewed by Deng & Wickham (2011) for density estimation in R, including: `ASH`, `ftnonpar`, `GenKern`, `gss`, `kerdiest`, `KernSmooth`, `ks`, `locfit`, `logspline`, `MASS`, `np`, `pendensity`, `plugdensity`, `sm`, `bayesm`, `delt`, `feature`, `fdrtool`, `hdrcde`, `ICE`, `latticeDensity`, `logcondens`, `MKLE`, `pencopula`, and `quantreg`.
+
+`ASH` is changed to `ash`. Package `ftnonpar` was removed from the CRAN repository. Package `GenKern` was removed from the CRAN repository. Package `kerdiest` was removed from the CRAN repository. Package `delt` was removed from the CRAN repository. Package `ICE` was removed from the CRAN repository. Package `latticeDensity` was removed from the CRAN repository. Package `pencopula` was removed from the CRAN repository.
+
+```{r, message=FALSE,echo=T,include=FALSE}
+packages <- c("ash", "gss", "KernSmooth", "ks", "locfit", "logspline", "MASS", "np", "pendensity", "plugdensity", "sm", "bayesm", "feature", "fdrtool", "hdrcde", "logcondens", "MKLE", "quantreg")
+
+
+#install.packages(packages, dependencies = TRUE)
+lapply(packages, require, character.only = TRUE)
+
+library("ggplot2")
+library("progressr")
+```
+
+## Comparison via L2 Error Given True Density
+
+We study two main examples: the claw density from Marron and Wand (1992) and the bimodal normal mixture density from Sain and Scott (1996). Below we take the sample of these two examples.
+
+
+```{r}
+library(ggplot2)
+
+# Set the seed
+set.seed(7)
+
+# Number of observations
+n <- 1000
+x_grid <- seq(-3.5, 3.5, length.out = 4 * n)
+
+# Define mixture parameters
+mixture_params <- list(
+  claw = list(weights = c(1/2, 1/10, 1/10, 1/10, 1/10, 1/10),
+              means = c(0, -1, -0.5, 0, 0.5, 1),
+              sds = c(1, 0.1, 0.1, 0.1, 0.1, 0.1)),
+  
+  bimodal = list(weights = c(1/2, 1/2),
+                 means = c(0, 1.5),
+                 sds = c(0.5, 0.1))
+)
+
+# Function to sample from a normal mixture
+sample_normal_mixture <- function(n, means, sds, weights) {
+  comp <- sample(seq_along(means), size = n, replace = TRUE, prob = weights)
+  rnorm(n, mean = means[comp], sd = sds[comp])
+}
+
+# Function to compute true density at given points
+compute_true_density <- function(x, means, sds, weights) {
+  density_matrix <- sapply(seq_along(means), function(i) dnorm(x, mean = means[i], sd = sds[i]))
+  as.vector(density_matrix %*% weights)
+}
+
+# Sample from the mixtures
+sampled_data <- list(
+  claw = sort(sample_normal_mixture(n, mixture_params$claw$means, mixture_params$claw$sds, mixture_params$claw$weights)),
+  bimodal = sort(sample_normal_mixture(n, mixture_params$bimodal$means, mixture_params$bimodal$sds, mixture_params$bimodal$weights))
+)
+
+# Compute true densities at x_grid and sampled points
+true_densities <- list(
+  claw = list(
+    grid = data.frame(grid = x_grid, true_pdf = compute_true_density(x_grid, mixture_params$claw$means, mixture_params$claw$sds, mixture_params$claw$weights)),
+    sampled = data.frame(value = sampled_data$claw, true_pdf = compute_true_density(sampled_data$claw, mixture_params$claw$means, mixture_params$claw$sds, mixture_params$claw$weights))
+  ),
+  bimodal = list(
+    grid = data.frame(grid = x_grid, true_pdf = compute_true_density(x_grid, mixture_params$bimodal$means, mixture_params$bimodal$sds, mixture_params$bimodal$weights)),
+    sampled = data.frame(value = sampled_data$bimodal, true_pdf = compute_true_density(sampled_data$bimodal, mixture_params$bimodal$means, mixture_params$bimodal$sds, mixture_params$bimodal$weights))
+  )
+)
+
+# Convert sampled data to data frames
+df_samples <- list(
+  claw = data.frame(value = sampled_data$claw),
+  bimodal = data.frame(value = sampled_data$bimodal)
+)
+
+# Function to plot histograms with true densities
+plot_histogram <- function(sample_df, density_grid_df, density_sampled_df, title) {
+  ggplot() +
+    geom_histogram(data = sample_df, aes(x = value, y = ..density..), bins = 50, fill = "gray", alpha = 0.6, colour = "black") +
+    geom_line(data = density_grid_df, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+#    geom_point(data = density_sampled_df, aes(x = value, y = true_pdf), colour = "black", alpha = 0.5, size = 0.8) + # True densities at sampled points
+    theme_bw() +
+    labs(title = title, x = "Value", y = "Density")
+}
+
+# Plot histograms
+plot_histogram(df_samples$claw, true_densities$claw$grid, true_densities$claw$sampled, "Histogram of Sampled Claw Data")
+plot_histogram(df_samples$bimodal, true_densities$bimodal$grid, true_densities$bimodal$sampled, "Histogram of Sampled Bimodal Data")
+
+
+```
+
+## 1. ASH (Average Shifted Histogram)
+
+In this section, we analyze the performance of the Average Shifted Histogram (ASH) estimator, originally introduced by J.M.F. Chamayou (1980) in *Averaging Shifted Histograms*, and implemented in the `ash` package (Scott and Gebhardt, 2022).
+
+To ensure a consistent metric for roughness across all estimators, defined as:
+
+$$
+R(\widehat{f}) := \int \widehat{f}(x)^2 \, dx
+$$
+
+we approximate this using the density over a uniformly spaced grid of $x$ values using the ASH approach.
+
+First, we perform cross-validation over a grid of parameters for ash.
+Next, we identify the optimal estimator by selecting the hyperparameters that 
+minimize the Integrated Mean Squared Error (MISE).
+Finally, we report the lowest cross-validation error.
+
+
+### Find the best hyperparameters using CV
+
+```{r}
+
+ash_cv_parallel <- function(sample, x_grid, m_grid, nbin_grid) {
+  
+  # Start timer
+  start_time <- Sys.time()
+  
+  # Initialize cluster
+  n_cores <- parallel::detectCores() - 1  # Use all available cores minus 1
+  cl <- parallel::makeCluster(n_cores)
+  doParallel::registerDoParallel(cl)
+  
+  # Parallel computation using foreach
+  results <- foreach::foreach(m = m_grid, .combine = rbind, .packages = c("ash", "pracma")) %:%
+    foreach::foreach(nbin = nbin_grid, .combine = rbind) %dopar% {
+      
+      # Step 1: ASH estimation
+      ash_result <- ash1(bin1(sample, ab = c(min(x_grid), max(x_grid)), nbin = nbin), m = m)
+
+      # Extract bin midpoints and densities
+      bin_mids <- ash_result$x  # Bin midpoints
+      densities <- ash_result$y  # Estimated densities
+
+      # Step 2: Compute bin edges
+      bin_width <- diff(bin_mids)[1]  # Assume uniform bin width
+      bin_edges <- c(bin_mids[1] - bin_width / 2, bin_mids + bin_width / 2)
+      
+      # Step 3: Find corresponding bins and densities
+      bin_indices <- findInterval(x_grid, bin_edges, rightmost.closed = TRUE)
+      corresponding_densities <- densities[bin_indices]
+      
+      # Roughness (L2 norm)
+      roughness <- pracma::trapz(x_grid, corresponding_densities^2)
+      
+      # Optimized Cross Product Term using proper indexing
+      leave_one_out_densities <- vapply(seq_along(sample), function(i) {
+        # Remove only the i-th occurrence, not all instances of sample[i]
+        sample_wo_i <- sample[-i]
+        
+        # Compute ASH without the i-th sample point
+        ash_result_wo_i <- ash1(bin1(sample_wo_i, ab = c(min(x_grid), max(x_grid)), 
+                                     nbin = nbin), m = m)
+        
+        # Extract density values
+        densities_wo_i <- ash_result_wo_i$y
+        
+        # Find the bin index for the removed sample point
+        bin_index <- findInterval(sample[i], bin_edges, rightmost.closed = TRUE)
+        
+        return(densities_wo_i[bin_index])
+      }, numeric(1))  # Ensures output is numeric
+      
+      # Cross-validation error calculation
+      cross_product_sum <- sum(leave_one_out_densities, na.rm = TRUE)
+      cv_error <- roughness - (2 / length(sample)) * cross_product_sum
+      
+      # Return the result for this combination of m and nbin
+      return(data.frame(m = m, nbin = nbin, cv_error = cv_error))
+    }
+  
+  # Stop the cluster
+  parallel::stopCluster(cl)
+  
+  # Find the best combination of m and nbin
+  best_result <- results[which.min(results$cv_error), ]
+  
+  # End timer
+  end_time <- Sys.time()
+  
+  # Compute total computation time
+  total_time <- end_time - start_time
+  
+  # Return results with computation time
+  return(list(best_nbin = best_result$nbin, best_m = best_result$m, 
+              min_cv_error = best_result$cv_error ,total_time = total_time))
+}
+
+
+```
+
+### Plotting the best estimator
+
+```{r, warning=FALSE}
+m_grid <- c(1:10)
+nbin_grid <- c(10,50,100,500,1000,5000)
+
+# Claw_density
+ash_cv_result_claw <- ash_cv_parallel(df_samples$claw$value,x_grid,m_grid,nbin_grid)
+
+# ASH best estimation
+ash_best_claw <- ash1(bin1(df_samples$claw$value, ab = c(min(x_grid), max(x_grid)), nbin = ash_cv_result_claw$best_nbin), m = ash_cv_result_claw$best_m)
+
+# Convert ASH result to a data frame for ggplot2
+ash_df_best_claw <- data.frame(x = ash_best_claw$x, density = ash_best_claw$y)
+
+# Plot ASH density estimate
+ggplot(ash_df_best_claw, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = paste0("ASH Density Estimate: CV time = ",round(ash_cv_result_claw$total_time,2),"s,"," m = ", ash_cv_result_claw$best_m, 
+                     ", nbin = ", ash_cv_result_claw$best_nbin), x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+ash_cv_result_bimodal <- ash_cv_parallel(df_samples$bimodal$value,x_grid,m_grid,nbin_grid)
+
+# ASH best estimation
+ash_best_bimodal <- ash1(bin1(df_samples$bimodal$value, ab = c(min(x_grid), max(x_grid)), nbin = ash_cv_result_bimodal$best_nbin), m = ash_cv_result_bimodal$best_m)
+
+# Convert ASH result to a data frame for ggplot2
+ash_df_best_bimodal <- data.frame(x = ash_best_bimodal$x, density = ash_best_bimodal$y)
+
+# Plot ASH density estimate
+ggplot(ash_df_best_bimodal, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = paste0("ASH Density Estimate: CV time = ",round(ash_cv_result_bimodal$total_time,2),"s,"," m = ", ash_cv_result_bimodal$best_m, 
+                     ", nbin = ", ash_cv_result_bimodal$best_nbin), x = "Value", y = "Density") +
+  theme_bw()
+
+```
+
+### Print the lowest cross-validation error
+
+```{r}
+print(paste("ASH claw best cv error = ",ash_cv_result_claw$min_cv_error))
+print(paste("ASH bimodal best cv error = ",ash_cv_result_bimodal$min_cv_error))
+```
+## 2. GSS (General Smoothing Splines)
+
+The `gss` package (General Smoothing Splines) by Gu (2011) employs a penalised likelihood approach for nonparametric density estimation. The `ssden` function features a formula interface and operates on vectors in the global environment or variables within a data frame specified via the data argument. It returns an `ssden` object, with predictions available at arbitrary locations using `dssden`. By default, the number and placement of knots are determined through cross-validation but can be manually specified using the `nbasis` and `id.basis` arguments.
+
+One major problem with `ssden` is that it cannot find the density beyond the range of sample points. So in order to evaluate $R(\widehat{f})$, we approximate $\int \widehat{f}(x)^2\, dx$ using the $\widehat{f}$ on the sample points. 
+
+### Find the best hyperparameters using CV
+
+```{r}
+
+gss_cv_parallel <- function(sample, x_grid, nbasis_grid) {
+  
+  # Start timer
+  start_time <- Sys.time()
+  
+  # Initialize cluster for leave-one-out (LOO) parallelization
+  n_cores <- parallel::detectCores() - 1  # Use all available cores minus 1
+  cl <- parallel::makeCluster(n_cores)
+  doParallel::registerDoParallel(cl)
+  
+  # Setup progress bar
+  #handlers(global = TRUE)  # Enable progress bar globally
+  #p <- progressor(along = nbasis_grid)  # Progress bar for outer loop
+
+  # Store results
+  results <- data.frame(nbasis = numeric(), cv_error = numeric())
+
+  # **Standard `for` loop for `nbasis` tuning**
+  for (nbasis in nbasis_grid) {
+    
+    # Update progress (done in main thread)
+    print(paste("Processing nbasis = ", nbasis))
+    
+    # Step 1: gss estimation on a grid for calculating the roughness.
+    gss_model <- ssden(~sample, nbasis = nbasis)
+    gss_result <- dssden(gss_model, x_grid)
+
+    # Roughness (L2 norm)
+    roughness <- trapz(x_grid, gss_result^2)
+
+    # Step 2: Parallel Leave-One-Out Cross-Validation
+    leave_one_out_densities <- foreach::foreach(i = seq_along(sample), .combine = c, .packages = "gss") %dopar% {
+      
+      # Remove only the i-th occurrence
+      sample_wo_i <- sample[-i]
+      
+      # Ensure the sample is still valid before calling ssden()
+      if (length(sample_wo_i) > 0) {
+          gss_model_wo_i <- ssden(~ sample_wo_i, nbasis = nbasis)
+          gss_result_wo_i <- dssden(gss_model_wo_i, sample[i])
+          return(gss_result_wo_i)
+      } else {
+          return(NA)  # Return NA if no valid density can be computed
+      }
+    }
+
+    # Step 3: Cross-validation error calculation
+    cross_product_sum <- sum(leave_one_out_densities, na.rm = TRUE)
+    cv_error <- roughness - (2 / length(sample)) * cross_product_sum
+
+    # Store result
+    results <- rbind(results, data.frame(nbasis = nbasis, cv_error = cv_error))
+  }
+
+  # Stop the cluster
+  parallel::stopCluster(cl)
+  
+  # Find the best combination of nbasis
+  best_result <- results[which.min(results$cv_error), ]
+  
+  # End timer
+  end_time <- Sys.time()
+  
+  # Compute total computation time
+  total_time <- end_time - start_time
+  
+  # Return results with computation time
+  return(list(best_nbasis = best_result$nbasis, 
+              min_cv_error = best_result$cv_error, 
+              total_time = total_time))
+}
+
+```
+
+### Plotting the best estimator
+
+```{r, warning=FALSE}
+
+nbasis_grid <- 10*c(1:30)
+
+# Claw_density
+#gss_cv_result_claw <- with_progress(gss_cv_parallel(df_samples$claw$value,x_grid,nbasis_grid))
+
+# Claw_density
+gss_cv_result_claw <- gss_cv_parallel(df_samples$claw$value,df_samples$claw$value,nbasis_grid)
+
+# gss best estimation
+samples <- df_samples$claw$value
+gss_best_claw <- dssden(ssden(~samples,nbasis = gss_cv_result_claw$best_nbasis),samples)
+
+# Convert gss result to a data frame for ggplot2
+gss_df_best_claw <- data.frame(x = df_samples$claw$value, density = gss_best_claw)
+
+# Plot gss density estimate
+ggplot(gss_df_best_claw, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = paste0("gss Density Estimate: CV time = ",round(gss_cv_result_claw$total_time,2),"hr,"," nbasis = ", gss_cv_result_claw$best_nbasis), x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+gss_cv_result_bimodal <- gss_cv_parallel(df_samples$bimodal$value,df_samples$bimodal$value,nbasis_grid)
+
+# gss best estimation
+samples <- df_samples$bimodal$value
+gss_best_bimodal <- dssden(ssden(~samples,nbasis = gss_cv_result_bimodal$best_nbasis),samples)
+
+# Convert gss result to a data frame for ggplot2
+gss_df_best_bimodal <- data.frame(x = df_samples$bimodal$value, density = gss_best_bimodal)
+
+# Plot gss density estimate
+ggplot(gss_df_best_bimodal, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = paste0("gss Density Estimate: CV time = ",round(gss_cv_result_bimodal$total_time,2),"hr,"," nbasis = ", gss_cv_result_bimodal$best_nbasis), x = "Value", y = "Density") +
+  theme_bw()
+
+```
+
+### Print the lowest cross-validation error
+
+```{r}
+print(paste("gss claw best cv error = ",gss_cv_result_claw$min_cv_error))
+print(paste("gss bimodal best cv error = ",gss_cv_result_bimodal$min_cv_error))
+```
+## 3. KernSmooth (Kernel Smoothing)
+
+Functions for Kernel Smoothing Supporting Wand & Jones(1995). 
+The `bkde` function (Wand & Ripley, 2010) computes binned kernel density estimates 
+using linear binning (Wand, 1994). Unlike regular binning, linear binning 
+distributes mass proportionally between adjacent grid points. Density estimation
+is performed using weighted bin counts instead of individual data points. Users 
+can select from five kernels—`normal`, `box`(rectangular box), `Epanechnikov`(centred beta(2,2)),
+`biweight`(centred beta(3,3)), and 
+`triweight`(centred beta(4,4)). The default is a bandwidth computed from the variance of samples. 
+The bandwidth is the "oversmoothed bandwidth selector" (Wand & Jones, 1995, p. 61). 
+Output consists of density values at gridsize evenly spaced points over range.x.
+
+The `bkde2D` function extends this to two-dimensional density estimation, while bkfe computes kernel functionals, integrating the density estimate with its derivative of order drv. The locpoly function performs local polynomial regression for non-parametric estimation of $\mathbb{E}(Y|X)$.
+
+Since the evaluation of the density at specific points is not possible the cross product 
+sum is not achievable, hopefully the package has two direct methods of bandwidth selection.
+
+A binned kernel density estimate (BKDE) is a computationally efficient way to approximate kernel density estimation (KDE) by first binning the data into a histogram-like structure before applying the kernel smoothing.
+The faster computation comes at the cost of precision, making this approach less accurate compared to the standard KDE. Thus, we already know that the precision will be worse than standard kde. So we do not try to *approximate* the density at given sample points which is required for calculation of  the cross product sum. Another idea was to define each sample point as min (or max) of 
+`range.x` but uisng this approach we find inconsistency between the estimated density for the min of the `range.x`. We conclude that it is not possible to compute the exact cross-product sum, and since the precision would be lower than that of standard KDE, we do not calculate the cross-validation error for this package. Additionally, Jones, Marron, and Sheather (1996) and Park and Marron (1992) discuss the benefits of increasing the number of functional estimation levels in the plug-in rule for improving the asymptotic rate of convergence, up to a certain point. We consider the optimal level to be 2, i.e., `level = 2`.
+
+
+
+```{r}
+# Compute kernel density estimate on a fine grid
+
+bandwidth_kde <- dpik(df_samples$claw$value, level = 2L)
+
+density_est_bkde <- bkde(x = df_samples$claw$value,bandwidth = bandwidth_kde) 
+
+bandwidth_hist <- dpih(df_samples$claw$value, level = 2L)
+
+density_est_bhist <- bkde(x = df_samples$claw$value,bandwidth = bandwidth_hist) 
+
+# Convert KernSmooth result to a data frame for ggplot2
+KernSmooth_df_bkde_claw <- data.frame(x = density_est_bkde$x, 
+                                      density_bkde = density_est_bkde$y)
+
+KernSmooth_df_bhist_claw <- data.frame(x = density_est_bhist$x, 
+                                      density_bhist = density_est_bhist$y)
+
+# Plot KernSmooth density estimate
+ggplot() +
+  geom_line(data = KernSmooth_df_bkde_claw, aes(x = x, y = density_bkde), colour = "blue", linewidth = 1) +
+  geom_line(data = KernSmooth_df_bhist_claw, aes(x = x, y = density_bhist), colour = "green", linewidth = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "KernSmooth Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+
+# Compute kernel density estimate on a fine grid
+
+bandwidth_kde <- dpik(df_samples$bimodal$value, level = 2L)
+
+density_est_bkde <- bkde(x = df_samples$bimodal$value,bandwidth = bandwidth_kde) 
+
+bandwidth_hist <- dpih(df_samples$bimodal$value, level = 2L)
+
+density_est_bhist <- bkde(x = df_samples$bimodal$value,bandwidth = bandwidth_hist) 
+
+# Convert KernSmooth result to a data frame for ggplot2
+KernSmooth_df_bkde_bimodal <- data.frame(x = density_est_bkde$x, 
+                                      density_bkde = density_est_bkde$y)
+
+KernSmooth_df_bhist_bimodal <- data.frame(x = density_est_bhist$x, 
+                                      density_bhist = density_est_bhist$y)
+
+# Plot KernSmooth density estimate
+ggplot() +
+  geom_line(data = KernSmooth_df_bkde_bimodal, aes(x = x, y = density_bkde), colour = "blue", linewidth = 1) +
+  geom_line(data = KernSmooth_df_bhist_bimodal, aes(x = x, y = density_bhist), colour = "green", linewidth = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "KernSmooth Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+
+```
+## 4. ks (Kernel Smoothing)
+
+The ks package (Duong, 2011) can perform density estimation computation of kernel smoothing for data from 1 to 6 dimensions, using **normal (Gaussian) kernels**.
+
+### Main Function Types
+
+#### 1. Kernel DEnsity Estimators and Tests (`k*`)
+- **Density Estimation:** `kde`
+- **Support Estimation:** `ksupp`
+- **Truncated Density Estimation:** `kde.truncate`
+- **Boundary Density Estimation:** `kde.boundary`
+- **Variable Kernel Density Estimation:** `kde.balloon`, `kde.sp`
+- **Density Derivative Estimation:** `kdde`
+- **Curvature Estimation:** `kcurv`
+- **Discriminant Analysis:** `kda`
+- **Functional Estimation:** `kfe`
+- **2-Sample Testing:** `kde.test`
+- **Local 2-Sample Testing:** `kde.local.test`
+- **Cumulative Distribution Estimation:** `kcde`
+
+Note that `kde.balloon` and `kde.sp` are variable kernel density estimate **only** 
+for 2-D data. Therefore this package do not introduce any adaptive kernel 
+density estimation for 1-D. 
+
+#### 2. Bandwidth Selectors
+- **1-D Data:** Functions start with `h*` (e.g., `hpi`, `hlscv`, `hscv`, `hns`).
+- **Multivariate Data (2-D to 6-D):** Functions start with `H*` (e.g., `Hpi`, `Hlscv`, `Hscv`, `Hns`).
+
+##### Methods Include:
+- **Plug-in:** `hpi`, `Hpi`
+- **Cross-Validation:** least squares (or unbiased) cross validation `hlscv`, smoothed cross validation (SCV) `Hscv`, biased cross validation (BCV) `Hbcv`.
+- **Normal Scale:** `hns`, `Hns`
+- **Specialized Selectors:** For derivatives and functionals (e.g., `hpi.kfe`, `Hpi.kcde`).
+
+#### 3. Visualization (`plot.*`)
+Functions are provided for plotting kernel estimates across different estimators, such as `plot.kde`, `plot.kdde`, `plot.kcde`, and `plot.kda`.
+
+#### Key Notes
+- The used Kernel is Normal (Gaussian) kernel.
+- Bandwidth Selection Crucial for estimator performance.
+- Functions support data from 1 to 6 dimensions.
+
+This package is versatile for kernel-based statistical analysis, 
+covering density estimation, hypothesis testing, and more.
+
+### Find CV error for the selected bandwidth:
+
+`hpi(,deriv.order=0)` is the univariate plug-in selector of Wand & Jones (1994), 
+i.e. it is exactly the same as `KernSmooth`'s `dpik`. 
+`hlscv` is the univariate LSCV selector of Bowman (1984) and Rudemo (1982).
+`hscv` is the univariate SCV selector of Jones, Marron & Park (1991).
+For `hns` see Chacon J.E., Duong, T. & Wand, M.P. (2011). Asymptotics for general multivariate kernel density derivative estimators.
+
+```{r}
+cv_error_calculator_ks <- function(sample, x_grid, bandwidth.type = "hpi") {
+  library(ks)
+  library(parallel)
+  library(doParallel)
+  library(foreach)
+  library(pracma)  # For trapz()
+
+  # Bandwidth selection
+  bandwidth <- switch(bandwidth.type,
+                      hlscv = hlscv(sample),
+                      hscv = hscv(sample, nstage = 2),
+                      hns = hns(sample),
+                      hpi(sample, nstage = 2))  # Default case
+
+  # Density estimation and roughness calculation
+  ks_on_grid <- kde(x = sample, h = bandwidth, eval.points = x_grid)
+  roughness <- trapz(x_grid, (ks_on_grid$estimate)^2)
+
+  # Parallel Leave-One-Out Cross-Validation
+  n_cores <- max(1, detectCores() - 1)  # Ensure at least one core is used
+  cl <- makeCluster(n_cores)
+  registerDoParallel(cl)
+
+  leave_one_out_densities <- foreach(i = seq_along(sample), .combine = c, .packages = "ks") %dopar% {
+    sample_wo_i <- sample[-i]
+    if (length(sample_wo_i) > 0) {
+      bandwidth_wo_i <- switch(bandwidth.type,
+                               hlscv = hlscv(sample_wo_i),
+                               hscv = hscv(sample_wo_i, nstage = 2),
+                               hns = hns(sample_wo_i),
+                               hpi(sample_wo_i, nstage = 2))  # Match bandwidth type
+      kde(sample_wo_i, h = bandwidth_wo_i, eval.points = sample[i])$estimate
+    } else {
+      NA  # Edge case handling
+    }
+  }
+
+  stopCluster(cl)  # Clean up
+
+  # Cross-validation error calculation
+  cv_error <- roughness - (2 / length(sample)) * sum(leave_one_out_densities, na.rm = TRUE)
+
+  return(cv_error)
+}
+
+# Function to compute CV errors for multiple datasets and bandwidths
+compute_cv_errors_ks <- function(datasets, bandwidth_types, x_grid) {
+  results <- data.frame()
+
+  for (data_name in names(datasets)) {
+    sample <- datasets[[data_name]]
+
+    for (bw_type in bandwidth_types) {
+      cv_error <- cv_error_calculator_ks(sample, x_grid, bandwidth.type = bw_type)
+
+      results <- rbind(results, data.frame(
+        Dataset = data_name,
+        Bandwidth_Type = bw_type,
+        CV_Error = cv_error
+      ))
+    }
+  }
+
+  return(results)
+}
+```
+
+
+
+```{r}
+# Compute CV errors
+cv_results <- compute_cv_errors_ks(
+  datasets = list(bimodal = df_samples$bimodal$value, claw = df_samples$claw$value),
+  bandwidth_types = c("hpi", "hlscv", "hscv", "hns"),
+  x_grid = x_grid
+)
+
+cv_results
+```
+### Plot the best results
+
+```{r}
+#Claw
+sample <- df_samples$claw$value
+ks <- kde(x = sample, h = hpi(sample), eval.points = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+ks_df <- data.frame(x = ks$eval.points, density = ks$estimate)
+
+# Plot ks density estimate
+ggplot(ks_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "ks Density Estimate - Bandwidth Method: PI", x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+sample <- df_samples$bimodal$value
+ks <- kde(x = sample, h = hpi(sample), eval.points = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+ks_df <- data.frame(x = ks$eval.points, density = ks$estimate)
+
+# Plot ks density estimate
+ggplot(ks_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "ks  Density Estimate - Bandwidth Method: PI", x = "Value", y = "Density") +
+  theme_bw()
+
+
+#Claw
+sample <- df_samples$claw$value
+ks <- kde(x = sample, h = hlscv(sample), eval.points = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+ks_df <- data.frame(x = ks$eval.points, density = ks$estimate)
+
+# Plot ks density estimate
+ggplot(ks_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "ks Density Estimate - Bandwidth Method: LSCV", x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+sample <- df_samples$bimodal$value
+ks <- kde(x = sample, h = hlscv(sample), eval.points = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+ks_df <- data.frame(x = ks$eval.points, density = ks$estimate)
+
+# Plot ks density estimate
+ggplot(ks_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "ks  Density Estimate - Bandwidth Method: LSCV", x = "Value", y = "Density") +
+  theme_bw()
+#Claw
+sample <- df_samples$claw$value
+ks <- kde(x = sample, h = hscv(sample), eval.points = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+ks_df <- data.frame(x = ks$eval.points, density = ks$estimate)
+
+# Plot ks density estimate
+ggplot(ks_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "ks Density Estimate - Bandwidth Method: SCV", x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+sample <- df_samples$bimodal$value
+ks <- kde(x = sample, h = hscv(sample), eval.points = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+ks_df <- data.frame(x = ks$eval.points, density = ks$estimate)
+
+# Plot ks density estimate
+ggplot(ks_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "ks  Density Estimate - Bandwidth Method: SCV", x = "Value", y = "Density") +
+  theme_bw()
+
+#Claw
+sample <- df_samples$claw$value
+ks <- kde(x = sample, h = hns(sample), eval.points = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+ks_df <- data.frame(x = ks$eval.points, density = ks$estimate)
+
+# Plot ks density estimate
+ggplot(ks_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "ks Density Estimate - Bandwidth Method: HNS", x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+sample <- df_samples$bimodal$value
+ks <- kde(x = sample, h = hns(sample), eval.points = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+ks_df <- data.frame(x = ks$eval.points, density = ks$estimate)
+
+# Plot ks density estimate
+ggplot(ks_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "ks  Density Estimate - Bandwidth Method: HNS", x = "Value", y = "Density") +
+  theme_bw()
+
+```
+
+## 5. locfit: local likelihood approach
+
+The `locfit` package (Loader, 2010) utilizes a local likelihood approach to density estimation. The locfit function has a flexible formula interface, with `density.lf` function performing 1d
+density estimation. The function returns an object of class `locfit`, and density estimation
+at arbitrary specific grid can be produced with the predict method.
+
+### Find CV error:
+
+```{r, warning=FALSE}
+
+cv_error_calculator_locfit <- function(sample, x_grid) {
+  library(locfit)
+  library(parallel)
+  library(doParallel)
+  library(foreach)
+  library(pracma)  # For trapz()
+
+  # Density estimation and roughness calculation
+  
+  locfit_on_grid <- density.lf(x = sample, ev = x_grid)
+  roughness <- trapz(x_grid, (locfit_on_grid$y)^2)
+
+  # Parallel Leave-One-Out Cross-Validation
+  n_cores <- max(1, detectCores() - 1)  # Ensure at least one core is used
+  cl <- makeCluster(n_cores)
+  registerDoParallel(cl)
+
+  leave_one_out_densities <- foreach(i = seq_along(sample), .combine = c, .packages = "locfit") %dopar% {
+    sample_wo_i <- sample[-i]
+    if (length(sample_wo_i) > 0) {
+      density.lf(sample_wo_i, ev = sample[i])$y
+    } else {
+      NA  # Edge case handling
+    }
+  }
+
+  stopCluster(cl)  # Clean up
+
+  # Cross-validation error calculation
+  cv_error <- roughness - (2 / length(sample)) * sum(leave_one_out_densities, na.rm = TRUE)
+
+  return(cv_error)
+}
+
+
+# Function to compute CV errors for multiple datasets 
+compute_cv_errors_localfit <- function(datasets, x_grid) {
+  results <- data.frame()
+
+  for (data_name in names(datasets)) {
+    sample <- datasets[[data_name]]
+
+    cv_error <- cv_error_calculator_locfit(sample, x_grid)
+
+    results <- rbind(results, data.frame(
+      Dataset = data_name,
+      CV_Error = cv_error
+    ))
+    
+  }
+
+  return(results)
+}
+```
+
+```{r, warning=FALSE}
+# Compute CV errors
+cv_results <- compute_cv_errors_localfit(
+  datasets = list(bimodal = df_samples$bimodal$value, claw = df_samples$claw$value),
+  x_grid = x_grid
+)
+
+cv_results
+```
+### Plot the best results
+
+```{r, warning=FALSE}
+#Claw
+sample <- df_samples$claw$value
+lf <- density.lf(x = sample, ev = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+lf_df <- data.frame(x = lf$x, density = lf$y)
+
+# Plot Localfit density estimate
+ggplot(lf_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Local Fit Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+sample <- df_samples$bimodal$value
+lf <- density.lf(x = sample, ev = x_grid)
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+lf_df <- data.frame(x = lf$x, density = lf$y)
+
+# Plot Localfit density estimate
+ggplot(lf_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Local Fit Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+```
+
+## 6. logspline: 
+
+Fits a `logspline` density using splines to approximate the log-density, based on the knot addition and deletion algorithm of Stone, Hansen, Kooperberg, and Truong (1997). The earlier Kooperberg and Stone (1992) algorithm is available via oldlogspline.
+
+The function returns an object of class `logspline`, and predicted densities at arbitrary locations can be extracted with `dlogspline`.
+
+The method automatically selects `nknots`, so tuning the number of knots (spline) is not required.
+
+### Find CV error:
+
+```{r, warning=FALSE}
+cv_error_calculator_logspline <- function(sample, x_grid) {
+  library(logspline)
+  library(parallel)
+  library(doParallel)
+  library(foreach)
+  library(pracma)  # For trapz()
+
+  # Density estimation and roughness calculation
+  logspline_model <- logspline(sample)
+  logspline_on_grid <- dlogspline(x_grid, fit = logspline_model)
+  
+  roughness <- trapz(x_grid, (logspline_on_grid)^2)
+
+  # Parallel Leave-One-Out Cross-Validation
+  n_cores <- max(1, detectCores() - 1)  # Ensure at least one core is used
+  cl <- makeCluster(n_cores)
+  registerDoParallel(cl)
+
+  leave_one_out_densities <- foreach(i = seq_along(sample), .combine = c, .packages = "logspline") %dopar% {
+    sample_wo_i <- sample[-i]
+    if (length(sample_wo_i) > 0) {
+      dlogspline(sample[i], fit = logspline(sample[-i]))
+    } else {
+      NA  # Edge case handling
+    }
+  }
+
+  stopCluster(cl)  # Clean up
+
+  # Cross-validation error calculation
+  cv_error <- roughness - (2 / length(sample)) * sum(leave_one_out_densities, na.rm = TRUE)
+
+  return(cv_error)
+}
+
+
+# Function to compute CV errors for multiple datasets 
+compute_cv_errors_logspline <- function(datasets, x_grid) {
+  results <- data.frame()
+
+  for (data_name in names(datasets)) {
+    sample <- datasets[[data_name]]
+
+    cv_error <- cv_error_calculator_logspline(sample, x_grid)
+
+    results <- rbind(results, data.frame(
+      Dataset = data_name,
+      CV_Error = cv_error
+    ))
+    
+  }
+
+  return(results)
+}
+
+```
+
+```{r, warning=FALSE}
+# Compute CV errors
+cv_results <- compute_cv_errors_logspline(
+  datasets = list(bimodal = df_samples$bimodal$value, claw = df_samples$claw$value),
+  x_grid = x_grid
+)
+
+cv_results
+```
+### Plot the best results
+
+```{r, warning=FALSE}
+#Claw
+sample <- df_samples$claw$value
+logspline <- dlogspline(x_grid, fit = logspline(sample))
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+logspline_df <- data.frame(x = x_grid, density = logspline)
+
+# Plot logspline density estimate
+ggplot(logspline_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Logspline Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+sample <- df_samples$bimodal$value
+logspline <- dlogspline(x_grid, fit = logspline(sample))
+# Convert ks.hlscv (the best) result to a data frame for ggplot2
+logspline_df <- data.frame(x = x_grid, density = logspline)
+
+# Plot logspline density estimate
+ggplot(logspline_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Logspline Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+```
+## 7. np: nonparametric kernel method
+
+The `np` package in R offers nonparametric and semiparametric kernel methods for mixed data types, including continuous, nominal (unordered), and ordinal (ordered) categorical variables. Key features include:
+
+- **Bandwidth Selection:** Central to the package, with automatic selection if not explicitly provided. Users can create bandwidth objects to manage kernel functions, data types, and avoid redundancy.
+- **Estimation Methods:** Includes density estimation, regression, mode, quantile estimators, and semiparametric models like single index and partially linear models.
+- **Kernel Functions:** Implements generalized product kernels for mixed data, with support for Gaussian, Epanechnikov, uniform kernels, and more for discrete data.
+- **Efficiency:** Core functions are written in C for speed, with options for parallel computing using Rmpi for large datasets.
+
+`npudens` computes kernel unconditional density estimates on evaluation data `edat`, given a set of training data and a bandwidth specification (a bandwidth object or a bandwidth vector, bandwidth type, and kernel type) using the method of Li and Racine (2003).
+
+### Find CV error:
+
+```{r, warning=FALSE}
+cv_error_calculator_np <- function(sample, x_grid) {
+  library(np)
+  library(parallel)
+  library(doParallel)
+  library(foreach)
+  library(pracma)  # For trapz()
+
+  # Density estimation and roughness calculation
+  np_on_grid <- npudens(~sample,  edat = x_grid)
+  
+  roughness <- trapz(x_grid, (np_on_grid$dens)^2)
+
+  # Parallel Leave-One-Out Cross-Validation
+  n_cores <- max(1, detectCores() - 1)  # Ensure at least one core is used
+  cl <- makeCluster(n_cores)
+  registerDoParallel(cl)
+
+  leave_one_out_densities <- foreach(i = seq_along(sample), .combine = c, .packages = "np") %dopar% {
+    sample_wo_i <- sample[-i]
+    if (length(sample_wo_i) > 0) {
+      npudens(~sample[-i],  edat = sample[i])$dens
+    } else {
+      NA  # Edge case handling
+    }
+  }
+
+  stopCluster(cl)  # Clean up
+
+  # Cross-validation error calculation
+  cv_error <- roughness - (2 / length(sample)) * sum(leave_one_out_densities, na.rm = TRUE)
+
+  return(cv_error)
+}
+
+
+# Function to compute CV errors for multiple datasets 
+compute_cv_errors_np <- function(datasets, x_grid) {
+  results <- data.frame()
+
+  for (data_name in names(datasets)) {
+    sample <- datasets[[data_name]]
+
+    cv_error <- cv_error_calculator_np(sample, x_grid)
+
+    results <- rbind(results, data.frame(
+      Dataset = data_name,
+      CV_Error = cv_error
+    ))
+    
+  }
+
+  return(results)
+}
+
+```
+
+```{r, warning=FALSE}
+# Compute CV errors
+cv_results <- compute_cv_errors_np(
+  datasets = list(bimodal = df_samples$bimodal$value, claw = df_samples$claw$value),
+  x_grid = x_grid
+)
+
+cv_results
+```
+### Plot the best results
+
+```{r, warning=FALSE}
+#Claw
+sample <- df_samples$claw$value
+np <- npudens(~sample,  edat = x_grid)
+# Convert np result to a data frame for ggplot2
+np_df <- data.frame(x = x_grid, density = np$dens)
+
+# Plot logspline density estimate
+ggplot(np_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "np Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+sample <- df_samples$bimodal$value
+np <- npudens(~sample,  edat = x_grid)
+# Convert np result to a data frame for ggplot2
+np_df <- data.frame(x = x_grid, density = np$dens)
+
+# Plot logspline density estimate
+ggplot(np_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "np Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+```
+
+## 8. plogdensity: plug-in density estimation via global bandwidth
+This package’s sole function, `plugin.density`, uses the iterative plug-in approach to
+select bandwidth in kernel density estimation Gasser et al. (1991) and Engel, Herrmann and Gasser (1994). Output is a grid of
+estimated densities at `nout` evenly spaced points, or, if specified, locations `xout`.
+
+### Find CV error:
+
+```{r, warning=FALSE}
+cv_error_calculator_pi <- function(sample, x_grid) {
+  library(plugdensity)
+  library(parallel)
+  library(doParallel)
+  library(foreach)
+  library(pracma)  # For trapz()
+
+  # Density estimation and roughness calculation
+  pi_on_grid <- plugin.density(sample,  xout = x_grid)
+  
+  roughness <- trapz(x_grid, (pi_on_grid$y)^2)
+
+  # Parallel Leave-One-Out Cross-Validation
+  n_cores <- max(1, detectCores() - 1)  # Ensure at least one core is used
+  cl <- makeCluster(n_cores)
+  registerDoParallel(cl)
+
+  leave_one_out_densities <- foreach(i = seq_along(sample), .combine = c, .packages = "plugdensity") %dopar% {
+    sample_wo_i <- sample[-i]
+    if (length(sample_wo_i) > 0) {
+      plugin.density(sample[-i],  xout = sample[i])$y
+    } else {
+      NA  # Edge case handling
+    }
+  }
+
+  stopCluster(cl)  # Clean up
+
+  # Cross-validation error calculation
+  cv_error <- roughness - (2 / length(sample)) * sum(leave_one_out_densities, na.rm = TRUE)
+
+  return(cv_error)
+}
+
+
+# Function to compute CV errors for multiple datasets 
+compute_cv_errors_pi <- function(datasets, x_grid) {
+  results <- data.frame()
+
+  for (data_name in names(datasets)) {
+    sample <- datasets[[data_name]]
+
+    cv_error <- cv_error_calculator_pi(sample, x_grid)
+
+    results <- rbind(results, data.frame(
+      Dataset = data_name,
+      CV_Error = cv_error
+    ))
+    
+  }
+
+  return(results)
+}
+
+```
+
+```{r, warning=FALSE}
+# Compute CV errors
+cv_results <- compute_cv_errors_pi(
+  datasets = list(bimodal = df_samples$bimodal$value, claw = df_samples$claw$value),
+  x_grid = x_grid
+)
+
+cv_results
+```
+### Plot the best results
+
+```{r, warning=FALSE}
+#Claw
+sample <- df_samples$claw$value
+pi <- plugin.density(sample,  xout = x_grid)
+# Convert np result to a data frame for ggplot2
+pi_df <- data.frame(x = x_grid, density =pi$y)
+
+# Plot logspline density estimate
+ggplot(pi_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Plug-in Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+sample <- df_samples$bimodal$value
+pi <- plugin.density(sample,  xout = x_grid)
+# Convert np result to a data frame for ggplot2
+pi_df <- data.frame(x = x_grid, density = pi$y)
+
+# Plot logspline density estimate
+ggplot(pi_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Plug-in Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+```
+## 9. sm package:
+
+The `sm` package (Bowman and Azzalini, 2010, 1997) can perform kernel density estimation from 1d to 3d. The function `sm.density` takes input x, bandwidths h, and
+frequency weights `h.weights`. If no bandwidth is specified, h.select uses a normal
+optimal smoothing estimate. Output is predicted density, with standard error, at
+`eval.points` locations. The default graphical output can be suppressed with display
+`= "none"`.
+
+### Find CV error:
+
+```{r, warning=FALSE}
+cv_error_calculator_sm <- function(sample, x_grid) {
+  library(sm)
+  library(parallel)
+  library(doParallel)
+  library(foreach)
+  library(pracma)  # For trapz()
+
+  # Density estimation and roughness calculation
+  sm_on_grid <- sm.density(sample, display = "none", eval.points = x_grid) 
+  
+  roughness <- trapz(x_grid, (sm_on_grid$estimate)^2)
+
+  # Parallel Leave-One-Out Cross-Validation
+  n_cores <- max(1, detectCores() - 1)  # Ensure at least one core is used
+  cl <- makeCluster(n_cores)
+  registerDoParallel(cl)
+
+  leave_one_out_densities <- foreach(i = seq_along(sample), .combine = c, .packages = "sm") %dopar% {
+    sample_wo_i <- sample[-i]
+    if (length(sample_wo_i) > 0) {
+      sm.density(sample[-i],  display = "none", eval.points= sample[i])$estimate
+    } else {
+      NA  # Edge case handling
+    }
+  }
+
+  stopCluster(cl)  # Clean up
+
+  # Cross-validation error calculation
+  cv_error <- roughness - (2 / length(sample)) * sum(leave_one_out_densities, na.rm = TRUE)
+
+  return(cv_error)
+}
+
+
+# Function to compute CV errors for multiple datasets 
+compute_cv_errors_sm <- function(datasets, x_grid) {
+  results <- data.frame()
+
+  for (data_name in names(datasets)) {
+    sample <- datasets[[data_name]]
+
+    cv_error <- cv_error_calculator_sm(sample, x_grid)
+
+    results <- rbind(results, data.frame(
+      Dataset = data_name,
+      CV_Error = cv_error
+    ))
+    
+  }
+
+  return(results)
+}
+
+```
+
+```{r, warning=FALSE}
+# Compute CV errors
+cv_results <- compute_cv_errors_sm(
+  datasets = list(bimodal = df_samples$bimodal$value, claw = df_samples$claw$value),
+  x_grid = x_grid
+)
+
+cv_results
+```
+### Plot the best results
+
+```{r, warning=FALSE}
+#Claw
+sample <- df_samples$claw$value
+sm <-  sm.density(sample, display = "none", eval.points = x_grid)
+# Convert np result to a data frame for ggplot2
+sm_df <- data.frame(x = x_grid, density= sm$estimate)
+
+# Plot logspline density estimate
+ggplot(sm_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Plug-in Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal
+sample <- df_samples$bimodal$value
+sm <- sm.density(sample, display = "none", eval.points = x_grid)
+# Convert np result to a data frame for ggplot2
+sm_df <- data.frame(x = x_grid, density = sm$estimate)
+
+# Plot logspline density estimate
+ggplot(sm_df, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Plug-in Density Estimate", x = "Value", y = "Density") +
+  theme_bw()
+```
+
+
+```{r}
+#packages <- c("ash", "gss", "KernSmooth", "ks", "locfit", "logspline", "MASS", "np", "pendensity", "plugdensity", "sm", "bayesm", "quantreg")
+
+
+# 10. MASS
+#mass_result <- hist(x, breaks = 4000, plot = FALSE)
+
+
+# 14. stat (Kernel Density in Base R)
+#stat_result <- density(x, n = 4000)
+
+```
+
