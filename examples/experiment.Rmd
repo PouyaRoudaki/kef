@@ -23,7 +23,7 @@ packages <- c("ash", "gss", "KernSmooth", "ks", "locfit", "logspline", "MASS", "
 lapply(packages, require, character.only = TRUE)
 
 library("ggplot2")
-library("progressr")
+
 ```
 
 ## Comparison via L2 Error Given True Density

@@ -2,6 +2,7 @@ library(quantreg)
 library(ggplot2)
 library(dplyr)
 library(MASS)
+library(BB)
 # Example usage
 
 set.seed(7)
@@ -13,8 +14,8 @@ mixture_weights <- c(1/2,1/6,1/6,1/6)
 means <- c(0,-1, 0,1)
 sds <- c(1,0.1,0.1,0.1)
 
-sampled_x <- sort(normal_mixture(100, means, sds, mixture_weights))
-x_grid <-  seq(-3.1,3.1,length.out = 400)
+sampled_x <- sort(normal_mixture(10000, means, sds, mixture_weights))
+x_grid <-  seq(-3.1,3.1,length.out = 40000)
 # centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
 #centering_grid <- runif(min = -3.1,max = 3.1,n = 4000)
 
@@ -76,7 +77,7 @@ tau_hat <- 0.05
 
 
 
-weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
+weights_hat_wo_grid <- get_weights_wo_grid_BBsolve(lambda_hat =lambda_hat,
                                            tau_hat = tau_hat,
                                    centered_kernel_mat_at_sampled,
                                    sampled_x = sampled_x,
