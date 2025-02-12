@@ -18,15 +18,15 @@ x_grid <-  seq(-3.1,3.1,length.out = 400)
 # centering_grid <- sampled_x This doesn't work because using this centering grid the kernel mean embedding is zero.
 #centering_grid <- runif(min = -3.1,max = 3.1,n = 4000)
 
-centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sampled_x,
+centered_kernel_mat_at_sampled <- centered_kernel_matrix_parallel(first_vec_kernel = sampled_x,
                                                          second_vec_kernel = sampled_x,
                                                          centering_grid = x_grid,
                                                          hurst_coef = 0.5)
-centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sampled_x,
+centered_kernel_mat_at_grid <- centered_kernel_matrix_parallel(first_vec_kernel = sampled_x,
                                                          second_vec_kernel = x_grid,
                                                          centering_grid = x_grid,
                                                          hurst_coef = 0.5)
-centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_grid,
+centered_kernel_self_grid <- diag(centered_kernel_matrix_parallel(first_vec_kernel = x_grid,
                                                         second_vec_kernel = x_grid,
                                                         centering_grid = x_grid,
                                                         hurst_coef = 0.5))

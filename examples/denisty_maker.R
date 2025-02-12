@@ -10,7 +10,7 @@ fixed_u_vec <- seq(-3.1, 3.1,length.out = n_fixed_u)
 #x_grid <-  seq(-4,4,length.out =40)
 x_grid_cv <- seq(-3.1, 3.1,length.out = n_grid)
 
-w_u_vec <- sapply(fixed_u_vec,function(x){-0.2*exp(-(10^(-6))*abs(x)^40)*(3.1-abs(x)^1)^(0.01)*(sin((-abs(x)+pi/4)*(2*pi)))})
+w_u_vec <- sapply(fixed_u_vec,function(x){-0.2*exp(-(10^(-6))*abs(x)^40)*(3.1-abs(x)^1)^(0.01)*(sin((-abs(x)+(pi)/4)*(2*pi)))})
 w_u_df <- data.frame(x = fixed_u_vec, weights = w_u_vec)
 
 sigma_w <- sd(w_u_vec)

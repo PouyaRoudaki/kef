@@ -16,7 +16,7 @@ In this notebook, we compare the density estimation results of our `kef` approac
 `ASH` is changed to `ash`. Package `ftnonpar` was removed from the CRAN repository. Package `GenKern` was removed from the CRAN repository. Package `kerdiest` was removed from the CRAN repository. Package `delt` was removed from the CRAN repository. Package `ICE` was removed from the CRAN repository. Package `latticeDensity` was removed from the CRAN repository. Package `pencopula` was removed from the CRAN repository.
 
 ```{r, message=FALSE,echo=T,include=FALSE}
-packages <- c("ash", "gss", "KernSmooth", "ks", "locfit", "logspline", "MASS", "np", "pendensity", "plugdensity", "sm", "bayesm", "feature", "fdrtool", "hdrcde", "logcondens", "MKLE", "quantreg")
+packages <- c("ash", "gss", "KernSmooth", "ks", "locfit", "logspline", "MASS", "np", "pendensity", "plugdensity", "sm", "quantreg")
 
 
 #install.packages(packages, dependencies = TRUE)
@@ -38,7 +38,7 @@ library(ggplot2)
 set.seed(7)
 
 # Number of observations
-n <- 1000
+n <- 100
 x_grid <- seq(-3.5, 3.5, length.out = 4 * n)
 
 # Define mixture parameters
@@ -104,6 +104,21 @@ plot_histogram(df_samples$bimodal, true_densities$bimodal$grid, true_densities$b
 
 
 ```
+### R(f)
+
+```{r}
+
+roughness_bimodal <- trapz(true_densities$bimodal$grid$grid, (true_densities$bimodal$grid$true_pdf)^2)
+
+roughness_claw <- trapz(true_densities$claw$grid$grid, (true_densities$claw$grid$true_pdf)^2)
+
+
+
+print(paste("Roughness bimodal = ",roughness_bimodal))
+print(paste("Roughness claw = ",roughness_claw))
+```
+
+
 
 ## 1. ASH (Average Shifted Histogram)
 
@@ -195,7 +210,7 @@ ash_cv_parallel <- function(sample, x_grid, m_grid, nbin_grid) {
   end_time <- Sys.time()
   
   # Compute total computation time
-  total_time <- end_time - start_time
+  total_time <- difftime(end_time, start_time, units = "secs")
   
   # Return results with computation time
   return(list(best_nbin = best_result$nbin, best_m = best_result$m, 
@@ -250,8 +265,8 @@ ggplot(ash_df_best_bimodal, aes(x = x, y = density)) +
 ### Print the lowest cross-validation error
 
 ```{r}
-print(paste("ASH claw best cv error = ",ash_cv_result_claw$min_cv_error))
 print(paste("ASH bimodal best cv error = ",ash_cv_result_bimodal$min_cv_error))
+print(paste("ASH claw best cv error = ",ash_cv_result_claw$min_cv_error))
 ```
 ## 2. GSS (General Smoothing Splines)
 
@@ -294,7 +309,7 @@ gss_cv_parallel <- function(sample, x_grid, nbasis_grid) {
     roughness <- trapz(x_grid, gss_result^2)
 
     # Step 2: Parallel Leave-One-Out Cross-Validation
-    leave_one_out_densities <- foreach::foreach(i = seq_along(sample), .combine = c, .packages = "gss") %dopar% {
+    leave_one_out_densities <- foreach::foreach(i = seq_along(sample)[-c(1,length(sample))], .combine = c, .packages = "gss") %dopar% {
       
       # Remove only the i-th occurrence
       sample_wo_i <- sample[-i]
@@ -311,7 +326,7 @@ gss_cv_parallel <- function(sample, x_grid, nbasis_grid) {
 
     # Step 3: Cross-validation error calculation
     cross_product_sum <- sum(leave_one_out_densities, na.rm = TRUE)
-    cv_error <- roughness - (2 / length(sample)) * cross_product_sum
+    cv_error <- roughness - (2 / (length(sample)-2)) * cross_product_sum
 
     # Store result
     results <- rbind(results, data.frame(nbasis = nbasis, cv_error = cv_error))
@@ -327,7 +342,7 @@ gss_cv_parallel <- function(sample, x_grid, nbasis_grid) {
   end_time <- Sys.time()
   
   # Compute total computation time
-  total_time <- end_time - start_time
+  total_time <- difftime(end_time, start_time, units = "secs")
   
   # Return results with computation time
   return(list(best_nbasis = best_result$nbasis, 
@@ -341,10 +356,7 @@ gss_cv_parallel <- function(sample, x_grid, nbasis_grid) {
 
 ```{r, warning=FALSE}
 
-nbasis_grid <- 10*c(1:30)
-
-# Claw_density
-#gss_cv_result_claw <- with_progress(gss_cv_parallel(df_samples$claw$value,x_grid,nbasis_grid))
+nbasis_grid <- 10*c(1:10)
 
 # Claw_density
 gss_cv_result_claw <- gss_cv_parallel(df_samples$claw$value,df_samples$claw$value,nbasis_grid)
@@ -360,7 +372,7 @@ gss_df_best_claw <- data.frame(x = df_samples$claw$value, density = gss_best_cla
 ggplot(gss_df_best_claw, aes(x = x, y = density)) +
   geom_line(color = "blue", size = 1) +
   geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
-  labs(title = paste0("gss Density Estimate: CV time = ",round(gss_cv_result_claw$total_time,2),"hr,"," nbasis = ", gss_cv_result_claw$best_nbasis), x = "Value", y = "Density") +
+  labs(title = paste0("gss Density Estimate: CV time = ",round(gss_cv_result_claw$total_time,2),"s,"," nbasis = ", gss_cv_result_claw$best_nbasis), x = "Value", y = "Density") +
   theme_bw()
 
 # Bimodal
@@ -377,16 +389,18 @@ gss_df_best_bimodal <- data.frame(x = df_samples$bimodal$value, density = gss_be
 ggplot(gss_df_best_bimodal, aes(x = x, y = density)) +
   geom_line(color = "blue", size = 1) +
   geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
-  labs(title = paste0("gss Density Estimate: CV time = ",round(gss_cv_result_bimodal$total_time,2),"hr,"," nbasis = ", gss_cv_result_bimodal$best_nbasis), x = "Value", y = "Density") +
+  labs(title = paste0("gss Density Estimate: CV time = ",round(gss_cv_result_bimodal$total_time,2),"s,"," nbasis = ", gss_cv_result_bimodal$best_nbasis), x = "Value", y = "Density") +
   theme_bw()
 
 ```
 
 ### Print the lowest cross-validation error
 
+But this is not acceptable!
+
 ```{r}
-print(paste("gss claw best cv error = ",gss_cv_result_claw$min_cv_error))
 print(paste("gss bimodal best cv error = ",gss_cv_result_bimodal$min_cv_error))
+print(paste("gss claw best cv error = ",gss_cv_result_claw$min_cv_error))
 ```
 ## 3. KernSmooth (Kernel Smoothing)
 
@@ -599,7 +613,7 @@ cv_results
 ```
 ### Plot the best results
 
-```{r}
+```{r, warning=F}
 #Claw
 sample <- df_samples$claw$value
 ks <- kde(x = sample, h = hpi(sample), eval.points = x_grid)
@@ -1232,18 +1246,296 @@ ggplot(sm_df, aes(x = x, y = density)) +
   labs(title = "Plug-in Density Estimate", x = "Value", y = "Density") +
   theme_bw()
 ```
+## 10. quantreg: Univariate adaptive kernel density estimation in the Silverman. As used by Portnoy and Koenker(1989).
+
+**References:**
+
+Breiman, Meisel and Purcell, 1977.
+
+Abramson, 1982.
+
+Silverman, B. (1986) Density Estimation, pp 100–104.
+
+### Find the best hyperparameters using CV
+
 
 
 ```{r}
-#packages <- c("ash", "gss", "KernSmooth", "ks", "locfit", "logspline", "MASS", "np", "pendensity", "plugdensity", "sm", "bayesm", "quantreg")
+adaptive_cv_parallel <- function(sample, x_grid, alpha_grid, kappa_grid) {
+  
+  # Start timer
+  start_time <- Sys.time()
+  
+  # Initialize cluster
+  n_cores <- parallel::detectCores() - 1  # Use all available cores minus 1
+  cl <- parallel::makeCluster(n_cores)
+  doParallel::registerDoParallel(cl)
+  
+  # Parallel computation using foreach
+  results <- foreach::foreach(alpha = alpha_grid, .combine = rbind, .packages = c("quantreg", "pracma")) %:%
+    foreach::foreach(kappa = kappa_grid, .combine = rbind) %dopar% {
+      
+      # Step 1: Adaptive kernel density estimation
+      adaptive_result <- akj(sample, x_grid, alpha = alpha, kappa = kappa)
+      
+      # Roughness (L2 norm)
+      roughness <- pracma::trapz(x_grid, (adaptive_result$dens)^2)
+      
+      # Optimized Cross Product Term using proper indexing
+      leave_one_out_densities <- vapply(seq_along(sample), function(i) {
+        # Remove only the i-th occurrence, not all instances of sample[i]
+        sample_wo_i <- sample[-i]
+        
+        # Compute Adaptive kernel density estimation without the i-th sample point
+        adpative_result_wo_i <- akj(x = sample_wo_i, z = sample[i], alpha = alpha, kappa = kappa)
+        
+        # Extract density values
+        densities_wo_i <- adpative_result_wo_i$dens
+        
+        return(densities_wo_i)
+      }, numeric(1))  # Ensures output is numeric
+      
+      # Cross-validation error calculation
+      cross_product_sum <- sum(leave_one_out_densities, na.rm = TRUE)
+      cv_error <- roughness - (2 / length(sample)) * cross_product_sum
+      
+      # Return the result for this combination of m and nbin
+      return(data.frame(alpha = alpha, kappa = kappa, cv_error = cv_error))
+    }
+  
+  # Stop the cluster
+  parallel::stopCluster(cl)
+  
+  # Find the best combination of m and nbin
+  best_result <- results[which.min(results$cv_error), ]
+  
+  # End timer
+  end_time <- Sys.time()
+  
+  # Compute total computation time
+  total_time <- end_time - start_time
+  
+  # Return results with computation time
+  return(list(best_alpha = best_result$alpha, best_kappa = best_result$kappa, 
+              min_cv_error = best_result$cv_error ,total_time = total_time))
+}
 
 
-# 10. MASS
-#mass_result <- hist(x, breaks = 4000, plot = FALSE)
+```
+
+### Plotting the best estimator
+
+```{r, warning=FALSE}
+alpha_grid <- seq(from = 0.1, to = 1.5, by = 0.1)
+kappa_grid <- seq(from = 0.1, to = 1.5, by = 0.1)
+
+# Claw_density
+adaptive_cv_result_claw <- adaptive_cv_parallel(df_samples$claw$value,x_grid,alpha_grid,kappa_grid)
+
+# Adaptive best estimation
+adaptive_best_claw <- akj(x = df_samples$claw$value, z = x_grid, alpha = adaptive_cv_result_claw$best_alpha, kappa = adaptive_cv_result_claw$best_kappa)
+
+# Convert Adaptive result to a data frame for ggplot2
+adaptive_df_best_claw <- data.frame(x = x_grid, density = adaptive_best_claw$dens)
+
+# Plot Adaptive density estimate
+ggplot(adaptive_df_best_claw, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = paste0("Adaptive Kernel Density Estimate: CV time = ",round(adaptive_cv_result_claw$total_time,2),"s,"," alpha = ",adaptive_cv_result_claw$best_alpha, 
+                     ", kappa = ", adaptive_cv_result_claw$best_kappa), x = "Value", y = "Density") +
+  theme_bw()
+
+# Bimodal_density
+adaptive_cv_result_bimodal <- adaptive_cv_parallel(df_samples$bimodal$value,x_grid,alpha_grid,kappa_grid)
+
+# Adaptive best estimation
+adaptive_best_bimodal <- akj(x = df_samples$bimodal$value, z = x_grid, alpha = adaptive_cv_result_bimodal$best_alpha, kappa = adaptive_cv_result_bimodal$best_kappa)
+
+# Convert Adaptive result to a data frame for ggplot2
+adaptive_df_best_bimodal <- data.frame(x = x_grid, density = adaptive_best_bimodal$dens)
+
+# Plot Adaptive density estimate
+ggplot(adaptive_df_best_bimodal, aes(x = x, y = density)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = paste0("Adaptive Kernel Density Estimate: CV time = ",round(adaptive_cv_result_bimodal$total_time,2),"s,"," alpha = ", adaptive_cv_result_bimodal$best_alpha, 
+                     ", kappa = ", adaptive_cv_result_bimodal$best_kappa), x = "Value", y = "Density") +
+  theme_bw()
+
+```
 
 
+
+```{r}
+print(paste("Adaptive claw best cv error = ",adaptive_cv_result_claw$min_cv_error))
+print(paste("Adaptive bimodal best cv error = ",adaptive_cv_result_bimodal$min_cv_error))
+```
+
+
+```{r}
 # 14. stat (Kernel Density in Base R)
 #stat_result <- density(x, n = 4000)
 
 ```
 
+## 10. The kef approach:
+
+### Claw
+```{r}
+
+#claw
+sample <- df_samples$claw$value
+
+centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sample,
+                                                         second_vec_kernel = sample,
+                                                         centering_grid = x_grid,
+                                                         hurst_coef = 0.5)
+centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sample,
+                                                         second_vec_kernel = x_grid,
+                                                         centering_grid = x_grid,
+                                                         hurst_coef = 0.5)
+centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_grid,
+                                                        second_vec_kernel = x_grid,
+                                                        centering_grid = x_grid,
+                                                        hurst_coef = 0.5))
+
+
+lambda_hat <- 1
+tau_hat <- 1/1350
+
+
+weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
+                                           tau_hat = tau_hat,
+                                   centered_kernel_mat_at_sampled,
+                                   sampled_x = sample,
+                                   min_x = min(x_grid),
+                                   max_x = max(x_grid),
+                                   print_trace = T
+)
+
+
+
+# Convert the data to a data frame for use with ggplot2
+plot_data <- data.frame(sample = sample, weights_hat = as.vector(weights_hat_wo_grid))
+
+# Create the ggplot
+p <- ggplot(plot_data, aes(x = sample, y = weights_hat)) +
+  geom_point(color  = "black") +
+  geom_line(color = "blue") +
+  labs(x = "Sampled x",
+       y = "Weights Hat")+
+  ggtitle(paste('Weights Hat vs Sampled x for lambda_hat =',
+                format(lambda_hat,digits = 3,scientific = T),'and tau_hat =',format(tau_hat,digits = 3,scientific = T))) +
+  theme_bw()
+
+print(p)
+```
+```{r}
+probs <- get_dens_or_prob(centered_kernel_mat_at_sampled,
+                          centered_kernel_mat_at_grid,
+                          centered_kernel_self_grid,
+                                  sampled_x,x_grid,
+                   lambda_hat, as.vector(weights_hat_wo_grid),
+                   type_of_p_is_prob = FALSE,
+                   type_of_q_is_prob = FALSE,
+                   method_of_p_calculation = "ordinary")
+
+
+
+
+
+#probs <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
+#                          -3.1,3.1,
+#                          sampled_x,
+#                          lambda_hat, as.vector(weights_hat_wo_grid))
+
+
+kef_df <- data.frame(grid = x_grid, kef_pdf = probs$grid_x)
+#kef_df <- data.frame(grid = sampled_x, kef_pdf = probs)
+```
+
+
+```{r}
+# Plot Adaptive density estimate
+ggplot(kef_df, aes(x = grid, y = kef_pdf)) +
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$claw$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Adaptive Kernel Density Estimate:", x = "Value", y = "Density") +
+  theme_bw()
+```
+
+### Bimodal
+```{r}
+
+#Bimodal
+sample <- df_samples$bimoda$value
+
+centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sample,
+                                                         second_vec_kernel = sample,
+                                                         centering_grid = x_grid,
+                                                         hurst_coef = 0.5)
+centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sample,
+                                                         second_vec_kernel = x_grid,
+                                                         centering_grid = x_grid,
+                                                         hurst_coef = 0.5)
+centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_grid,
+                                                        second_vec_kernel = x_grid,
+                                                        centering_grid = x_grid,
+                                                        hurst_coef = 0.5))
+
+
+lambda_hat <- 1
+tau_hat <- 1/1350
+
+
+weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
+                                           tau_hat = tau_hat,
+                                   centered_kernel_mat_at_sampled,
+                                   sampled_x = sample,
+                                   min_x = min(x_grid),
+                                   max_x = max(x_grid),
+                                   print_trace = T
+)
+
+
+
+# Convert the data to a data frame for use with ggplot2
+plot_data <- data.frame(sample = sample, weights_hat = as.vector(weights_hat_wo_grid))
+
+# Create the ggplot
+p <- ggplot(plot_data, aes(x = sample, y = weights_hat)) +
+  geom_point(color  = "black") +
+  geom_line(color = "blue") +
+  labs(x = "Sampled x",
+       y = "Weights Hat")+
+  ggtitle(paste('Weights Hat vs Sampled x for lambda_hat =',
+                format(lambda_hat,digits = 3,scientific = T),'and tau_hat =',format(tau_hat,digits = 3,scientific = T))) +
+  theme_bw()
+
+print(p)
+```
+```{r}
+probs <- get_dens_or_prob(centered_kernel_mat_at_sampled,
+                          centered_kernel_mat_at_grid,
+                          centered_kernel_self_grid,
+                                  sampled_x,x_grid,
+                   lambda_hat, as.vector(weights_hat_wo_grid),
+                   type_of_p_is_prob = FALSE,
+                   type_of_q_is_prob = FALSE,
+                   method_of_p_calculation = "ordinary")
+
+kef_df <- data.frame(grid = x_grid, kef_pdf = probs$grid_x)
+#kef_df <- data.frame(grid = sampled_x, kef_pdf = probs)
+```
+
+
+```{r}
+# Plot Adaptive density estimate
+ggplot(kef_df, aes(x = grid, y = kef_pdf)) +
+  geom_histogram(data = df_samples$bimodal, aes(x = value, y = ..density..), bins = 50, fill = "gray", alpha = 0.6, colour = "black")+ 
+  geom_line(color = "blue", size = 1) +
+  geom_line(data = true_densities$bimodal$grid, aes(x = grid, y = true_pdf), colour = "black", linewidth = 1) +
+  labs(title = "Adaptive Kernel Density Estimate:", x = "Value", y = "Density") +
+  theme_bw()
+```
