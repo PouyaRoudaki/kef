@@ -194,9 +194,9 @@ get_weights_wo_grid <- function(lambda_hat,
 }
 
 
-#' Estimate Weights Using the Newton-Raphson Method
+#' Estimate Weights Using the Barzilai-Borwein method
 #'
-#' This function estimates the weight vector using an iterative Newton-Raphson method.
+#' This function estimates the weight vector using a Barzilai-Borwein method.
 #' The method updates weights based on the provided kernel matrices, regularization
 #' parameters, sampled points, and grid points.
 #'
@@ -209,7 +209,7 @@ get_weights_wo_grid <- function(lambda_hat,
 #' @param sampled_x A vector of sampled points for which the weights are to be estimated.
 #' @param min_x A scalar representing the minimum value of the domain.
 #' @param max_x A scalar representing the maximum value of the domain.
-#' @param print_trace Logical; if TRUE, prints progress updates during the Newton-Raphson iterations.
+#' @param print_trace Logical; if TRUE, prints progress updates during the Barzilai-Borwein method.
 #'
 #' @return A numeric vector of length n representing the estimated weight vector for the sampled points.
 #'

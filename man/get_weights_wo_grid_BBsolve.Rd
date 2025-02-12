@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_weights.R
 \name{get_weights_wo_grid_BBsolve}
 \alias{get_weights_wo_grid_BBsolve}
-\title{Estimate Weights Using the Newton-Raphson Method}
+\title{Estimate Weights Using the Barzilai-Borwein method}
 \usage{
 get_weights_wo_grid_BBsolve(
   lambda_hat,
@@ -30,13 +30,13 @@ kernel matrix evaluated at the sampled points, where n is the number of sampled 
 
 \item{max_x}{A scalar representing the maximum value of the domain.}
 
-\item{print_trace}{Logical; if TRUE, prints progress updates during the Newton-Raphson iterations.}
+\item{print_trace}{Logical; if TRUE, prints progress updates during the Barzilai-Borwein method.}
 }
 \value{
 A numeric vector of length n representing the estimated weight vector for the sampled points.
 }
 \description{
-This function estimates the weight vector using an iterative Newton-Raphson method.
+This function estimates the weight vector using a Barzilai-Borwein method.
 The method updates weights based on the provided kernel matrices, regularization
 parameters, sampled points, and grid points.
 }
