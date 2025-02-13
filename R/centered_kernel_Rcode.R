@@ -19,7 +19,7 @@
 #' vec2 <- c(1, 2)
 #' cent_grid <- sort(runif(1000, min = -1, max = 1))
 #' h_result_matrix <- centered_kernel_matrix(vec1, vec2, cent_grid, hurst_coef = 0.5)
-centered_kernel_matrix <- function(first_vec_kernel, second_vec_kernel, centering_grid, hurst_coef) {
+centered_kernel_matrix_R <- function(first_vec_kernel, second_vec_kernel, centering_grid, hurst_coef) {
   # Length of the first input vector
   n0 <- length(first_vec_kernel)
 
@@ -105,7 +105,7 @@ centered_kernel_matrix <- function(first_vec_kernel, second_vec_kernel, centerin
 #' print(result)
 
 
-centered_kernel_matrix_parallel <- function(first_vec_kernel, second_vec_kernel, centering_grid, hurst_coef) {
+centered_kernel_matrix_R_parallel <- function(first_vec_kernel, second_vec_kernel, centering_grid, hurst_coef) {
   # Lengths of input vectors
   n0 <- length(first_vec_kernel)
   n1 <- length(second_vec_kernel)

@@ -194,79 +194,6 @@ get_weights_wo_grid <- function(lambda_hat,
 }
 
 
-#' Estimate Weights Using the Barzilai-Borwein method
-#'
-#' This function estimates the weight vector using a Barzilai-Borwein method.
-#' The method updates weights based on the provided kernel matrices, regularization
-#' parameters, sampled points, and grid points.
-#'
-#' @param lambda_hat A scalar representing the estimated lambda parameter, which
-#'        controls the contribution of the kernel matrices to the weight estimation.
-#' @param tau_hat A scalar representing the estimated tau parameter, which
-#'        determines the regularization strength applied to the weights.
-#' @param centered_kernel_mat_at_sampled A square matrix (n x n) representing the centered
-#'        kernel matrix evaluated at the sampled points, where n is the number of sampled points.
-#' @param sampled_x A vector of sampled points for which the weights are to be estimated.
-#' @param min_x A scalar representing the minimum value of the domain.
-#' @param max_x A scalar representing the maximum value of the domain.
-#' @param print_trace Logical; if TRUE, prints progress updates during the Barzilai-Borwein method.
-#'
-#' @return A numeric vector of length n representing the estimated weight vector for the sampled points.
-#'
-#' @export
-get_weights_wo_grid_BBsolve <- function(lambda_hat,
-                                        tau_hat,
-                                        centered_kernel_mat_at_sampled,
-                                        sampled_x,
-                                        min_x,
-                                        max_x,
-                                        print_trace = FALSE) {
-
-  n <- nrow(centered_kernel_mat_at_sampled)  # Number of sampled points
-
-  # Define the system of equations s_j(x_1,...,x_n) = 0
-  s_function <- function(weight_hat_vec) {
-
-    # Compute densities
-    dens <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
-                             min_x,
-                             max_x,
-                             sampled_x,
-                             lambda_hat,
-                             weight_hat_vec)
-
-    # Compute base measure
-    sample_mid_points <- get_middle_points_grid(min_x, sampled_x, max_x)
-    base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
-
-    dens_sampled_base <- dens * base_measure_weights
-
-    prob_sampled_base <- dens_sampled_base / sum(dens_sampled_base)
-    prob_sampled <- dens / sum(dens)
-
-    # Compute the function values
-    s <- lambda_hat * (colSums(centered_kernel_mat_at_sampled) -
-                         n * (prob_sampled_base) %*% t(centered_kernel_mat_at_sampled)) -
-      tau_hat * weight_hat_vec / prob_sampled
-
-    return(as.vector(s))  # Ensure output is a numeric vector
-  }
-
-  # Solve using BBsolve
-  result <- BBsolve(par = rep(0, n), fn = s_function, control = list(maxit = 10000,
-                                                                     tol = 1e-4,
-                                                                     trace = print_trace))
-
-  if (print_trace) {
-    print(result$message)
-  }
-
-  return(result$par)  # Return the optimized weight vector
-}
-
-
-
-
 #' Estimate Weights Using the Newton-Raphson Method for Monte Carlo Approach.
 #'
 #' This function estimates the weight vector using an iterative Newton-Raphson method.
@@ -650,3 +577,5 @@ get_weights_gd <- function(lambda_hat,
 
   return(weight_hat_vec)
 }
+
+

@@ -12,7 +12,7 @@
 #'
 #' @examples
 #' get_middle_points_grid(0, c(2, 4, 6), 8)
-get_middle_points_grid <- function(min, samples, max){
+get_middle_points_grid_R <- function(min, samples, max){
   n <- length(samples)
   return(c( min , (samples[-n] + samples[-1])/2, max) )
 }

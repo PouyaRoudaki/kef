@@ -16,7 +16,7 @@
 #' @examples
 #' # Example usage of the function
 #' density_at_sampled_x(centered_kernel_mat_at_sampled, lambda_hat, weight_hat_vec)
-density_at_sampled_x <- function(centered_kernel_mat_at_sampled, lambda_hat, weight_hat_vec) {
+density_at_sampled_x_R <- function(centered_kernel_mat_at_sampled, lambda_hat, weight_hat_vec) {
 
   # Extract the diagonal elements of the kernel matrix, which represent the
   # self-kernel values (i.e., the kernel values of each point with itself).
@@ -57,7 +57,7 @@ density_at_sampled_x <- function(centered_kernel_mat_at_sampled, lambda_hat, wei
 #' @examples
 #' # Example usage of the function
 #' density_at_grid(centered_kernel_mat_at_grid, centerd_kernel_self_grid, lambda_hat, weight_hat_vec)
-density_at_grid <- function(centered_kernel_mat_at_grid, centerd_kernel_self_grid, lambda_hat, weight_hat_vec) {
+density_at_grid_R <- function(centered_kernel_mat_at_grid, centerd_kernel_self_grid, lambda_hat, weight_hat_vec) {
 
   # Compute the density values at each grid point
   p_vec <- sapply(1:ncol(centered_kernel_mat_at_grid), function(i) {
@@ -103,7 +103,7 @@ density_at_grid <- function(centered_kernel_mat_at_grid, centerd_kernel_self_gri
 #' probs <- get_dens_or_prob(centered_kernel_mat_at_sampled, centered_kernel_mat_at_grid,
 #'                    centered_kernel_self_grid, sampled_x,
 #'                    x_grid, lambda_hat, weight_hat_vec)
-get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
+get_dens_or_prob_R <- function(centered_kernel_mat_at_sampled,
                              centered_kernel_mat_at_grid,
                           centered_kernel_self_grid,
                           sampled_x,
@@ -133,15 +133,15 @@ get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
   prob_list$grid_x <- dens_list$grid_x / sum(dens_list$grid_x)
 
   #print(paste("inside get_dens_or_probs",length(prob_list$grid_x)))
-  if(method_of_p_calculation == "neighborhood_grid"){
+  #if(method_of_p_calculation == "neighborhood_grid"){
 
-    approx_dens_or_prob <- get_grid_approx_dens_or_probs_vectorized(sampled_x, x_grid, dens_list)
+  #  approx_dens_or_prob <- get_grid_approx_dens_or_probs_vectorized(sampled_x, x_grid, dens_list)
 
-    dens_list$sampled_x <- approx_dens_or_prob$dens
+  #  dens_list$sampled_x <- approx_dens_or_prob$dens
 
-    prob_list$sampled_x <- approx_dens_or_prob$prob
+  #  prob_list$sampled_x <- approx_dens_or_prob$prob
 
-  }
+  #}
 
   result_list <- list()
 
@@ -184,7 +184,7 @@ get_dens_or_prob <- function(centered_kernel_mat_at_sampled,
 #' probs <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
 #'                                   sampled_x,
 #'                    x_grid, lambda_hat, weight_hat_vec)
-get_dens_wo_grid <- function(centered_kernel_mat_at_sampled,
+get_dens_wo_grid_R <- function(centered_kernel_mat_at_sampled,
                              min_x,
                              max_x,
                              sampled_x,
@@ -199,55 +199,6 @@ get_dens_wo_grid <- function(centered_kernel_mat_at_sampled,
 
   # Prepare the output as a list of normalized probabilities
   normalised_dens <- dens_sampled_x / normalizing_cte
-
-  #return
-  return(normalised_dens)
-}
-
-
-#' Compute Densities for Sampled points without a grid
-#'
-#' This function computes densities for both sampled points and grid points.
-#' The normalization is done by dividing the densities by the integral over the grid points.
-#'
-#' @param centered_kernel_mat_at_sampled A square matrix (n x n) where n is the number of sampled points.
-#'        The matrix should be a centered kernel matrix evaluated at the sampled points.
-#' @param sampled_x A vector of sampled points where the probabilities are evaluated.
-#' @param min_x A scalar value representing the minimum of x domain.
-#' @param max_x A scalar value representing the maximum of x domain.
-#' @param lambda_hat A scalar value representing the estimated lambda.
-#' @param weight_hat_vec A vector of weights (length n) corresponding to the sampled points.
-#'
-#' @return A list containing an element:
-#'         \item{sampled_x}{A vector of densities or normalized probabilities at the sampled points.}
-#' @export
-#'
-#' @examples
-#' # Example usage (assuming inputs are defined):
-#' probs <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
-#'                                   sampled_x,
-#'                    x_grid, lambda_hat, weight_hat_vec)
-get_dens_wo_grid_with_base <- function(centered_kernel_mat_at_sampled,
-                             min_x,
-                             max_x,
-                             sampled_x,
-                             lambda_hat,
-                             weight_hat_vec){
-
-  # Compute the probabilities at the sampled points
-  dens_sampled_x <- density_at_sampled_x(centered_kernel_mat_at_sampled, lambda_hat, weight_hat_vec)
-
-
-  sample_mid_points <- get_middle_points_grid(min_x, sampled_x, max_x)
-  base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
-
-  dens_sampled_x_with_base <- dens_sampled_x * exp(-base_measure_weights)
-
-  # Normalize the density by the integral over the grid
-  normalizing_cte <- pracma::trapz( sampled_x, dens_sampled_x_with_base)  # trapz is from pracma package
-
-  # Prepare the output as a list of normalized probabilities
-  normalised_dens <- dens_sampled_x_with_base / normalizing_cte
 
   #return
   return(normalised_dens)
