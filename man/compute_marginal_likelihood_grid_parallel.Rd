@@ -2,7 +2,7 @@
 % Please edit documentation in R/marginal_likelihood.R
 \name{compute_marginal_likelihood_grid_parallel}
 \alias{compute_marginal_likelihood_grid_parallel}
-\title{Title: Compute Marginal Likelihood over a Grid of Parameters Parallelly.}
+\title{Compute Marginal Likelihood Over a Grid of Hyperparameters (Parallel)}
 \usage{
 compute_marginal_likelihood_grid_parallel(
   centered_kernel_mat_at_sampled,
@@ -13,31 +13,35 @@ compute_marginal_likelihood_grid_parallel(
   initial_lambda = 1,
   initial_w = rep(0, length(sampled_x)),
   MC_iterations,
-  max.iterations = 1,
-  censoring = T
+  max_iterations = 5,
+  parallel_computing = TRUE
 )
 }
 \arguments{
 \item{centered_kernel_mat_at_sampled}{A matrix of centered kernel values at sampled points.}
 
-\item{hyperparam_grid}{A dataframe including pairs of lambda and tau values.}
+\item{min_x}{The minimum x value.}
 
-\item{MC_iterations}{Number of Monte Carlo iterations to perform.}
+\item{max_x}{The maximum x value.}
 
-\item{censoring}{True if the margnials is censored.}
+\item{sampled_x}{A numeric vector of sampled points.}
 
-\item{centered_kernel_mat_at_grid}{A matrix of centered kernel values at grid points.}
+\item{hyperparam_grid}{A dataframe containing pairs of lambda and tau values.}
 
-\item{centered_kernel_self_grid}{A matrix of centered kernel self-values at grid points.}
+\item{initial_lambda}{The initial lambda value.}
 
-\item{x_grid}{A grid of x values where the function is evaluated.}
+\item{initial_w}{The initial weight vector.}
 
-\item{p_vec}{A vector of initial probabilities (default is a vector of 1's).}
+\item{MC_iterations}{The number of Monte Carlo iterations.}
+
+\item{max_iterations}{The maximum number of iterations.}
+
+\item{parallel_computing}{Logical; if TRUE, enables parallel computing.}
 }
 \value{
-A data frame containing lambda, tau, and their corresponding marginal log likelihoods.
+A dataframe containing lambda, tau, and their corresponding marginal log likelihoods.
 }
 \description{
 This function computes the marginal likelihood for each combination of lambda and tau
-in the provided grids.
+in the provided hyperparameter grid using parallel computing.
 }

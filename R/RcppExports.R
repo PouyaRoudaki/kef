@@ -25,7 +25,23 @@ get_middle_points_grid <- function(min, samples, max) {
     .Call(`_kef_get_middle_points_grid`, min, samples, max)
 }
 
-get_s_function <- function(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x) {
-    .Call(`_kef_get_s_function`, weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x)
+get_s_function <- function(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, prior_variance_p_vector = NULL) {
+    .Call(`_kef_get_s_function`, weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, prior_variance_p_vector)
+}
+
+interp_linear_cpp <- function(x, y, xnew) {
+    .Call(`_kef_interp_linear_cpp`, x, y, xnew)
+}
+
+marginal_log_likelihood <- function(centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, p_vec, lambda, tau, std_rnorm_matrix, MC_iterations, parallel_computing = TRUE) {
+    .Call(`_kef_marginal_log_likelihood`, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, p_vec, lambda, tau, std_rnorm_matrix, MC_iterations, parallel_computing)
+}
+
+call_get_weights_wo_grid_BBsolve <- function(lambda, tau, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, p_vec, print_trace = FALSE) {
+    .Call(`_kef_call_get_weights_wo_grid_BBsolve`, lambda, tau, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, p_vec, print_trace)
+}
+
+compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sampled, min_x, max_x, sampled_x, hyperparam_grid, initial_lambda, initial_w, MC_iterations, max_iterations, parallel_computing = TRUE) {
+    .Call(`_kef_compute_marginal_likelihood_grid_parallel`, centered_kernel_mat_at_sampled, min_x, max_x, sampled_x, hyperparam_grid, initial_lambda, initial_w, MC_iterations, max_iterations, parallel_computing)
 }
 

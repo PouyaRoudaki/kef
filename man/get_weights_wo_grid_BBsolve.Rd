@@ -11,7 +11,9 @@ get_weights_wo_grid_BBsolve(
   sampled_x,
   min_x,
   max_x,
-  print_trace = FALSE
+  prior_variance_p_vector = NULL,
+  print_trace = FALSE,
+  init = FALSE
 )
 }
 \arguments{
@@ -21,17 +23,24 @@ get_weights_wo_grid_BBsolve(
 
 \item{centered_kernel_mat_at_sampled}{A matrix representing the centered kernel at sampled points.}
 
-\item{sampled_x}{A vector of sampled points.}
+\item{sampled_x}{A numeric vector of sampled points.}
 
 \item{min_x}{The minimum domain value.}
 
 \item{max_x}{The maximum domain value.}
 
+\item{prior_variance_p_vector}{A numeric vector for prior variance probabilities. Default is NULL.}
+
 \item{print_trace}{Logical; if TRUE, prints progress updates.}
+
+\item{init}{Logical; if TRUE, the weights calculation has a subsampling method for initialization.}
 }
 \value{
 A numeric vector of estimated weights.
 }
 \description{
-This function estimates the weight vector using a Barzilai-Borwein method.
+This function estimates the weight vector using the Barzilai-Borwein method,
+a numerical approach to solve nonlinear systems of equations. It optimizes
+performance by leveraging Rcpp for computation and adaptive subsampling for
+better initial values in the Barzilai-Borwein method.
 }

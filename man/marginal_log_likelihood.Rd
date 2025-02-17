@@ -2,7 +2,7 @@
 % Please edit documentation in R/marginal_likelihood.R
 \name{marginal_log_likelihood}
 \alias{marginal_log_likelihood}
-\title{Title: Compute Marginal Log Likelihood}
+\title{Compute Marginal Log Likelihood Using Rcpp}
 \usage{
 marginal_log_likelihood(
   centered_kernel_mat_at_sampled,
@@ -14,31 +14,34 @@ marginal_log_likelihood(
   tau,
   std_rnorm_matrix,
   MC_iterations,
-  censoring = T
+  parallel_computing = TRUE
 )
 }
 \arguments{
 \item{centered_kernel_mat_at_sampled}{A matrix of centered kernel values at sampled points.}
 
-\item{lambda}{A scalar parameter, lambda, to be used in the likelihood computation.}
+\item{sampled_x}{A numeric vector of sampled points.}
 
-\item{tau}{A scalar parameter, tau, to be used in the likelihood computation.}
+\item{min_x}{The minimum x value.}
 
-\item{MC_iterations}{Number of Monte Carlo iterations to perform.}
+\item{max_x}{The maximum x value.}
 
-\item{censoring}{True if the margnials is censored.}
+\item{p_vec}{A probability vector (default: uniform distribution).}
 
-\item{centered_kernel_mat_at_grid}{A matrix of centered kernel values at grid points.}
+\item{lambda}{A scalar for the lambda hyperparameter.}
 
-\item{centered_kernel_self_grid}{A matrix of centered kernel self-values at grid points.}
+\item{tau}{A scalar for the tau hyperparameter.}
 
-\item{x_grid}{A grid of x values where the function is evaluated.}
+\item{std_rnorm_matrix}{A matrix of standard normal random values for Monte Carlo sampling.}
 
-\item{dens_vec}{A vector of initial probabilities (default is a vector of 1's).}
+\item{MC_iterations}{The number of Monte Carlo iterations.}
+
+\item{parallel_computing}{Logical; if TRUE, enables parallel computing.}
 }
 \value{
-The log of the marginal likelihood.
+The computed log of the marginal likelihood.
 }
 \description{
-This function calculates the marginal likelihood for a given set of parameters.
+This function computes the marginal log likelihood using a Monte Carlo approach
+with optional parallel computing.
 }

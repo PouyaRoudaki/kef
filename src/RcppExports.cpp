@@ -101,8 +101,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_s_function
-arma::vec get_s_function(const arma::vec& weight_hat_vec, double lambda_hat, double tau_hat, const arma::mat& centered_kernel_mat_at_sampled, const arma::vec& sampled_x, double min_x, double max_x);
-RcppExport SEXP _kef_get_s_function(SEXP weight_hat_vecSEXP, SEXP lambda_hatSEXP, SEXP tau_hatSEXP, SEXP centered_kernel_mat_at_sampledSEXP, SEXP sampled_xSEXP, SEXP min_xSEXP, SEXP max_xSEXP) {
+arma::vec get_s_function(const arma::vec& weight_hat_vec, double lambda_hat, double tau_hat, const arma::mat& centered_kernel_mat_at_sampled, const arma::vec& sampled_x, double min_x, double max_x, Rcpp::Nullable<arma::vec> prior_variance_p_vector);
+RcppExport SEXP _kef_get_s_function(SEXP weight_hat_vecSEXP, SEXP lambda_hatSEXP, SEXP tau_hatSEXP, SEXP centered_kernel_mat_at_sampledSEXP, SEXP sampled_xSEXP, SEXP min_xSEXP, SEXP max_xSEXP, SEXP prior_variance_p_vectorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -113,7 +113,79 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type sampled_x(sampled_xSEXP);
     Rcpp::traits::input_parameter< double >::type min_x(min_xSEXP);
     Rcpp::traits::input_parameter< double >::type max_x(max_xSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_s_function(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x));
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::vec> >::type prior_variance_p_vector(prior_variance_p_vectorSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_s_function(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, prior_variance_p_vector));
+    return rcpp_result_gen;
+END_RCPP
+}
+// interp_linear_cpp
+arma::vec interp_linear_cpp(const arma::vec& x, const arma::vec& y, const arma::vec& xnew);
+RcppExport SEXP _kef_interp_linear_cpp(SEXP xSEXP, SEXP ySEXP, SEXP xnewSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type xnew(xnewSEXP);
+    rcpp_result_gen = Rcpp::wrap(interp_linear_cpp(x, y, xnew));
+    return rcpp_result_gen;
+END_RCPP
+}
+// marginal_log_likelihood
+double marginal_log_likelihood(const arma::mat& centered_kernel_mat_at_sampled, const arma::vec& sampled_x, double min_x, double max_x, arma::vec p_vec, double lambda, double tau, const arma::mat& std_rnorm_matrix, int MC_iterations, bool parallel_computing);
+RcppExport SEXP _kef_marginal_log_likelihood(SEXP centered_kernel_mat_at_sampledSEXP, SEXP sampled_xSEXP, SEXP min_xSEXP, SEXP max_xSEXP, SEXP p_vecSEXP, SEXP lambdaSEXP, SEXP tauSEXP, SEXP std_rnorm_matrixSEXP, SEXP MC_iterationsSEXP, SEXP parallel_computingSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type centered_kernel_mat_at_sampled(centered_kernel_mat_at_sampledSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sampled_x(sampled_xSEXP);
+    Rcpp::traits::input_parameter< double >::type min_x(min_xSEXP);
+    Rcpp::traits::input_parameter< double >::type max_x(max_xSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type p_vec(p_vecSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type std_rnorm_matrix(std_rnorm_matrixSEXP);
+    Rcpp::traits::input_parameter< int >::type MC_iterations(MC_iterationsSEXP);
+    Rcpp::traits::input_parameter< bool >::type parallel_computing(parallel_computingSEXP);
+    rcpp_result_gen = Rcpp::wrap(marginal_log_likelihood(centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, p_vec, lambda, tau, std_rnorm_matrix, MC_iterations, parallel_computing));
+    return rcpp_result_gen;
+END_RCPP
+}
+// call_get_weights_wo_grid_BBsolve
+arma::vec call_get_weights_wo_grid_BBsolve(double lambda, double tau, const arma::mat& centered_kernel_mat_at_sampled, const arma::vec& sampled_x, double min_x, double max_x, const arma::vec& p_vec, bool print_trace);
+RcppExport SEXP _kef_call_get_weights_wo_grid_BBsolve(SEXP lambdaSEXP, SEXP tauSEXP, SEXP centered_kernel_mat_at_sampledSEXP, SEXP sampled_xSEXP, SEXP min_xSEXP, SEXP max_xSEXP, SEXP p_vecSEXP, SEXP print_traceSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< double >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type centered_kernel_mat_at_sampled(centered_kernel_mat_at_sampledSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sampled_x(sampled_xSEXP);
+    Rcpp::traits::input_parameter< double >::type min_x(min_xSEXP);
+    Rcpp::traits::input_parameter< double >::type max_x(max_xSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type p_vec(p_vecSEXP);
+    Rcpp::traits::input_parameter< bool >::type print_trace(print_traceSEXP);
+    rcpp_result_gen = Rcpp::wrap(call_get_weights_wo_grid_BBsolve(lambda, tau, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, p_vec, print_trace));
+    return rcpp_result_gen;
+END_RCPP
+}
+// compute_marginal_likelihood_grid_parallel
+arma::mat compute_marginal_likelihood_grid_parallel(const arma::mat& centered_kernel_mat_at_sampled, double min_x, double max_x, const arma::vec& sampled_x, const arma::mat& hyperparam_grid, double initial_lambda, const arma::vec& initial_w, int MC_iterations, int max_iterations, bool parallel_computing);
+RcppExport SEXP _kef_compute_marginal_likelihood_grid_parallel(SEXP centered_kernel_mat_at_sampledSEXP, SEXP min_xSEXP, SEXP max_xSEXP, SEXP sampled_xSEXP, SEXP hyperparam_gridSEXP, SEXP initial_lambdaSEXP, SEXP initial_wSEXP, SEXP MC_iterationsSEXP, SEXP max_iterationsSEXP, SEXP parallel_computingSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type centered_kernel_mat_at_sampled(centered_kernel_mat_at_sampledSEXP);
+    Rcpp::traits::input_parameter< double >::type min_x(min_xSEXP);
+    Rcpp::traits::input_parameter< double >::type max_x(max_xSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type sampled_x(sampled_xSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type hyperparam_grid(hyperparam_gridSEXP);
+    Rcpp::traits::input_parameter< double >::type initial_lambda(initial_lambdaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type initial_w(initial_wSEXP);
+    Rcpp::traits::input_parameter< int >::type MC_iterations(MC_iterationsSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iterations(max_iterationsSEXP);
+    Rcpp::traits::input_parameter< bool >::type parallel_computing(parallel_computingSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_marginal_likelihood_grid_parallel(centered_kernel_mat_at_sampled, min_x, max_x, sampled_x, hyperparam_grid, initial_lambda, initial_w, MC_iterations, max_iterations, parallel_computing));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -125,7 +197,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_kef_get_dens_wo_grid", (DL_FUNC) &_kef_get_dens_wo_grid, 6},
     {"_kef_get_dens_or_prob", (DL_FUNC) &_kef_get_dens_or_prob, 9},
     {"_kef_get_middle_points_grid", (DL_FUNC) &_kef_get_middle_points_grid, 3},
-    {"_kef_get_s_function", (DL_FUNC) &_kef_get_s_function, 7},
+    {"_kef_get_s_function", (DL_FUNC) &_kef_get_s_function, 8},
+    {"_kef_interp_linear_cpp", (DL_FUNC) &_kef_interp_linear_cpp, 3},
+    {"_kef_marginal_log_likelihood", (DL_FUNC) &_kef_marginal_log_likelihood, 10},
+    {"_kef_call_get_weights_wo_grid_BBsolve", (DL_FUNC) &_kef_call_get_weights_wo_grid_BBsolve, 8},
+    {"_kef_compute_marginal_likelihood_grid_parallel", (DL_FUNC) &_kef_compute_marginal_likelihood_grid_parallel, 10},
     {NULL, NULL, 0}
 };
 
