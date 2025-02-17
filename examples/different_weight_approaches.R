@@ -17,6 +17,10 @@ sds <- c(1,0.1,0.1,0.1)
 sampled_x <- sort(normal_mixture(1000, means, sds, mixture_weights))
 x_grid <-  seq(-3.1,3.1,length.out = 4000)
 
+
+lambda_hat <- 1
+tau_hat <- 1/1350
+
 kef_res <- kef(sampled_x,grid = x_grid,lambda = lambda_hat, tau = tau_hat)
 
 kef_res

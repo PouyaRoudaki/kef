@@ -130,7 +130,7 @@ ggplot() +
 ################################################################################
 
 lambda_grid <- 10^(seq(-1,2,by=0.1))
-tau_grid <- 10^(seq(-6,1,by=0.1))
+tau_grid <- 10^(seq(-4,1,by=0.1))
 
 # Create a data frame with all possible combinations of lambda and tau
 grid <- expand.grid(lambda = lambda_grid, tau = tau_grid)
@@ -162,8 +162,8 @@ lst_df <- compute_marginal_likelihood_grid_parallel(centered_kernel_mat_at_sampl
                                  initial_lambda = 1,
                                  initial_w = rep(0, length(sampled_x)),
                                  MC_iterations = 1000,
-                                 max.iterations = 4,
-                                 censoring = T)
+                                 max_iterations = 4
+                                 )
 
 result_df <- lst_df[[1]]
 
@@ -449,7 +449,7 @@ ggplot() +
 ################################################################################
 
 lambda_grid <- 10^(seq(-1,2,by=0.1))
-tau_grid <- 10^(seq(-6,1,by=0.1))
+tau_grid <- 10^(seq(-4,1,by=0.1))
 
 # Create a data frame with all possible combinations of lambda and tau
 grid <- expand.grid(lambda = lambda_grid, tau = tau_grid)
@@ -481,8 +481,7 @@ lst_df <- compute_marginal_likelihood_grid_parallel(centered_kernel_mat_at_sampl
                                                     initial_lambda = 1,
                                                     initial_w = rep(0, length(sampled_x)),
                                                     MC_iterations = 5000,
-                                                    max.iterations = 4,
-                                                    censoring = T)
+                                                    max.iterations = 5)
 
 result_df <- lst_df[[1]]
 
