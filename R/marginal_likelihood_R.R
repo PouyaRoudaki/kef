@@ -58,12 +58,18 @@ marginal_log_likelihood_R <- function(centered_kernel_mat_at_sampled,
 
   #print(dim(probabilities_for_given_weights))
 
-  # Assuming your matrix is called densities_for_given_weights
-  #monte_carlo_likelihood <- apply(densities_for_given_weights, 2, prod)
+  # Assuming your matrix is called densities_for_given_weights this will calculate
+  # the marginal joint conditional density for a simulation of Monte Carlo
+  monte_carlo_likelihood <- apply(densities_for_given_weights, 2, prod)
 
+  #print(dim(monte_carlo_likelihood))
+  #print(length(monte_carlo_likelihood))
+  # Find the marginal likelihood: average of all the marginal joint conditional
+  # densities for all Monte Carlo simulations.
+  marginal_likelihood <- mean(monte_carlo_likelihood)
 
   # Compute the likelihood vector by taking the mean across Monte Carlo iterations
-  likelihood_vector <- rowMeans(densities_for_given_weights, na.rm = F)
+  #likelihood_vector <- rowMeans(densities_for_given_weights, na.rm = F)
 
   #sample_mid_points <- get_middle_points_grid(min_x, sampled_x, max_x)
   #base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
@@ -95,20 +101,20 @@ marginal_log_likelihood_R <- function(centered_kernel_mat_at_sampled,
   # Compute the likelihood vector by taking the median across Monte Carlo iterations
   #likelihood_vector <- apply(densities_for_given_weights, 1, median, na.rm = TRUE)
 
-  if(censoring){
-    likelihood_vector_trimmed <- likelihood_vector[(5):(length(likelihood_vector)-4)]
-    sampled_x_trimmed <- sampled_x[(5):(length(sampled_x)-4)]
-    # Normalize the density by the integral over the grid
-    normalizing_cte <- pracma::trapz( sampled_x_trimmed, likelihood_vector_trimmed)  # trapz is from pracma package
+  #if(censoring){
+  #  likelihood_vector_trimmed <- likelihood_vector[(5):(length(likelihood_vector)-4)]
+  #  sampled_x_trimmed <- sampled_x[(5):(length(sampled_x)-4)]
+  #  # Normalize the density by the integral over the grid
+  #  normalizing_cte <- pracma::trapz( sampled_x_trimmed, likelihood_vector_trimmed)  # trapz is from pracma package
 
-    norm_likelihood_vector <- likelihood_vector_trimmed/normalizing_cte
+  #  norm_likelihood_vector <- likelihood_vector_trimmed/normalizing_cte
 
-    sampled_x <- sampled_x_trimmed
-  }else{
-    normalizing_cte <- pracma::trapz( sampled_x, likelihood_vector)  # trapz is from pracma package
+  #  sampled_x <- sampled_x_trimmed
+  #}else{
+  #  normalizing_cte <- pracma::trapz( sampled_x, likelihood_vector)  # trapz is from pracma package
 
-    norm_likelihood_vector <- likelihood_vector/normalizing_cte
-  }
+  #  norm_likelihood_vector <- likelihood_vector/normalizing_cte
+  #}
 
 
   # Initial guess (avoid zeros)
@@ -145,27 +151,27 @@ marginal_log_likelihood_R <- function(centered_kernel_mat_at_sampled,
   #norm_likelihood_vector <- abs(norm_likelihood_vector - base_measure_weights)
 
   # Create a data frame with your data
-  plot_data <- data.frame(x = sampled_x, likelihood = norm_likelihood_vector)
+  #plot_data <- data.frame(x = sampled_x, likelihood = norm_likelihood_vector)
 
-  log_lambda <- log10(lambda)
-  log_tau <- log10(tau)
+  #log_lambda <- log10(lambda)
+  #log_tau <- log10(tau)
   # Plot using ggplot
-  plot <- ggplot(plot_data, aes(x = x, y = likelihood)) +
-    geom_line(color = "black", size = 1) +  # Line plot with color and size
-    geom_point(color = "black", size = 2) +  # Add points with color and size to emphasize sampled values
-    labs(title = bquote("Likelihood vs. Sampled X, "
-                        #~ log[10](lambda) == .(format(log_lambda, digits = 3, scientific = TRUE)) ~ ","
-                           ~ log[10](tau) == .(format(log_tau, digits = 3, scientific = TRUE)) ~
-                          "," ~ log-likelihood == .(format(sum(log(norm_likelihood_vector)), digits = 3, scientific = TRUE))),
-         x = "Sampled X",
-         y = "Likelihood") +
-    theme_bw() +  # Use a clean theme
-    theme(plot.title = element_text(hjust = 0.5))  # Center the title
+  #plot <- ggplot(plot_data, aes(x = x, y = likelihood)) +
+  #  geom_line(color = "black", size = 1) +  # Line plot with color and size
+  #  geom_point(color = "black", size = 2) +  # Add points with color and size to emphasize sampled values
+  #  labs(title = bquote("Likelihood vs. Sampled X, "
+  #                      #~ log[10](lambda) == .(format(log_lambda, digits = 3, scientific = TRUE)) ~ ","
+  #                         ~ log[10](tau) == .(format(log_tau, digits = 3, scientific = TRUE)) ~
+  #                        "," ~ log-likelihood == .(format(sum(log(norm_likelihood_vector)), digits = 3, scientific = TRUE))),
+  #       x = "Sampled X",
+  #       y = "Likelihood") +
+  #  theme_bw() +  # Use a clean theme
+  #  theme(plot.title = element_text(hjust = 0.5))  # Center the title
 
   #print(plot)
 
   # Compute the log of the marginal likelihood by summing the log of the likelihood vector
-  marginal_log_likelihood <- sum(log(norm_likelihood_vector))
+  marginal_log_likelihood <- log(marginal_likelihood)
 
   # Print a separator (seems to be for debugging purposes)
   #print("-")
@@ -342,7 +348,7 @@ compute_marginal_likelihood_grid_R <- function(centered_kernel_mat_at_sampled,
                                min_x,
                                max_x,
                                sampled_x,
-                               lambda_hat,
+                               lambda,
                                w_vec))
 
   p_vec <- dens_vec / sum(dens_vec)
@@ -472,4 +478,131 @@ compute_marginal_likelihood_grid_R <- function(centered_kernel_mat_at_sampled,
   lst[[1]] <- plot_ml
   #lst[[2]] <- interp_df
   return(lst)
+}
+
+#' Optimize Marginal Log-Likelihood using L-BFGS-B Optimization
+#'
+#' This function finds the optimal `lambda` and `tau` by maximizing the marginal log-likelihood
+#' using an iterative approach. Instead of a grid search, it employs L-BFGS-B optimization
+#' to efficiently search for the best parameters.
+#'
+#' @param centered_kernel_mat_at_sampled The kernel matrix centered at sampled points.
+#' @param min_x Minimum value of the sampled domain.
+#' @param max_x Maximum value of the sampled domain.
+#' @param sampled_x Vector of sampled points.
+#' @param initial_lambda Initial value for lambda (default: 1).
+#' @param initial_tau Initial value for tau (default: 1).
+#' @param initial_w Initial weights vector (default: zeros of sampled_x length).
+#' @param MC_iterations Number of Monte Carlo iterations.
+#' @param max.iterations Maximum number of iterations (default: 1).
+#' @param censoring Boolean indicating whether censoring is applied (default: FALSE).
+#'
+#' @return A list containing:
+#' 	\item{lambda}{Optimized value of lambda.}
+#' 	\item{tau}{Optimized value of tau.}
+#' 	\item{max_marginal_log_likelihood}{Maximum marginal log-likelihood value.}
+#'
+#' @examples
+#' \dontrun{
+#' result <- optimize_marginal_log_likelihood(
+#'   centered_kernel_mat_at_sampled, min_x, max_x, sampled_x,
+#'   MC_iterations = 1000, max.iterations = 5
+#' )
+#' print(result)
+#' }
+#'
+#' @export
+optimize_marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
+                                             min_x,
+                                             max_x,
+                                             sampled_x,
+                                             initial_lambda = 1,
+                                             initial_tau = 1,
+                                             initial_w = rep(0, length(sampled_x)),
+                                             MC_iterations,
+                                             max.iterations = 1,
+                                             censoring = FALSE) {
+
+  t <- 1
+  n <- length(sampled_x)
+
+  # Generate matrix with each row independently sampled from Normal(0,1)
+  std_rnorm_matrix <- matrix(rnorm(MC_iterations * n, mean = 0, sd = 1),
+                             nrow = MC_iterations,
+                             ncol = n)
+
+  lambda <- initial_lambda
+  tau <- initial_tau
+  w_vec <- initial_w
+
+  dens_vec <- as.numeric(get_dens_wo_grid(centered_kernel_mat_at_sampled,
+                                          min_x,
+                                          max_x,
+                                          sampled_x,
+                                          lambda,
+                                          w_vec))
+
+  p_vec <- dens_vec / sum(dens_vec)
+
+  while (t <= max.iterations) {
+
+    cat(paste0("Iteration: ", t, "\n"))
+
+    # Define objective function for optimization
+    objective_function <- function(params) {
+      lambda <- exp(params[1])  # Ensure positivity by optimizing log(lambda)
+      tau <- exp(params[2])  # Ensure positivity by optimizing log(tau)
+
+      -marginal_log_likelihood_R(
+        centered_kernel_mat_at_sampled,
+        sampled_x,
+        min_x,
+        max_x,
+        p_vec,
+        lambda,
+        tau,
+        std_rnorm_matrix,
+        MC_iterations,
+        censoring)
+    }
+
+    # Optimization using L-BFGS-B (bounded optimization)
+    opt_result <- optim(
+      par = c(log(lambda), log(tau)),
+      fn = objective_function,
+      method = "L-BFGS-B",
+      lower = c(log(1e-5), log(1e-5)),
+      upper = c(log(1e5), log(1e5))
+    )
+
+    # Retrieve optimal lambda and tau
+    lambda <- exp(opt_result$par[1])
+    tau <- exp(opt_result$par[2])
+
+    cat(paste0("Optimized lambda: ", lambda, ", tau: ", tau, ", MLL: ", -opt_result$value, "\n"))
+
+    # Update weights
+    w_vec <- get_weights_wo_grid_mll(lambda_t = lambda,
+                                     tau_t = tau,
+                                     centered_kernel_mat_at_sampled = centered_kernel_mat_at_sampled,
+                                     sampled_x = sampled_x,
+                                     min_x = min_x,
+                                     max_x = max_x,
+                                     p_vec_t_1 = p_vec,
+                                     print_trace = FALSE)
+
+    # Update density and p_vec
+    dens_vec <- as.numeric(get_dens_wo_grid(centered_kernel_mat_at_sampled,
+                                            min_x,
+                                            max_x,
+                                            sampled_x,
+                                            lambda,
+                                            w_vec))
+
+    p_vec <- dens_vec / sum(dens_vec)
+
+    t <- t + 1
+  }
+
+  return(list(lambda = lambda, tau = tau, max_marginal_log_likelihood = -opt_result$value))
 }
