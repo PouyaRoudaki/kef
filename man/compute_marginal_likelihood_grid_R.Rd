@@ -2,7 +2,9 @@
 % Please edit documentation in R/marginal_likelihood_R.R
 \name{compute_marginal_likelihood_grid_R}
 \alias{compute_marginal_likelihood_grid_R}
-\title{Title: Compute Marginal Likelihood over a Grid of Parameters}
+\title{Title: Compute Marginal Likelihood over a Grid of Parameters
+This function computes the marginal likelihood for each combination of lambda and tau
+in the provided grids.}
 \usage{
 compute_marginal_likelihood_grid_R(
   centered_kernel_mat_at_sampled,
@@ -14,7 +16,7 @@ compute_marginal_likelihood_grid_R(
   initial_w = rep(0, length(sampled_x)),
   MC_iterations,
   max.iterations = 1,
-  censoring = T
+  censoring = F
 )
 }
 \arguments{
@@ -24,7 +26,7 @@ compute_marginal_likelihood_grid_R(
 
 \item{MC_iterations}{Number of Monte Carlo iterations to perform.}
 
-\item{censoring}{True if the margnials is censored.}
+\item{censoring}{True if the marginals is censored.}
 
 \item{centered_kernel_mat_at_grid}{A matrix of centered kernel values at grid points.}
 
@@ -38,6 +40,7 @@ compute_marginal_likelihood_grid_R(
 A data frame containing lambda, tau, and their corresponding marginal log likelihoods.
 }
 \description{
+Title: Compute Marginal Likelihood over a Grid of Parameters
 This function computes the marginal likelihood for each combination of lambda and tau
 in the provided grids.
 }

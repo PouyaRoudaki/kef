@@ -232,15 +232,15 @@ get_weights_wo_grid_mll <- function(lambda_t,
   #print(summary(base_measure_weights))
   for (i in 1:max_iteration) {
     # Calculate probabilities for sampled and grid points
-    dens <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
+    dens <- as.numeric(get_dens_wo_grid(centered_kernel_mat_at_sampled,
                              min_x,
                              max_x,
                              sampled_x,
                              lambda_t,
-                             weight_t_vec)
+                             weight_t_vec))
 
     # Find the base measure of samples
-    sample_mid_points <- get_middle_points_grid(min_x, sampled_x, max_x)
+    sample_mid_points <- as.numeric(get_middle_points_grid(min_x, sampled_x, max_x))
     base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
 
     dens_sampled_base <- dens * base_measure_weights

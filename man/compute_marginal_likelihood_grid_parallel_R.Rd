@@ -14,7 +14,7 @@ compute_marginal_likelihood_grid_parallel_R(
   initial_w = rep(0, length(sampled_x)),
   MC_iterations,
   max.iterations = 1,
-  censoring = T
+  censoring = F
 )
 }
 \arguments{

@@ -39,7 +39,7 @@ double marginal_log_likelihood(
 #pragma omp parallel for if(parallel_computing) num_threads(omp_get_max_threads())
   for (int i = 0; i < MC_iterations; i++) {
     for (int j = 0; j < n; j++) {
-      w_sampled(i, j) = std_rnorm_matrix(i, j) * std::sqrt(p_vec(j) / tau);
+      w_sampled(i, j) = std_rnorm_matrix(i, j) * std::sqrt(p_vec(j) / tau); //std::sqrt(p_vec(j) / tau)
     }
   }
 
@@ -179,7 +179,7 @@ arma::mat compute_marginal_likelihood_grid_parallel(
       local_results(i, 1) = candidate_tau;
       local_results(i, 2) = mll;
     }
-
+    results = local_results;
     // Find the best hyperparameters
     arma::uword best_idx;
     max_mll = local_results.col(2).max(best_idx);
@@ -197,8 +197,9 @@ arma::mat compute_marginal_likelihood_grid_parallel(
     Rcpp::Rcout << "\nIteration: " << t << ", lambda_hat: " << lambda
                 << ", tau_hat: " << tau << ", max_mll: " << max_mll << std::endl;
 
-    results.row(t - 1) = local_results.row(best_idx);
+
   }
+
 
   return results;
 }

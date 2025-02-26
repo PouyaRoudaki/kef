@@ -60,7 +60,7 @@ get_weights_wo_grid_BBsolve <- function(lambda_hat, tau_hat, centered_kernel_mat
     }
 
     # Solve using BBsolve for subsample
-    result_100 <- BBsolve(par = rep(0,length(sampled_x_100)),
+    result_100 <- BB::BBsolve(par = rep(0,length(sampled_x_100)),
                           fn = s_function_100,
                           control = list(maxit = 10000,
                                          tol = 1e-6,
@@ -80,7 +80,7 @@ get_weights_wo_grid_BBsolve <- function(lambda_hat, tau_hat, centered_kernel_mat
   }
 
   # Solve using BBsolve for full dataset
-  result <- BBsolve(par = as.numeric(initial_weights),
+  result <- BB::BBsolve(par = as.numeric(initial_weights),
                     fn = s_function,
                     control = list(maxit = 10000,
                                    tol = 1e-4,

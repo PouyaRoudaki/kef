@@ -4,6 +4,7 @@ library(plotly)
 library(akima)
 library(dplyr)
 library(MASS)
+library(BB)
 # Example usage
 
 set.seed(7)
@@ -39,7 +40,7 @@ lambda_hat <- 1
 tau_hat <- 1/1350
 
 
-weights_hat_wo_grid <- get_weights_wo_grid(lambda_hat =lambda_hat,
+weights_hat_wo_grid <- get_weights_wo_grid_BBsolve(lambda_hat =lambda_hat,
                                            tau_hat = tau_hat,
                                            centered_kernel_mat_at_sampled,
                                            sampled_x = sampled_x,
@@ -72,8 +73,7 @@ probs <- get_dens_or_prob(centered_kernel_mat_at_sampled,
                           sampled_x,x_grid,
                           lambda_hat, as.vector(weights_hat_wo_grid),
                           type_of_p_is_prob = FALSE,
-                          type_of_q_is_prob = FALSE,
-                          method_of_p_calculation = "ordinary")
+                          type_of_q_is_prob = FALSE)
 
 
 
@@ -129,27 +129,29 @@ ggplot() +
 
 ################################################################################
 
-lambda_grid <- 10^(seq(-1,2,by=0.1))
+lambda_grid <- 10^(seq(-1,1,by=0.1))
+lambda_grid <- 1
 tau_grid <- 10^(seq(-4,1,by=0.1))
 
 # Create a data frame with all possible combinations of lambda and tau
 grid <- expand.grid(lambda = lambda_grid, tau = tau_grid)
 
 # Calculate log10(tau) and log10(lambda)
-grid$log10_tau <- log10(grid$tau)
+
 grid$log10_lambda <- log10(grid$lambda)
+grid$log10_tau <- log10(grid$tau)
 
 # Filter the grid based on the condition
 filtered_grid <- grid %>% filter(log10_tau >= log10_lambda - 4.2 )
 
 # Print the filtered grid
-View(filtered_grid)
+#View(filtered_grid)
 
 
 #lambda_grid_trimmed <- seq(30,60,by =1)
 library(ggplot2)
 # Specify the PDF output file
-#pdf("output3.pdf")  # Adjust width and height as needed
+#pdf("output5.pdf")  # Adjust width and height as needed
 #dev.off()
 library(doParallel)
 library(foreach)
@@ -162,8 +164,64 @@ lst_df <- compute_marginal_likelihood_grid_parallel(centered_kernel_mat_at_sampl
                                  initial_lambda = 1,
                                  initial_w = rep(0, length(sampled_x)),
                                  MC_iterations = 1000,
-                                 max_iterations = 4
+                                 max_iterations =  3
                                  )
+
+lst_df <- compute_marginal_likelihood_grid_parallel_R(centered_kernel_mat_at_sampled,
+                                                    min_x = -3.1,
+                                                    max_x = 3.1,
+                                                    sampled_x,
+                                                    hyperparam_grid = filtered_grid,
+                                                    initial_lambda = 1,
+                                                    initial_w = rep(0, length(sampled_x)),
+                                                    MC_iterations = 1000,
+                                                    max.iterations =  3,
+                                                    censoring = F
+)
+
+
+pdf("marginal_likelihood_results.pdf")
+lst_df <- compute_marginal_likelihood_grid_R(centered_kernel_mat_at_sampled,
+                                                     min_x = -3.1,
+                                                     max_x = 3.1,
+                                                     sampled_x,
+                                                     hyperparam_grid = filtered_grid,
+                                                     initial_lambda = 1,
+                                                     initial_w = rep(0, length(sampled_x)),
+                                                     MC_iterations = 100000,
+                                                     max.iterations =  5,
+                                                     censoring = F
+)
+
+dev.off()
+
+
+
+sample_mid_points <- get_middle_points_grid(-3.1, sampled_x, 3.1)
+base_measure_weights <- sample_mid_points[-1] - sample_mid_points[-length(sample_mid_points)]
+
+solve_without_inversion <- function(b,y) {
+  S_inv <- sum(y / b)  # Compute 1/S directly
+  x <- (y / b) / S_inv  # Solve for x_i
+  return(x)
+}
+
+plot(sampled_x, base_measure_weights)
+
+# Assuming sampled_x and base_measure_weights are vectors
+data <- data.frame(sampled_x, base_measure_weights)
+
+# Create the plot
+ggplot(data, aes(x = sampled_x, y = base_measure_weights)) +
+  geom_point() +  # Scatter plot
+  geom_line()+
+  labs(
+    title = "Sampled X vs. Base Measure Weights",
+    x = "Sampled X",
+    y = "Base Measure Weights"
+  ) +
+  theme_bw()
+
 
 result_df <- lst_df[[1]]
 
@@ -257,7 +315,7 @@ ggplot() +
   theme(legend.position = "bottom")
 
 # Close the PDF device
-lst_df_not_censored <- compute_marginal_likelihood_grid_parallel(centered_kernel_mat_at_sampled,
+lst_df_not_censored <- compute_marginal_likelihood_grid_parallel_R(centered_kernel_mat_at_sampled,
                                                     min_x = -3.1,
                                                     max_x = 3.1,
                                                     sampled_x,
