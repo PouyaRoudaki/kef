@@ -100,3 +100,178 @@ compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sam
 
   return(results_df)
 }
+
+
+#' Optimize Marginal Log-Likelihood with Convergence Check
+#'
+#' This function optimizes the hyperparameters \eqn{\lambda} and \eqn{\tau} by maximizing
+#' the marginal log-likelihood using L-BFGS-B optimization. Instead of a grid search,
+#' it efficiently finds the best parameters while checking for convergence.
+#'
+#' @param centered_kernel_mat_at_sampled The kernel matrix centered at sampled points.
+#' @param min_x Minimum value of the sampled domain.
+#' @param max_x Maximum value of the sampled domain.
+#' @param sampled_x Vector of sampled points.
+#' @param initial_lambda Initial value for \eqn{\lambda} (default: 1).
+#' @param initial_w Initial weight vector (default: zeros of length `sampled_x`).
+#' @param MC_iterations Number of Monte Carlo iterations.
+#' @param max.iterations Maximum number of iterations (default: 50).
+#' @param tol Convergence tolerance (default: `1e-4`). If the relative change in
+#' \eqn{\lambda} and \eqn{\tau} falls below this threshold, optimization stops early.
+#' @param parallel_computing Boolean flag indicating whether parallelization should be
+#' used for optimization (default: `TRUE`).
+#'
+#' @return A list containing:
+#' \describe{
+#'   \item{lambda}{Optimized value of \eqn{\lambda}.}
+#'   \item{tau}{Optimized value of \eqn{\tau}.}
+#'   \item{max_marginal_log_likelihood}{Maximum marginal log-likelihood value.}
+#'   \item{converged}{Logical value indicating whether the optimization converged
+#'   before reaching `max.iterations`.}
+#' }
+#'
+#' @details
+#' - Uses the **L-BFGS-B** optimization method to efficiently find the best
+#'   \eqn{\lambda} and \eqn{\tau} values.
+#' - The optimization stops early if the relative change in \eqn{\lambda} and
+#'   \eqn{\tau} is smaller than `tol`.
+#' - If convergence is not achieved within `max.iterations`, the function
+#'   prints a warning and returns the best estimate.
+#'
+#' @examples
+#' \dontrun{
+#' result <- optimize_marginal_log_likelihood(
+#'   centered_kernel_mat_at_sampled, min_x, max_x, sampled_x,
+#'   MC_iterations = 10000, max.iterations = 50, tol = 1e-4
+#' )
+#' print(result)
+#' }
+#'
+#' @export
+optimize_marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
+                                               min_x,
+                                               max_x,
+                                               sampled_x,
+                                               initial_lambda = 1,
+                                               initial_w = rep(0, length(sampled_x)),
+                                               MC_iterations = 10000,
+                                               max.iterations = 10,
+                                               tol = 1e-4,  # Convergence tolerance
+                                               parallel_computing = TRUE) {
+
+  t <- 1
+  n <- length(sampled_x)
+
+  # Generate matrix with each row independently sampled from Normal(0,1)
+  std_rnorm_matrix <- matrix(rnorm(MC_iterations * n, mean = 0, sd = 1),
+                             nrow = MC_iterations,
+                             ncol = n)
+
+  lambda <- initial_lambda
+  tau <- exp(log(lambda) - 9.671 + (.Machine$double.xmin))
+  w_vec <- initial_w
+
+
+  dens_vec <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
+                                          min_x,
+                                          max_x,
+                                          sampled_x,
+                                          lambda,
+                                          w_vec)
+
+  p_vec <- dens_vec / sum(dens_vec)
+
+
+  repeat {
+
+    cat(paste0("Iteration: ", t, "\n"))
+
+    # Store old values for convergence check
+    lambda_old <- lambda
+    tau_old <- tau
+
+    # Define objective function for optimization
+    objective_function <- function(params) {
+      log_lambda <- params[1]  # Optimizing log(lambda)
+      theta <- params[2]  # Free parameter for tau reparameterization
+      log_tau <- log_lambda - 9.671 + exp(theta)  # Enforcing constraint
+      lambda <- exp(log_lambda)
+      tau <- exp(log_tau)
+
+
+
+      - marginal_log_likelihood(
+        centered_kernel_mat_at_sampled,
+        sampled_x,
+        min_x,
+        max_x,
+        p_vec,
+        lambda,
+        tau,
+        std_rnorm_matrix,
+        MC_iterations,
+        parallel_computing)
+    }
+
+    cat(paste0("Initial lambda: ", lambda,", Initial tau: ", exp(log(lambda) - 9.671 + (.Machine$double.xmin)), "\n"))
+
+    # Optimization using L-BFGS-B (bounded optimization)
+    opt_result <- optim(
+      par = c(log(lambda), log(.Machine$double.xmin) ),  # Initial values for log(lambda) and theta
+      fn = objective_function,
+      method = "L-BFGS-B",
+      lower = c(log(1e-1), log(.Machine$double.xmin)),
+      upper = c(log(1e1), 5)
+    )
+
+    # Retrieve optimal lambda and tau
+    log_lambda <- opt_result$par[1]
+    theta <- opt_result$par[2]
+    log_tau <- log_lambda - 9.678 + exp(theta)
+    lambda <- exp(log_lambda)
+    tau <- exp(log_tau)
+
+    cat(paste0("Optimized lambda: ", lambda, ", tau: ", tau, ", MLL: ", -opt_result$value,
+               ", The ratio: ", lambda^2/tau ,"\n"))
+
+    # Convergence check: Stop if parameters don't change significantly
+    delta_lambda <- abs(lambda - lambda_old) / lambda_old
+    delta_tau <- abs(tau - tau_old) / tau_old
+
+    if (delta_lambda < tol & delta_tau < tol) {
+      converged <- TRUE
+      cat("✔ Convergence reached: Lambda and Tau are stable.\n")
+      break
+    }
+
+    # Update weights
+    w_vec <- get_weights_wo_grid_BBsolve(lambda_hat = lambda,
+                                     tau_hat = tau,
+                                     centered_kernel_mat_at_sampled = centered_kernel_mat_at_sampled,
+                                     sampled_x = sampled_x,
+                                     min_x = min_x,
+                                     max_x = max_x,
+                                     prior_variance_p_vector = p_vec,
+                                     print_trace = FALSE)
+
+    # Update density and p_vec
+    dens_vec <- get_dens_wo_grid(centered_kernel_mat_at_sampled,
+                                            min_x,
+                                            max_x,
+                                            sampled_x,
+                                            lambda,
+                                            w_vec)
+
+    p_vec <- dens_vec / sum(dens_vec)
+
+    t <- t + 1
+
+    if (t > max.iterations) {
+      stop("Error: Max iterations reached without full convergence.\n")
+      break
+    }
+  }
+
+  return(list(lambda = lambda, tau = tau, max_marginal_log_likelihood = -opt_result$value, converged = converged))
+}
+

@@ -512,12 +512,11 @@ compute_marginal_likelihood_grid_R <- function(centered_kernel_mat_at_sampled,
 #' }
 #'
 #' @export
-optimize_marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
+optimize_marginal_log_likelihood_R <- function(centered_kernel_mat_at_sampled,
                                              min_x,
                                              max_x,
                                              sampled_x,
                                              initial_lambda = 1,
-                                             initial_tau = 1,
                                              initial_w = rep(0, length(sampled_x)),
                                              MC_iterations,
                                              max.iterations = 1,
@@ -532,7 +531,6 @@ optimize_marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
                              ncol = n)
 
   lambda <- initial_lambda
-  tau <- initial_tau
   w_vec <- initial_w
 
   dens_vec <- as.numeric(get_dens_wo_grid(centered_kernel_mat_at_sampled,
@@ -550,8 +548,13 @@ optimize_marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
 
     # Define objective function for optimization
     objective_function <- function(params) {
-      lambda <- exp(params[1])  # Ensure positivity by optimizing log(lambda)
-      tau <- exp(params[2])  # Ensure positivity by optimizing log(tau)
+      log_lambda <- params[1]  # Optimizing log(lambda)
+      theta <- params[2]  # Free parameter for tau reparameterization
+      log_tau <- log_lambda - 9.671 + exp(theta)  # Enforcing constraint
+      lambda <- exp(log_lambda)
+      tau <- exp(log_tau)
+
+
 
       -marginal_log_likelihood_R(
         centered_kernel_mat_at_sampled,
@@ -566,20 +569,26 @@ optimize_marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
         censoring)
     }
 
+    cat(paste0("lambda: ", lambda,",tau: ", exp(log(lambda) - 9.671 + (.Machine$double.xmin)), "\n"))
+
     # Optimization using L-BFGS-B (bounded optimization)
     opt_result <- optim(
-      par = c(log(lambda), log(tau)),
+      par = c(log(lambda), log(.Machine$double.xmin) ),  # Initial values for log(lambda) and theta
       fn = objective_function,
       method = "L-BFGS-B",
-      lower = c(log(1e-5), log(1e-5)),
-      upper = c(log(1e5), log(1e5))
+      lower = c(log(1e-1), log(.Machine$double.xmin)),
+      upper = c(log(1e1), 5)
     )
 
     # Retrieve optimal lambda and tau
-    lambda <- exp(opt_result$par[1])
-    tau <- exp(opt_result$par[2])
+    log_lambda <- opt_result$par[1]
+    theta <- opt_result$par[2]
+    log_tau <- log_lambda - 9.678 + exp(theta)
+    lambda <- exp(log_lambda)
+    tau <- exp(log_tau)
 
-    cat(paste0("Optimized lambda: ", lambda, ", tau: ", tau, ", MLL: ", -opt_result$value, "\n"))
+    cat(paste0("Optimized lambda: ", lambda, ", tau: ", tau, ", MLL: ", -opt_result$value,
+               ", The ratio: ", lambda^2/tau ,"\n"))
 
     # Update weights
     w_vec <- get_weights_wo_grid_mll(lambda_t = lambda,
@@ -606,3 +615,4 @@ optimize_marginal_log_likelihood <- function(centered_kernel_mat_at_sampled,
 
   return(list(lambda = lambda, tau = tau, max_marginal_log_likelihood = -opt_result$value))
 }
+

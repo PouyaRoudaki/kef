@@ -5,6 +5,7 @@ library(akima)
 library(dplyr)
 library(MASS)
 library(BB)
+library(spatstat)
 # Example usage
 
 set.seed(7)
@@ -36,8 +37,8 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_gr
 
 
 
-lambda_hat <- 1
-tau_hat <- 0.00794
+lambda_hat <- 0.1
+tau_hat <- 6.264667e-06
 
 
 weights_hat_wo_grid <- get_weights_wo_grid_BBsolve(lambda_hat =lambda_hat,
@@ -232,6 +233,16 @@ lst_df <- compute_marginal_likelihood_grid_R(centered_kernel_mat_at_sampled,
 )
 
 dev.off()
+
+optimize_marginal_log_likelihood(centered_kernel_mat_at_sampled,
+                                 min_x = -3.1,
+                                 max_x = 3.1,
+                                 sampled_x,
+                                 initial_lambda = 1,
+                                 initial_w = rep(0, length(sampled_x)),
+                                 MC_iterations = 10000,
+                                 max.iterations = 5,
+                                 parallel_computing = TRUE)
 
 
 
