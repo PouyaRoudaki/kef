@@ -42,7 +42,7 @@ arma::vec get_dens_wo_grid(const arma::mat& centered_kernel_mat_at_sampled,
   arma::vec p_vec;
 
   if (max_f_x > EXP_THRESHOLD) {
-    Rcpp::Rcout << "Warning: Exponential function at risk of overflow. Applying log-scaling.\n";
+    //Rcpp::Rcout << "Warning: Exponential function at risk of overflow. Applying log-scaling.\n";
     p_vec = arma::exp(f_x - max_f_x);  // Apply log-stabilization
   } else {
     p_vec = arma::exp(f_x);  // Compute normally if safe
