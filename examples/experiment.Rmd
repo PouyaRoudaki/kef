@@ -1264,7 +1264,7 @@ Silverman, B. (1986) Density Estimation, pp 100–104.
 adaptive_cv_parallel <- function(sample, x_grid, alpha_grid, kappa_grid) {
   
   # Start timer
-  start_time <- Sys.time()
+  #start_time <- Sys.time()
   
   # Initialize cluster
   n_cores <- parallel::detectCores() - 1  # Use all available cores minus 1
@@ -1310,14 +1310,14 @@ adaptive_cv_parallel <- function(sample, x_grid, alpha_grid, kappa_grid) {
   best_result <- results[which.min(results$cv_error), ]
   
   # End timer
-  end_time <- Sys.time()
+  #end_time <- Sys.time()
   
   # Compute total computation time
-  total_time <- end_time - start_time
+  #total_time <- end_time - start_time
   
   # Return results with computation time
   return(list(best_alpha = best_result$alpha, best_kappa = best_result$kappa, 
-              min_cv_error = best_result$cv_error ,total_time = total_time))
+              min_cv_error = best_result$cv_error ))#,total_time = total_time))
 }
 
 
@@ -1379,7 +1379,7 @@ print(paste("Adaptive bimodal best cv error = ",adaptive_cv_result_bimodal$min_c
 
 ```
 
-## 10. The kef approach:
+## 11. The kef approach:
 
 ### Claw
 ```{r}

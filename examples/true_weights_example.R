@@ -35,6 +35,8 @@ plot(grid, true_density_mixture, type = "l", main = "Mixture Normal Density", xl
 
 
 w_vec <- get_true_weights(sample,grid,true_density_mixture)
+# I tried to solve the system of equations with BBsolve but it cannot reach convergence.
+
 
 plot(sample,w_vec, type = "l", main = "Mixture Normal weights", xlab = "x", ylab = "Weights")
 

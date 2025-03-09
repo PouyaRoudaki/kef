@@ -11,6 +11,7 @@
 #' @return A numeric vector of estimated weights (`w`) corresponding to the sampled points.
 #' @importFrom pracma trapz Norm
 #' @importFrom stats optim
+#'
 #' @examples
 #' sample <- seq(-3, 3, length.out = 10)
 #' grid <- seq(-3, 3, length.out = 100)
@@ -72,11 +73,14 @@ get_true_weights <- function(sample, grid, true_density_at_grid) {
     return((pracma::Norm(predicted_f(w) - f_x, 2))^2)  # Least squares error
   }
 
-  # Optimize w using 'optim'
+  # Choose method for solving the nonlinear system of equations
   initial_w <- rep(0, length(sample))  # Initial guess for weights
-  result <- optim(initial_w, loss_function, method = "L-BFGS-B")
 
-  # Extract the approximation of true weights
+
+  result <- optim(initial_w, loss_function, method = "L-BFGS-B")
   approx_true_w <- result$par
+
+
+
   return(approx_true_w)
 }
