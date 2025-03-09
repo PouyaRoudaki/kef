@@ -1,0 +1,21 @@
+Iteration: 1
+Initial lambda: 1, Initial tau: 1
+Optimized lambda: 0.678447353535959, tau: 0.00552771486568446, MLL: -124.255900724069, The ratio: 83.2696372197829
+  Successful convergence.
+Iteration: 2
+Initial lambda: 0.678447353535959, Initial tau: 0.00552771486568446
+Optimized lambda: 0.67844151298092, tau: 0.00669832614305001, MLL: -124.232411224387, The ratio: 68.716105592054
+  Successful convergence.
+Iteration: 3
+Initial lambda: 0.67844151298092, Initial tau: 0.00669832614305001
+Optimized lambda: 0.683850765054881, tau: 0.00630730411269257, MLL: -124.053836049246, The ratio: 74.1444935126976
+  Successful convergence.
+Iteration: 4
+Initial lambda: 0.683850765054881, Initial tau: 0.00630730411269257
+Optimized lambda: 0.683846173638532, tau: 0.00660617350533063, MLL: -124.155551099527, The ratio: 70.7891775507727
+  Successful convergence.
+Iteration: 5
+Initial lambda: 0.683846173638532, Initial tau: 0.00660617350533063
+Optimized lambda: 0.683052411916616, tau: 0.0064255209936458, MLL: -124.105955122539, The ratio: 72.6105475161452
+  Successful convergence.
+Error: Max iterations reached without full convergence.

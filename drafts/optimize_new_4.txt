@@ -1,0 +1,12 @@
+Iteration: 1
+Initial lambda: 1, Initial tau: 1
+Optimized lambda: 0.849989879101494, tau: 0.00774403934474329, MLL: -125.543981290708, The ratio: 93.2953414118949
+  Successful convergence.
+Iteration: 2
+Initial lambda: 0.849989879101494, Initial tau: 0.00774403934474329
+Optimized lambda: 0.651864057142187, tau: 0.00411625979323444, MLL: -124.341175642097, The ratio: 103.231275560471
+  Successful convergence.
+Iteration: 3
+Initial lambda: 0.651864057142187, Initial tau: 0.00411625979323444
+Optimized lambda: 0.651864057142187, tau: 0.00411625979323444, MLL: -124.255675869299, The ratio: 103.231275560471
+✔ Convergence reached: Estimated Lambda and Tau by Maximum Marginal Likelihood are stable.

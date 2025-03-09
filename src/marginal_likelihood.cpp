@@ -21,6 +21,8 @@ double marginal_log_likelihood(
 
   int n = centered_kernel_mat_at_sampled.n_rows;
 
+
+
   arma::mat w_sampled(MC_iterations, n); // Make the w_sampled matrix
   p_vec = arma::vectorise(p_vec);  // Ensure column vector
 
@@ -66,8 +68,19 @@ double marginal_log_likelihood(
   // Compute the marginal likelihood (mean of all joint conditional densities)
   double marginal_likelihood = arma::mean(monte_carlo_likelihood);
 
+  double log_marginal_likelihood = std::log(marginal_likelihood);
+
+  // Handle -inf case
+  if (!std::isfinite(log_marginal_likelihood)) {
+    log_marginal_likelihood = -10000;
+  }
+
+  //Rcpp::Rcout << "-----------------------------------------------------" << std::endl;
+  //Rcpp::Rcout << "lambda: " << lambda << ", tau: " << tau << ", mll: " << log_marginal_likelihood <<std::endl;
+  //Rcpp::Rcout << "-----------------------------------------------------" << std::endl;
+
   // Return the marginal_log_likelihood
-  return std::log(marginal_likelihood);
+  return log_marginal_likelihood;
 }
 
 // [[Rcpp::depends(RcppArmadillo)]]

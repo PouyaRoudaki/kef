@@ -16,7 +16,7 @@ In this notebook, we compare the density estimation results of our `kef` approac
 `ASH` is changed to `ash`. Package `ftnonpar` was removed from the CRAN repository. Package `GenKern` was removed from the CRAN repository. Package `kerdiest` was removed from the CRAN repository. Package `delt` was removed from the CRAN repository. Package `ICE` was removed from the CRAN repository. Package `latticeDensity` was removed from the CRAN repository. Package `pencopula` was removed from the CRAN repository.
 
 ```{r, message=FALSE,echo=T,include=FALSE}
-packages <- c("ash", "gss", "KernSmooth", "ks", "locfit", "logspline", "MASS", "np", "pendensity", "plugdensity", "sm", "quantreg")
+packages <- c("ash", "gss", "KernSmooth", "ks", "locfit", "logspline", "MASS", "np", "pendensity", "plugdensity", "sm", "quantreg", "BB", "dplyr","pracma", "akima", "tidyverse", "dplyr", "ggplot2")
 
 
 #install.packages(packages, dependencies = TRUE)

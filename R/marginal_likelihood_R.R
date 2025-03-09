@@ -318,7 +318,8 @@ compute_marginal_likelihood_grid_parallel_R <- function(centered_kernel_mat_at_s
 #' @param p_vec A vector of initial probabilities (default is a vector of 1's).
 #' @param hyperparam_grid A dataframe including pairs of lambda and tau values.
 #' @param MC_iterations Number of Monte Carlo iterations to perform.
-#' @param censoring True if the marginals is censored.
+#' @param max.iterations Maximum number of iterations (default: 5).
+#' @param seed An integer that controls the randomness.
 
 #' @return A data frame containing lambda, tau, and their corresponding marginal log likelihoods.
 #' @export
@@ -331,13 +332,14 @@ compute_marginal_likelihood_grid_R <- function(centered_kernel_mat_at_sampled,
                                                initial_lambda = 1,
                                                initial_w = rep(0, length(sampled_x)),
                                                MC_iterations,
-                                               max.iterations = 1,
-                                               censoring = F) {
+                                               max.iterations = 5,
+                                               seed = 1) {
 
   t <- 1
   n <- length(sampled_x)
 
   # Generate matrix with each row independently sampled from Uniform(0,1)
+  set.seed(seed)
   std_rnorm_matrix <- matrix(rnorm(MC_iterations * n, mean = 0, sd = 1),
                              nrow = MC_iterations,
                              ncol = n)
@@ -352,6 +354,8 @@ compute_marginal_likelihood_grid_R <- function(centered_kernel_mat_at_sampled,
                                w_vec))
 
   p_vec <- dens_vec / sum(dens_vec)
+
+  p_vec_init <- p_vec
 
   while (t <= max.iterations) {
 
@@ -371,17 +375,17 @@ compute_marginal_likelihood_grid_R <- function(centered_kernel_mat_at_sampled,
 
       cat(paste0("-"))
 
-      marginal_log_likelihood <- marginal_log_likelihood_R(
-        centered_kernel_mat_at_sampled,
-        sampled_x,
-        min_x,
-        max_x,
-        p_vec,
-        lambda,
-        tau,
-        std_rnorm_matrix,
-        MC_iterations,
-        censoring)
+      marginal_log_likelihood <- marginal_log_likelihood(centered_kernel_mat_at_sampled,
+                                                         sampled_x,
+                                                         min_x,
+                                                         max_x,
+                                                         p_vec = p_vec,
+                                                         lambda,
+                                                         tau,
+                                                         std_rnorm_matrix,
+                                                         MC_iterations,
+                                                         parallel_computing = TRUE)
+
 
       plot_ml <- rbind(plot_ml, data.frame(
         lambda = lambda,
@@ -399,14 +403,15 @@ compute_marginal_likelihood_grid_R <- function(centered_kernel_mat_at_sampled,
     lambda <- max_likelihood_lambda
     tau <- max_likelihood_tau
 
-    w_vec <- get_weights_wo_grid_mll(lambda_t = lambda,
-                                     tau_t = tau,
-                                     centered_kernel_mat_at_sampled = centered_kernel_mat_at_sampled,
-                                     sampled_x = sampled_x,
-                                     min_x = min_x,
-                                     max_x = max_x,
-                                     p_vec_t_1 = p_vec,
-                                     print_trace = F)
+    # Update weights
+    w_vec <- get_weights_wo_grid_BBsolve(lambda_hat = lambda,
+                                           tau_hat = tau,
+                                           centered_kernel_mat_at_sampled = centered_kernel_mat_at_sampled,
+                                           sampled_x = sampled_x,
+                                           min_x = min_x,
+                                           max_x = max_x,
+                                           prior_variance_p_vector = p_vec,
+                                           print_trace = FALSE)
 
     dens_vec <- as.numeric(get_dens_wo_grid(centered_kernel_mat_at_sampled,
                                  min_x,
@@ -417,68 +422,253 @@ compute_marginal_likelihood_grid_R <- function(centered_kernel_mat_at_sampled,
 
     p_vec <- dens_vec / sum(dens_vec)
 
-    output_file <- "marginal_likelihood_results.txt"
+    #output_file <- "marginal_likelihood_results.txt"
 
     cat(paste0("Iteration = ", t,
                ", lambda_hat = ", lambda,
                ", tau_hat = ", tau,
-               ", max_marginal_log_likelihood = ", round(max_marginal_log_likelihood, 2), "\n"),
-        file = output_file, append = TRUE)
+               ", max_marginal_log_likelihood = ", round(max_marginal_log_likelihood, 2),
+               ", The ratio: ", lambda^2/tau ,"\n")
+    )
+        #file = output_file, append = TRUE)
 
-    plot_ml <- plot_ml %>% filter(mll > -1000)
+    plot_ml <- plot_ml %>% filter(mll > -140)
 
-    plot <- ggplot(plot_ml, aes(x = log10(tau), y = mll)) +
-      geom_point(color = "red") +
-      geom_line(color = "red") +
-      geom_vline(xintercept = log10(1/1350), linetype = "dotted", color = "blue", size = 1) + # Dotted vertical line
-      labs(
-        title = bquote("Likelihood vs." ~ log[10](tau) ~
-                         "," ~ log[10](lambda) == .(0)),
-        x = bquote(~ log[10](tau)),
-        y = "Likelihood"
-      ) +
-      theme_bw()
+    #plot <- ggplot(plot_ml, aes(x = log10(tau), y = mll)) +
+    #  geom_point(color = "red") +
+    #  geom_line(color = "red") +
+    #  geom_vline(xintercept = log10(1/1350), linetype = "dotted", color = "blue", size = 1) + # Dotted vertical line
+    #  labs(
+    #    title = bquote("Likelihood vs." ~ log[10](tau) ~
+    #                     "," ~ log[10](lambda) == .(0)),
+    #    x = bquote(~ log[10](tau)),
+    #    y = "Likelihood"
+    #  ) +
+    #  theme_bw()
 
-    print(plot)
-    #x_grid <- seq(min(log10(plot_ml$lambda)), max(log10(plot_ml$lambda)), length.out = 100)
-    #y_grid <- seq(min(log10(plot_ml$tau)), max(log10(plot_ml$tau)), length.out = 100)
+    #print(plot)
+    x_grid <- seq(min(log10(plot_ml$lambda)), max(log10(plot_ml$lambda)), length.out = 100)
+    y_grid <- seq(min(log10(plot_ml$tau)), max(log10(plot_ml$tau)), length.out = 100)
 
-    #interp_data <- with(plot_ml, akima::interp(log10(lambda), log10(tau), mll, xo = x_grid, yo = y_grid, duplicate = "mean"))
-    #interp_df <- expand.grid(x = interp_data$x, y = interp_data$y)
-    #interp_df$z <- as.vector(interp_data$z)
+    interp_data <- with(plot_ml, akima::interp(log10(lambda), log10(tau), mll, xo = x_grid, yo = y_grid, duplicate = "mean"))
+    interp_df <- expand.grid(x = interp_data$x, y = interp_data$y)
+    interp_df$z <- as.vector(interp_data$z)
 
-    #p_ml <- plotly::plot_ly() %>%
-    #  plotly::add_surface(x = interp_data$x, y = interp_data$y, z = matrix(interp_df$z, nrow = length(interp_data$x), ncol = length(interp_data$y), byrow = TRUE), colorscale = 'Viridis') %>%
-    #  plotly::layout(title = paste0("Marginal Log Likelihood-Iteration:", t, ", Censored:",censoring),
-    #                 scene = list(xaxis = list(title = "log(λ)"), yaxis = list(title = "log(τ)"), zaxis = list(title = "MLL")))
-
+    p_ml <- plotly::plot_ly() %>%
+      plotly::add_surface(x = interp_data$x, y = interp_data$y, z = matrix(interp_df$z, nrow = length(interp_data$x), ncol = length(interp_data$y), byrow = TRUE), colorscale = 'Viridis') %>%
+      plotly::layout(title = paste0("Marginal Log Likelihood-Iteration:", t, ", Seed:",seed),
+                     scene = list(xaxis = list(title = "log10(λ)"), yaxis = list(title = "log10(τ)"), zaxis = list(title = "MLL")))
     #print(p_ml)
 
-    #scatter <- plot_ly(
-    #  plot_ml,
-    #  x = ~log10(lambda), y = ~log10(tau), z = ~mll,
-    #  type = 'scatter3d', mode = 'markers',
-    #  marker = list(size = 4, color = ~mll, colorscale = 'Viridis')
-    #) %>%
-    #  layout(
-    #    title = paste0("Scatter plot Marginal Log Likelihood-Iteration:", t, ", Censored:", censoring),
-    #    scene = list(
-    #      xaxis = list(title = "log(\u03bb)"),
-    #      yaxis = list(title = "log(\u03c4)"),
-    #      zaxis = list(title = "MLL")
-    #    )
-    #  )
+    scatter <- plot_ly(
+      plot_ml,
+      x = ~log10(lambda), y = ~log10(tau), z = ~mll,
+      type = 'scatter3d', mode = 'markers',
+      marker = list(size = 4, color = ~mll, colorscale = 'Viridis')
+    ) %>%
+      layout(
+        title = paste0("Scatter plot Marginal Log Likelihood-Iteration:", t, ", Seed:", seed),
+        scene = list(
+          xaxis = list(title = "log10(\u03bb)"),
+          yaxis = list(title = "log10(\u03c4)"),
+          zaxis = list(title = "MLL")
+        )
+      )
 
-    #print(scatter)
+    print(scatter)
 
     t <- t + 1
   }
 
   lst <- list()
   lst[[1]] <- plot_ml
-  #lst[[2]] <- interp_df
+  lst[[2]] <- interp_df
+  lst[[3]] <- std_rnorm_matrix
+  lst[[4]] <- p_vec_init
   return(lst)
 }
+
+
+#' Title: Compute Marginal Likelihood over a Grid of Parameters
+
+#' This function computes the marginal likelihood for each combination of lambda and tau
+#' in the provided grids.
+
+#' @param centered_kernel_mat_at_sampled A matrix of centered kernel values at sampled points.
+#' @param centered_kernel_mat_at_grid A matrix of centered kernel values at grid points.
+#' @param centered_kernel_self_grid A matrix of centered kernel self-values at grid points.
+#' @param x_grid A grid of x values where the function is evaluated.
+#' @param p_vec A vector of initial probabilities (default is a vector of 1's).
+#' @param hyperparam_grid A dataframe including pairs of lambda and tau values.
+#' @param MC_iterations Number of Monte Carlo iterations to perform.
+#' @param max.iterations Maximum number of iterations (default: 5).
+#' @param seed An integer that controls the randomness.
+
+#' @return A data frame containing lambda, tau, and their corresponding marginal log likelihoods.
+#' @export
+
+compute_marginal_likelihood_grid_R_pint <- function(centered_kernel_mat_at_sampled,
+                                               min_x,
+                                               max_x,
+                                               sampled_x,
+                                               hyperparam_grid,
+                                               initial_lambda = 1,
+                                               initial_tau = 1/1350,
+                                               MC_iterations,
+                                               max.iterations = 5,
+                                               seed = 1) {
+
+  t <- 1
+  n <- length(sampled_x)
+
+  # Generate matrix with each row independently sampled from Uniform(0,1)
+  set.seed(seed)
+  std_rnorm_matrix <- matrix(rnorm(MC_iterations * n, mean = 0, sd = 1),
+                             nrow = MC_iterations,
+                             ncol = n)
+
+  lambda <- initial_lambda
+  tau <- initial_tau
+
+  grid <- seq(from = min_x, to = max_x,length.out = 4*n)
+
+  dens_vec <- kef(sampled_x,grid,lambda = lambda,tau = tau)$probs_sample
+
+  p_vec <- dens_vec / sum(dens_vec)
+
+  p_vec_init <- p_vec
+
+  while (t <= max.iterations) {
+
+    plot_ml <- data.frame(
+      lambda = numeric(),
+      tau = numeric(),
+      mll = numeric()
+    )
+
+    max_marginal_log_likelihood <- -Inf
+    #max_likelihood_lambda <- -Inf
+    #max_likelihood_tau <- -Inf
+
+    for (i in (1:dim(hyperparam_grid)[1])) {
+      lambda <- hyperparam_grid[i, 1]
+      tau <- hyperparam_grid[i, 2]
+
+      cat(paste0("-"))
+
+      marginal_log_likelihood <- marginal_log_likelihood(centered_kernel_mat_at_sampled,
+                                                         sampled_x,
+                                                         min_x,
+                                                         max_x,
+                                                         p_vec = p_vec,
+                                                         lambda,
+                                                         tau,
+                                                         std_rnorm_matrix,
+                                                         MC_iterations,
+                                                         parallel_computing = TRUE)
+
+
+      plot_ml <- rbind(plot_ml, data.frame(
+        lambda = lambda,
+        tau = tau,
+        mll = marginal_log_likelihood
+      ))
+
+      if (marginal_log_likelihood > max_marginal_log_likelihood & (!is.nan(marginal_log_likelihood))) {
+        max_marginal_log_likelihood <- marginal_log_likelihood
+        max_likelihood_lambda <- lambda
+        max_likelihood_tau <- tau
+      }
+    }
+
+    lambda <- max_likelihood_lambda
+    tau <- max_likelihood_tau
+
+    # Update weights
+    w_vec <- get_weights_wo_grid_BBsolve(lambda_hat = lambda,
+                                         tau_hat = tau,
+                                         centered_kernel_mat_at_sampled = centered_kernel_mat_at_sampled,
+                                         sampled_x = sampled_x,
+                                         min_x = min_x,
+                                         max_x = max_x,
+                                         prior_variance_p_vector = p_vec,
+                                         print_trace = FALSE)
+
+    dens_vec <- as.numeric(get_dens_wo_grid(centered_kernel_mat_at_sampled,
+                                            min_x,
+                                            max_x,
+                                            sampled_x,
+                                            lambda,
+                                            w_vec))
+
+    p_vec <- dens_vec / sum(dens_vec)
+
+    #output_file <- "marginal_likelihood_results.txt"
+
+    cat(paste0("Iteration = ", t,
+               ", lambda_hat = ", lambda,
+               ", tau_hat = ", tau,
+               ", max_marginal_log_likelihood = ", round(max_marginal_log_likelihood, 2),
+               ", The ratio: ", lambda^2/tau ,"\n")
+    )
+    #file = output_file, append = TRUE)
+
+    plot_ml <- plot_ml %>% filter(mll > -140)
+
+    #plot <- ggplot(plot_ml, aes(x = log10(tau), y = mll)) +
+    #  geom_point(color = "red") +
+    #  geom_line(color = "red") +
+    #  geom_vline(xintercept = log10(1/1350), linetype = "dotted", color = "blue", size = 1) + # Dotted vertical line
+    #  labs(
+    #    title = bquote("Likelihood vs." ~ log[10](tau) ~
+    #                     "," ~ log[10](lambda) == .(0)),
+    #    x = bquote(~ log[10](tau)),
+    #    y = "Likelihood"
+    #  ) +
+    #  theme_bw()
+
+    #print(plot)
+    x_grid <- seq(min(log10(plot_ml$lambda)), max(log10(plot_ml$lambda)), length.out = 100)
+    y_grid <- seq(min(log10(plot_ml$tau)), max(log10(plot_ml$tau)), length.out = 100)
+
+    interp_data <- with(plot_ml, akima::interp(log10(lambda), log10(tau), mll, xo = x_grid, yo = y_grid, duplicate = "mean"))
+    interp_df <- expand.grid(x = interp_data$x, y = interp_data$y)
+    interp_df$z <- as.vector(interp_data$z)
+
+    p_ml <- plotly::plot_ly() %>%
+      plotly::add_surface(x = interp_data$x, y = interp_data$y, z = matrix(interp_df$z, nrow = length(interp_data$x), ncol = length(interp_data$y), byrow = TRUE), colorscale = 'Viridis') %>%
+      plotly::layout(title = paste0("Marginal Log Likelihood-Iteration p_int:", t, ", Seed:",seed),
+                     scene = list(xaxis = list(title = "log10(λ)"), yaxis = list(title = "log10(τ)"), zaxis = list(title = "MLL")))
+    print(p_ml)
+
+    scatter <- plot_ly(
+      plot_ml,
+      x = ~log10(lambda), y = ~log10(tau), z = ~mll,
+      type = 'scatter3d', mode = 'markers',
+      marker = list(size = 4, color = ~mll, colorscale = 'Viridis')
+    ) %>%
+      layout(
+        title = paste0("Scatter plot Marginal Log Likelihood-Iteration p_int:", t, ", Seed:", seed),
+        scene = list(
+          xaxis = list(title = "log10(\u03bb)"),
+          yaxis = list(title = "log10(\u03c4)"),
+          zaxis = list(title = "MLL")
+        )
+      )
+
+    print(scatter)
+
+    t <- t + 1
+  }
+
+  lst <- list()
+  lst[[1]] <- plot_ml
+  lst[[2]] <- interp_df
+  lst[[3]] <- std_rnorm_matrix
+  lst[[4]] <- p_vec_init
+  return(lst)
+}
+
 
 #' Optimize Marginal Log-Likelihood using L-BFGS-B Optimization
 #'

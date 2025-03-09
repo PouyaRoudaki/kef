@@ -168,9 +168,10 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_gr
                                                          hurst_coef = 0.5))
 
 
-lambda_grid <- 10^(seq(-1,1,by=0.1))
-lambda_grid <- 1
-tau_grid <- 10^(seq(-4,1,by=0.1))
+plot(sampled_x,exp(-100*0.5*diag(centered_kernel_mat_at_sampled)))
+lambda_grid <- 10^(seq(-2,2,by=0.2))
+#lambda_grid <- 1
+tau_grid <- 10^(seq(-8,1,by=0.2))
 
 # Create a data frame with all possible combinations of lambda and tau
 grid <- expand.grid(lambda = lambda_grid, tau = tau_grid)
@@ -188,12 +189,12 @@ filtered_grid <- grid %>% filter(log10_tau >= log10_lambda - 4.2 )
 
 
 #lambda_grid_trimmed <- seq(30,60,by =1)
-library(ggplot2)
+#library(ggplot2)
 # Specify the PDF output file
 #pdf("output5.pdf")  # Adjust width and height as needed
 #dev.off()
-library(doParallel)
-library(foreach)
+#library(doParallel)
+#library(foreach)
 
 #lst_df <- compute_marginal_likelihood_grid_parallel(centered_kernel_mat_at_sampled,
 #                                 min_x = -3.1,
@@ -219,30 +220,170 @@ library(foreach)
 #)
 
 
-pdf("marginal_likelihood_results.pdf")
-lst_df <- compute_marginal_likelihood_grid_R(centered_kernel_mat_at_sampled,
-                                                     min_x = -3.1,
-                                                     max_x = 3.1,
-                                                     sampled_x,
-                                                     hyperparam_grid = filtered_grid,
-                                                     initial_lambda = 1,
-                                                     initial_w = rep(0, length(sampled_x)),
-                                                     MC_iterations = 100000,
-                                                     max.iterations =  5,
-                                                     censoring = F
-)
 
-dev.off()
+lst <- list()
+for (i in 1:10) {
+  #pdf("marginal_likelihood_results.pdf")
 
-optimize_marginal_log_likelihood(centered_kernel_mat_at_sampled,
-                                 min_x = -3.1,
-                                 max_x = 3.1,
-                                 sampled_x,
-                                 initial_lambda = 1,
-                                 initial_w = rep(0, length(sampled_x)),
-                                 MC_iterations = 10000,
-                                 max.iterations = 5,
-                                 parallel_computing = TRUE)
+  sink(paste0("drafts/grid_",i,".txt"))
+  lst_grid <- compute_marginal_likelihood_grid_R(centered_kernel_mat_at_sampled,
+                                                       min_x = -3.1,
+                                                       max_x = 3.1,
+                                                       sampled_x,
+                                                       hyperparam_grid = filtered_grid,
+                                                       initial_lambda = 1,
+                                                       initial_w = rep(0, length(sampled_x)),
+                                                       MC_iterations = 10000,
+                                                       max.iterations = 5,
+                                                       seed = i
+  )
+  sink()
+
+  lst[[i]] <- lst_grid
+  #dev.off()
+  #sink("nloptr2.txt")
+  #optimize_marginal_log_likelihood_nloptr(centered_kernel_mat_at_sampled,
+  #                                 min_x = -3.1,
+  #                                 max_x = 3.1,
+  #                                 sampled_x,
+  #                                 initial_lambda = 1,
+  #                                 initial_w = rep(0, length(sampled_x)),
+  #                                 MC_iterations = 10000,#
+  #                                 max.iterations = 10,
+  #                                 tol = 1e-3,
+  #                                 parallel_computing = TRUE)
+  #sink()
+  #pdf("marginal_likelihood_results.pdf")
+  sink(paste0("drafts/optimize_new_",i,".txt"))
+  lst_opt <- optimize_marginal_log_likelihood_new(centered_kernel_mat_at_sampled,
+                                          min_x = -3.1,
+                                          max_x = 3.1,
+                                          sampled_x,
+                                          initial_lambda = 1,
+                                          initial_w = rep(0, length(sampled_x)),
+                                          MC_iterations = 10000,
+                                          max.iterations = 5,
+                                          tol = 1e-3,
+                                          parallel_computing = TRUE,
+                                          seed = i)
+  sink()
+
+  #sink(paste0("grid_pint_",i,".txt"))
+  #lst_grid <- compute_marginal_likelihood_grid_R_pint(centered_kernel_mat_at_sampled,
+  #                                               min_x = -3.1,
+  #                                               max_x = 3.1,
+  #                                               sampled_x,
+  #                                               hyperparam_grid = filtered_grid,
+  #                                               initial_lambda = 1,
+  #                                               initial_tau = 1/1350,
+  #                                               MC_iterations = 10000,
+  #                                               max.iterations = 5,
+  #                                               seed = i
+  #)
+  #sink()
+  #dev.off()
+  #sink("nloptr2.txt")
+  #optimize_marginal_log_likelihood_nloptr(centered_kernel_mat_at_sampled,
+  #                                 min_x = -3.1,
+  #                                 max_x = 3.1,
+  #                                 sampled_x,
+  #                                 initial_lambda = 1,
+  #                                 initial_w = rep(0, length(sampled_x)),
+  #                                 MC_iterations = 10000,#
+  #                                 max.iterations = 10,
+  #                                 tol = 1e-3,
+  #                                 parallel_computing = TRUE)
+  #sink()
+  #pdf("marginal_likelihood_results.pdf")
+  #sink(paste0("optimize_new_pint_",i,".txt"))
+  #lst_opt <- optimize_marginal_log_likelihood_init_p(centered_kernel_mat_at_sampled,
+  #                                             min_x = -3.1,
+  #                                             max_x = 3.1,
+  #                                             sampled_x,
+  #                                             initial_lambda = 1,
+  #                                             initial_tau = 1/1350,
+  #                                             MC_iterations = 10000,
+  #                                             max.iterations = 5,
+  #                                             tol = 1e-3,
+  #                                             parallel_computing = TRUE,
+  #                                             seed = i)
+  #sink()
+
+
+}
+
+library(ggplot2)
+library(dplyr)
+
+# Initialize the first dataset
+df_2d_plot <- lst[[1]][[1]]
+colnames(df_2d_plot)[3] <- "mll_seed1"
+df_2d_plot[df_2d_plot[, 3] < -130, 3] <- NA  # Set values < -130 to NA
+
+# Merge the remaining datasets
+for (i in 2:10) {
+  temp_df <- lst[[i]][[1]]
+  temp_df[temp_df[, 3] < -130, 3] <- NA  # Apply threshold
+
+  df_2d_plot <- merge(df_2d_plot, temp_df, by = c("lambda", "tau"), all = TRUE)
+  colnames(df_2d_plot)[i + 2] <- paste0("mll_seed", i)  # Rename column dynamically
+}
+
+# Initialize lists for storing thresholds and new data
+top_threshold <- vector("list", 10)  # Stores top 50 thresholds
+top_1 <- vector("list", 10)  # Stores top 1 (max) values
+df_2d_plot_new <- vector("list", 10)  # Stores modified data frames
+
+for (i in 1:10) {
+  col_name <- paste0("mll_seed", i)  # Dynamically get the column name
+
+  # Select the top 50 values
+  top_threshold[[i]] <- df_2d_plot %>%
+    filter(!is.na(.data[[col_name]])) %>%
+    arrange(desc(.data[[col_name]])) %>%
+    slice(1:50) %>%
+    pull(.data[[col_name]]) %>%
+    min()  # Get the minimum value among the top 50
+
+  # Get the top 1 (maximum) value
+  top_1[[i]] <- df_2d_plot %>%
+    filter(!is.na(.data[[col_name]])) %>%
+    pull(.data[[col_name]]) %>%
+    max()
+
+  # Create a new column for top 50 and top 1 values
+  df_2d_plot_new[[i]] <- df_2d_plot %>%
+    mutate(color_group = case_when(
+      .data[[col_name]] == top_1[[i]] ~ "Global max",  # Max value in red
+      .data[[col_name]] >= top_threshold[[i]] ~ "Local Maxima",  # Top 50 in green
+      TRUE ~ "Other points in ridge"  # Everything else in blue
+    ))
+
+  # Filter top points for LOESS fitting
+  top_points <- df_2d_plot_new[[i]] %>%
+    filter(color_group %in% c("Global max", "Local Maxima"))
+
+  # Plot with customized color mapping
+  p <- ggplot(df_2d_plot_new[[i]], aes(x = log10(lambda), y = log10(tau), color = color_group)) +
+    geom_point(size = 3, aes(alpha = !is.na(.data[[col_name]]))) +  # Reduce opacity for NA values
+    scale_color_manual(values = c("Global max" = "red", "Local Maxima" = "green", "Other points in ridge" = "blue")) +  # Assign colors
+    geom_smooth(data = top_points, aes(x = log10(lambda), y = log10(tau)),
+                method = "loess", se = FALSE, color = "darkgreen", size = 1) +  # LOESS fit in dark green
+    geom_abline(intercept = -3, slope = 2, color = "red", linetype = "dotted", size = 1) +  # Custom reference line
+    theme_bw() +
+    labs(title = paste("Scatter Plot of MLL Ridge: \u03bb vs \u03c4 (Seed", i, ")"),
+         x = "log10(\u03bb)",
+         y = "log10(\u03c4)",
+         color = paste("MLL Seed", i, "Group")) +
+    guides(alpha = "none")  # Hide alpha legend
+
+  print(p)  # Ensure the plot is printed inside the loop
+}
+
+
+
+
+
 
 
 

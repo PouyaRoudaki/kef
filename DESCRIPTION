@@ -3,8 +3,8 @@ Type: Package
 Title: Kernel Exponential Family Density Estimation
 Version: 1.0.0
 Author: Pouya Roudaki
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
+Maintainer: The package maintainer <roudaki.pouya@gmail.com>
+Description: This package estimate the kernel exponential family density based on I-prior idea.
     Use four spaces when indenting paragraphs within the Description.
 License: What license is it under?
 Encoding: UTF-8
@@ -16,5 +16,6 @@ LinkingTo:
 Imports: 
     Rcpp,
     RcppArmadillo,
-    pracma,
+    BB
+Depends:
     BB

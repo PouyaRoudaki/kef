@@ -1,0 +1,16 @@
+Iteration = 1, lambda_hat = 1, tau_hat = 0.0125892541179417, max_marginal_log_likelihood = -126.14
+Iteration = 2, lambda_hat = 1, tau_hat = 0.0316227766016838, max_marginal_log_likelihood = -125.8
+Iteration = 3, lambda_hat = 1, tau_hat = 0.0251188643150958, max_marginal_log_likelihood = -125.92
+Iteration = 4, lambda_hat = 1, tau_hat = 0.0251188643150958, max_marginal_log_likelihood = -125.85
+Iteration = 5, lambda_hat = 1, tau_hat = 0.0251188643150958, max_marginal_log_likelihood = -125.85
+Iteration = 1, lambda_hat = 1, tau_hat = 0.0158489319246111, max_marginal_log_likelihood = -124.24
+Iteration = 2, lambda_hat = 1, tau_hat = 0.0199526231496888, max_marginal_log_likelihood = -122.95
+Iteration = 3, lambda_hat = 1, tau_hat = 0.0199526231496888, max_marginal_log_likelihood = -122.83
+Iteration = 4, lambda_hat = 1, tau_hat = 0.0199526231496888, max_marginal_log_likelihood = -122.86
+Iteration = 5, lambda_hat = 1, tau_hat = 0.0199526231496888, max_marginal_log_likelihood = -122.86
+Iteration = 1, lambda_hat = 1, tau_hat = 2.51188643150958, max_marginal_log_likelihood = -125.69
+Iteration = 1, lambda_hat = 0.1, tau_hat = 0.00794328234724282, max_marginal_log_likelihood = -125.28
+Iteration = 2, lambda_hat = 0.1, tau_hat = 0.00794328234724282, max_marginal_log_likelihood = -125.28
+Iteration = 3, lambda_hat = 0.1, tau_hat = 0.00794328234724282, max_marginal_log_likelihood = -125.28
+Iteration = 4, lambda_hat = 0.1, tau_hat = 0.00794328234724282, max_marginal_log_likelihood = -125.28
+Iteration = 5, lambda_hat = 0.1, tau_hat = 0.00794328234724282, max_marginal_log_likelihood = -125.28
