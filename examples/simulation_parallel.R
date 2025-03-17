@@ -155,7 +155,7 @@ result_summary <- df_combined %>%
   )
 
 # Save results
-write.csv(result_summary, file = "summary_claw1.csv")
+write.csv(result_summary, file = "results/summary_claw1.csv")
 
 # View the summary
 #View(result_summary)

@@ -45,4 +45,5 @@ params_beta <- list(shape1 = 2, shape2 = 5)
 density_characterization_beta <- list(type = "beta", parameters = params_beta)
 true_density_beta <- true_density_function(grid_beta, density_characterization_beta)
 plot(grid_beta, true_density_beta, type = "l", main = "Beta Density", xlab = "x", ylab = "Density")
+
 }

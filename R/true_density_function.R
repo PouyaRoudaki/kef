@@ -33,6 +33,8 @@
 #' density_characterization_beta <- list(type = "beta", parameters = params_beta)
 #' true_density_beta <- true_density_function(grid_beta, density_characterization_beta)
 #' plot(grid_beta, true_density_beta, type = "l", main = "Beta Density", xlab = "x", ylab = "Density")
+#'
+#' @export
 true_density_function <- function(grid, density_characterization) {
 
   x_grid <- grid  # Ensure the function uses the provided grid
