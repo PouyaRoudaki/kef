@@ -168,7 +168,7 @@ centered_kernel_self_grid <- diag(centered_kernel_matrix(first_vec_kernel = x_gr
                                                          hurst_coef = 0.5))
 
 
-plot(sampled_x,exp(-100*0.5*diag(centered_kernel_mat_at_sampled)))
+#plot(sampled_x,exp(-100*0.5*diag(centered_kernel_mat_at_sampled)))
 lambda_grid <- 10^(seq(-2,2,by=0.2))
 #lambda_grid <- 1
 tau_grid <- 10^(seq(-8,1,by=0.2))
@@ -221,27 +221,27 @@ filtered_grid <- grid %>% filter(log10_tau >= log10_lambda - 4.2 )
 
 
 
-lst <- list()
+#lst <- list()
 for (i in 1:10) {
   #pdf("marginal_likelihood_results.pdf")
 
-  sink(paste0("drafts/grid_",i,".txt"))
-  lst_grid <- compute_marginal_likelihood_grid_R(centered_kernel_mat_at_sampled,
-                                                       min_x = -3.1,
-                                                       max_x = 3.1,
-                                                       sampled_x,
-                                                       hyperparam_grid = filtered_grid,
-                                                       initial_lambda = 1,
-                                                       initial_w = rep(0, length(sampled_x)),
-                                                       MC_iterations = 10000,
-                                                       max.iterations = 5,
-                                                       seed = i
-  )
-  sink()
+  #sink(paste0("draft_new/1e5_grid_",i,".txt"))
+  #lst_grid <- compute_marginal_likelihood_grid_R(centered_kernel_mat_at_sampled,
+  #                                                     min_x = -3.1,
+  #                                                     max_x = 3.1,
+  #                                                     sampled_x,
+  #                                                     hyperparam_grid = filtered_grid,
+  #                                                     initial_lambda = 1,
+  #                                                     initial_w = rep(0, length(sampled_x)),
+  #                                                     MC_iterations = 100000,
+  #                                                     max.iterations = 1,
+  #                                                     seed = i
+  #)
+  #sink()
 
-  lst[[i]] <- lst_grid
+  #lst[[i]] <- lst_grid
   #dev.off()
-  #sink("nloptr2.txt")
+  #sink("draft_new/nloptr2.txt")
   #optimize_marginal_log_likelihood_nloptr(centered_kernel_mat_at_sampled,
   #                                 min_x = -3.1,
   #                                 max_x = 3.1,
@@ -254,16 +254,17 @@ for (i in 1:10) {
   #                                 parallel_computing = TRUE)
   #sink()
   #pdf("marginal_likelihood_results.pdf")
-  sink(paste0("drafts/optimize_new_",i,".txt"))
-  lst_opt <- optimize_marginal_log_likelihood_new(centered_kernel_mat_at_sampled,
+  sink(paste0("draft_new/optimize_10iter_final",i,".txt"))
+  lst_opt <- optimize_marginal_log_likelihood(centered_kernel_mat_at_sampled,
                                           min_x = -3.1,
                                           max_x = 3.1,
                                           sampled_x,
                                           initial_lambda = 1,
+                                          initial_tau = 1,
                                           initial_w = rep(0, length(sampled_x)),
-                                          MC_iterations = 10000,
-                                          max.iterations = 5,
-                                          tol = 1e-3,
+                                          MC_iterations = 100000,
+                                          max.iterations = 10,
+                                          tol = 1e-1,
                                           parallel_computing = TRUE,
                                           seed = i)
   sink()
@@ -311,6 +312,7 @@ for (i in 1:10) {
 
 
 }
+
 
 library(ggplot2)
 library(dplyr)
@@ -371,9 +373,9 @@ for (i in 1:10) {
                 method = "loess", se = FALSE, color = "darkgreen", size = 1) +  # LOESS fit in dark green
     geom_abline(intercept = -3, slope = 2, color = "red", linetype = "dotted", size = 1) +  # Custom reference line
     theme_bw() +
-    labs(title = paste("Scatter Plot of MLL Ridge: \u03bb vs \u03c4 (Seed", i, ")"),
-         x = "log10(\u03bb)",
-         y = "log10(\u03c4)",
+    labs(title = paste("Scatter Plot of MLL Ridge: tau vs lambda (Seed", i, ")"),
+         x = "log10(tau)",
+         y = "log10(lambda)",
          color = paste("MLL Seed", i, "Group")) +
     guides(alpha = "none")  # Hide alpha legend
 

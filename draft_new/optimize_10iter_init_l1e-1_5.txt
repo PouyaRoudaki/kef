@@ -1,0 +1,17 @@
+Error: Normalizing constant is zero, NaN, or Inf
+Error: Normalizing constant is zero, NaN, or Inf
+  Unsuccessful convergence.
+Iteration: 1
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 7.50421071319584, tau: 0.116529325168519, MLL: -124.958831402661, The ratio: 483.253278491108
+  Successful convergence.
+Iteration: 2
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 2.25642637743509, tau: 0.035620134222342, MLL: -123.59918953179, The ratio: 142.937698241219
+  Successful convergence.
+Iteration: 3
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.01, tau: 1.06197351566084e-06, MLL: -124.152457215283, The ratio: 94.1643068544632
+  Successful convergence.
+Iteration: 4
+Initial lambda: 0.1, Initial tau: 1e-04

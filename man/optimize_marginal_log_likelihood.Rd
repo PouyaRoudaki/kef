@@ -10,11 +10,13 @@ optimize_marginal_log_likelihood(
   max_x,
   sampled_x,
   initial_lambda = 1,
+  initial_tau = 1,
   initial_w = rep(0, length(sampled_x)),
   MC_iterations = 10000,
-  max.iterations = 10,
+  max.iterations = 5,
   tol = 1e-04,
-  parallel_computing = TRUE
+  parallel_computing = TRUE,
+  seed = 1
 )
 }
 \arguments{
@@ -28,17 +30,21 @@ optimize_marginal_log_likelihood(
 
 \item{initial_lambda}{Initial value for \eqn{\lambda} (default: 1).}
 
+\item{initial_tau}{Initial value for \eqn{\tau} (default: 1).}
+
 \item{initial_w}{Initial weight vector (default: zeros of length `sampled_x`).}
 
 \item{MC_iterations}{Number of Monte Carlo iterations.}
 
-\item{max.iterations}{Maximum number of iterations (default: 50).}
+\item{max.iterations}{Maximum number of iterations (default: 5).}
 
 \item{tol}{Convergence tolerance (default: `1e-4`). If the relative change in
 \eqn{\lambda} and \eqn{\tau} falls below this threshold, optimization stops early.}
 
 \item{parallel_computing}{Boolean flag indicating whether parallelization should be
 used for optimization (default: `TRUE`).}
+
+\item{seed}{An integer that controls the randomness.}
 }
 \value{
 A list containing:

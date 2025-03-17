@@ -1,0 +1,7 @@
+Error: Normalizing constant is zero, NaN, or Inf
+Error: Normalizing constant is zero, NaN, or Inf
+  Unsuccessful convergence.
+Iteration: 1
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.01, tau: 6.57486484602821e-07, MLL: -125.127318324043, The ratio: 152.094381164974
+✔ Convergence reached: Estimated Lambda and Tau by Maximum Marginal Likelihood are stable.

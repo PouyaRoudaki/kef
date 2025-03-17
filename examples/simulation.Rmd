@@ -86,11 +86,10 @@ sample <- sort(normal_mixture(n_sample, means, sds, mixture_weights))
 ## Find the Cenetered Kernel Matrices
 
 ```{r}
-centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sample,
-                                                         second_vec_kernel = sample,
-                                                         centering_grid = grid,
-                                                         hurst_coef = 0.5)
-centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel = sample,
+centered_kernel_mat_at_sampled <- centered_kernel_matrix(first_vec_kernel = sample,                                       second_vec_kernel = sample,
+                            centering_grid = grid,
+                            hurst_coef = 0.5)
+centered_kernel_mat_at_grid <- centered_kernel_matrix(first_vec_kernel= sample,
                                                       second_vec_kernel = grid,
                                                       centering_grid = grid,
                                                       hurst_coef = 0.5)
@@ -229,7 +228,7 @@ adaptive_cv_optim_ise <- l2_ise(grid,true_density_grid,estimated_density_grid)
 
 #### KEF: Rule of thumb
 ```{r}
-kef_rot <- kef(sample, grid, lambda = 0.1, tau = 0.01/1350)
+kef_rot <- kef(sample, grid, lambda = 1, tau = 1/1350)
 kef_rot_time <- kef_rot$time 
 estimated_density_grid <- kef_rot$probs_grid
 kef_rot_ise <- l2_ise(grid,true_density_grid,estimated_density_grid)
@@ -262,7 +261,7 @@ kef_mll_se <- rkhs_se(w_hat_vec = kef_mll$weights,
                       kernel_matrix_at_samples = centered_kernel_mat_at_sampled)
 ```
 
-#### KEF: Jackkinfe optimised MISE
+#### KEF: Jackknife optimised MISE
 ```{r}
 kef_jackknife_optim <- function(sample, grid, lambda_init, tau_init, lower_bounds, upper_bounds,loss_metric = "MISE") {
   
@@ -392,7 +391,7 @@ kef_mise_jk_se <- rkhs_se(w_hat_vec = kef_mise$weights,
                       kernel_matrix_at_samples = centered_kernel_mat_at_sampled)
 ```
 
-#### KEF: Jackkinfe optimised MSE
+#### KEF: Jackknife optimised MSE
 
 ```{r}
 start_time_mse <- Sys.time()

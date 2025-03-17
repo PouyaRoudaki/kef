@@ -1,0 +1,41 @@
+Iteration: 1
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.0163521384666973, tau: 1e-06, MLL: -122.904108155342, The ratio: 267.392432434041
+  Successful convergence.
+Iteration: 2
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.0140838716161504, tau: 1e-06, MLL: -121.002187619913, The ratio: 198.355439700208
+  Successful convergence.
+Iteration: 3
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.550868773529142, tau: 0.00124467199646598, MLL: -120.257188008194, The ratio: 243.804316728511
+  Successful convergence.
+Iteration: 4
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.0144895309967901, tau: 1e-06, MLL: -120.915774342036, The ratio: 209.946508506941
+  Successful convergence.
+Iteration: 5
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.250524777000362, tau: 0.000268166256096403, MLL: -120.435763064095, The ratio: 234.043853259893
+  Successful convergence.
+Iteration: 6
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.0147558563662145, tau: 1e-06, MLL: -120.766866434752, The ratio: 217.735297100352
+  Successful convergence.
+Iteration: 7
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.140142300447143, tau: 8.44942703966977e-05, MLL: -120.470509829796, The ratio: 232.440191298283
+  Successful convergence.
+Iteration: 8
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.0148043390572464, tau: 1e-06, MLL: -120.739838240111, The ratio: 219.168454921911
+  Successful convergence.
+Iteration: 9
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.139845987484349, tau: 8.45702718992023e-05, MLL: -120.487956641074, The ratio: 231.250293705832
+  Successful convergence.
+Iteration: 10
+Initial lambda: 0.1, Initial tau: 1e-04
+Optimized lambda: 0.016163847582428, tau: 1.18612773581281e-06, MLL: -120.719163436675, The ratio: 220.271359297507
+  Successful convergence.
+Error: Max iterations reached without full convergence.

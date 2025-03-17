@@ -1,0 +1,5 @@
+Iteration: 1
+Initial lambda: 1, Initial tau: 1
+Optimized lambda: 0.955635143606454, tau: 0.00355059063626144, MLL: -124.204924083966, The ratio: 257.207496231476
+  Successful convergence.
+Error: Max iterations reached without full convergence.
