@@ -45,7 +45,7 @@ compute_marginal_likelihood_grid_parallel <- function(centered_kernel_mat_at_sam
     .Call(`_kef_compute_marginal_likelihood_grid_parallel`, centered_kernel_mat_at_sampled, min_x, max_x, sampled_x, hyperparam_grid, initial_lambda, initial_w, MC_iterations, max_iterations, parallel_computing)
 }
 
-generate_voronoi <- function(points, extension, x_min, x_max, y_min, y_max) {
-    .Call(`_kef_generate_voronoi`, points, extension, x_min, x_max, y_min, y_max)
+generate_voronoi <- function(points, x_min, x_max, y_min, y_max) {
+    .Call(`_kef_generate_voronoi`, points, x_min, x_max, y_min, y_max)
 }
 

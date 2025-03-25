@@ -6,38 +6,31 @@
 #include <limits>
 #include <algorithm>
 #include <set>
-#include <map>
 
 namespace bp = boost::polygon;
 using namespace std;
 
-// Original double precision point structure
+// Define a simple point structure
 struct Point {
   double x, y;
 };
 
-// Integer version of Point for Boost input
-struct IntPoint {
-  int x, y;
-};
-
-// Specialization for Boost Polygon using IntPoint
+// Specialization for Boost Polygon
 namespace boost {
-namespace polygon {
-template <>
-struct geometry_concept<IntPoint> {
-  typedef point_concept type;
-};
-
-template <>
-struct point_traits<IntPoint> {
-  typedef int coordinate_type;
-  static inline coordinate_type get(const IntPoint& p, orientation_2d orient) {
-    return (orient == HORIZONTAL) ? p.x : p.y;
-  }
-};
-}
-}
+  namespace polygon {
+    template <>
+      struct geometry_concept<Point> {
+        typedef point_concept type;
+      };
+    template <>
+      struct point_traits<Point> {
+        typedef double coordinate_type;
+        static inline coordinate_type get(const Point& p, orientation_2d orient) {
+          return (orient == HORIZONTAL) ? p.x : p.y;
+        }
+      };
+  }  // namespace polygon
+}  // namespace boost
 
 // [[Rcpp::export]]
 Rcpp::List generate_voronoi(Rcpp::NumericMatrix points,
@@ -46,10 +39,6 @@ Rcpp::List generate_voronoi(Rcpp::NumericMatrix points,
   VoronoiDiagram vd;
 
   std::vector<Point> point_vec;
-  std::vector<IntPoint> int_point_vec;
-
-  const double scale_factor = 1e8;
-  const double inv_scale = 1.0 / scale_factor;
 
   double x_smallest_value = std::numeric_limits<double>::infinity();
   double x_largest_value  = -std::numeric_limits<double>::infinity();
@@ -85,12 +74,11 @@ Rcpp::List generate_voronoi(Rcpp::NumericMatrix points,
     }
 
     point_vec.push_back({x, y});
-    int x_scaled = static_cast<int>(std::round(x * scale_factor));
-    int y_scaled = static_cast<int>(std::round(y * scale_factor));
-    int_point_vec.push_back({x_scaled, y_scaled});
   }
 
-  bp::construct_voronoi(int_point_vec.begin(), int_point_vec.end(), &vd);
+
+
+  bp::construct_voronoi(point_vec.begin(), point_vec.end(), &vd);
 
   Rcpp::List finite_edges;
   Rcpp::List infinite_edges;
@@ -98,15 +86,16 @@ Rcpp::List generate_voronoi(Rcpp::NumericMatrix points,
   std::vector<std::pair<double, double>> inf_edges;
   std::vector<std::vector<std::vector<double>>> cell_polygons(point_vec.size());
 
-  const double tol = 1e-6;
+  const double tol = 1e-8;
   std::map<const bp::voronoi_edge<double>*, std::pair<double, double>> infinite_endpoints;
 
   for (const auto& edge : vd.edges()) {
     if (edge.vertex0() && edge.vertex1()) {
-      double x1 = edge.vertex0()->x()* inv_scale;
-      double y1 = edge.vertex0()->y()* inv_scale;
-      double x2 = edge.vertex1()->x()* inv_scale;
-      double y2 = edge.vertex1()->y()* inv_scale;
+      double x1 = edge.vertex0()->x();
+
+      double y1 = edge.vertex0()->y();
+      double x2 = edge.vertex1()->x();
+      double y2 = edge.vertex1()->y();
       finite_edges.push_back(Rcpp::NumericVector::create(x1, y1, x2, y2));
 
       // Update bounding box based on finite edge vertices
@@ -166,11 +155,11 @@ Rcpp::List generate_voronoi(Rcpp::NumericMatrix points,
 
       double vx, vy;
       if (edge.vertex0()) {
-        vx = edge.vertex0()->x()* inv_scale;
-        vy = edge.vertex0()->y()* inv_scale;
+        vx = edge.vertex0()->x();
+        vy = edge.vertex0()->y();
       } else {
-        vx = edge.vertex1()->x()* inv_scale;
-        vy = edge.vertex1()->y()* inv_scale;
+        vx = edge.vertex1()->x();
+        vy = edge.vertex1()->y();
       }
 
       double r_sq = (site1.x - vx) * (site1.x - vx) + (site1.y - vy) * (site1.y - vy);
@@ -183,7 +172,6 @@ Rcpp::List generate_voronoi(Rcpp::NumericMatrix points,
         Point p = point_vec[i];
         double d_sq = (p.x - vx) * (p.x - vx) + (p.y - vy) * (p.y - vy);
         if (std::abs(d_sq - r_sq) < tol) {
-          Rcpp::Rcout << "Debug " << std::abs(d_sq - r_sq) << std::endl;
           site3_index = static_cast<int>(i);
           x3 = p.x;
           y3 = p.y;
@@ -211,12 +199,12 @@ Rcpp::List generate_voronoi(Rcpp::NumericMatrix points,
       if (dx != 0) {
         t_x = (direction_sign * dx > 0)
         ? (x_max - vx) / (direction_sign * dx)
-          : (x_min - vx) / (direction_sign * dx);
+        : (x_min - vx) / (direction_sign * dx);
       }
       if (dy != 0) {
         t_y = (direction_sign * dy > 0)
         ? (y_max - vy) / (direction_sign * dy)
-          : (y_min - vy) / (direction_sign * dy);
+        : (y_min - vy) / (direction_sign * dy);
       }
 
       double t = std::min(t_x, t_y);
@@ -293,7 +281,7 @@ Rcpp::List generate_voronoi(Rcpp::NumericMatrix points,
     do {
       if (edge->is_primary()) {
         if (edge->vertex0()) {
-          polygon.push_back({edge->vertex0()->x()* inv_scale, edge->vertex0()->y()* inv_scale});
+          polygon.push_back({edge->vertex0()->x(), edge->vertex0()->y()});
         } else if (infinite_endpoints.count(edge)) {
           polygon.push_back({infinite_endpoints[edge].first, infinite_endpoints[edge].second});
         }

@@ -190,18 +190,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // generate_voronoi
-Rcpp::List generate_voronoi(Rcpp::NumericMatrix points, double extension, double x_min, double x_max, double y_min, double y_max);
-RcppExport SEXP _kef_generate_voronoi(SEXP pointsSEXP, SEXP extensionSEXP, SEXP x_minSEXP, SEXP x_maxSEXP, SEXP y_minSEXP, SEXP y_maxSEXP) {
+Rcpp::List generate_voronoi(Rcpp::NumericMatrix points, double x_min, double x_max, double y_min, double y_max);
+RcppExport SEXP _kef_generate_voronoi(SEXP pointsSEXP, SEXP x_minSEXP, SEXP x_maxSEXP, SEXP y_minSEXP, SEXP y_maxSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type points(pointsSEXP);
-    Rcpp::traits::input_parameter< double >::type extension(extensionSEXP);
     Rcpp::traits::input_parameter< double >::type x_min(x_minSEXP);
     Rcpp::traits::input_parameter< double >::type x_max(x_maxSEXP);
     Rcpp::traits::input_parameter< double >::type y_min(y_minSEXP);
     Rcpp::traits::input_parameter< double >::type y_max(y_maxSEXP);
-    rcpp_result_gen = Rcpp::wrap(generate_voronoi(points, extension, x_min, x_max, y_min, y_max));
+    rcpp_result_gen = Rcpp::wrap(generate_voronoi(points, x_min, x_max, y_min, y_max));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -218,7 +217,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_kef_marginal_log_likelihood", (DL_FUNC) &_kef_marginal_log_likelihood, 10},
     {"_kef_call_get_weights_wo_grid_BBsolve", (DL_FUNC) &_kef_call_get_weights_wo_grid_BBsolve, 8},
     {"_kef_compute_marginal_likelihood_grid_parallel", (DL_FUNC) &_kef_compute_marginal_likelihood_grid_parallel, 10},
-    {"_kef_generate_voronoi", (DL_FUNC) &_kef_generate_voronoi, 6},
+    {"_kef_generate_voronoi", (DL_FUNC) &_kef_generate_voronoi, 5},
     {NULL, NULL, 0}
 };
 
