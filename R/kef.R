@@ -32,7 +32,7 @@
 #' result <- kef(sample, grid, lambda, tau)
 #' plot(grid, result$probs_grid, type = "l", main = "Estimated Density", ylab = "Density")
 
-kef <- function(sample, grid, lambda, tau) {
+kef <- function(sample, grid, lambda, tau, with_base = TRUE, with_prob_in_var = TRUE) {
 
   # Start timer
   start_time <- Sys.time()
@@ -76,7 +76,9 @@ kef <- function(sample, grid, lambda, tau) {
     centered_kernel_mat_at_sampled = centered_kernel_mat_at_sampled,
     sampled_x = sample,
     min_x = min(grid),
-    max_x = max(grid)
+    max_x = max(grid),
+    with_base = with_base,
+    with_prob_in_var = with_prob_in_var
   )
 
 

@@ -16,15 +16,24 @@ arma::vec get_s_function(const arma::vec& weight_hat_vec,
                          const arma::vec& sampled_x,
                          double min_x,
                          double max_x,
-                         Rcpp::Nullable<arma::vec> prior_variance_p_vector = R_NilValue) {
+                         Rcpp::Nullable<arma::vec> prior_variance_p_vector = R_NilValue,
+                         bool with_base = true,
+                         bool with_prob_in_var = true) {
+  // Sample size
+  double n = sampled_x.n_elem;
 
   // Compute densities
   arma::vec dens = get_dens_wo_grid(centered_kernel_mat_at_sampled, min_x, max_x, sampled_x, lambda_hat, weight_hat_vec);
 
   // Compute base measure
-  arma::vec sample_mid_points = get_middle_points_grid(min_x, sampled_x, max_x);
-  arma::vec base_measure_weights = sample_mid_points.subvec(1, sample_mid_points.n_elem - 1) -
+  arma::vec base_measure_weights;
+  if (with_base){
+    arma::vec sample_mid_points = get_middle_points_grid(min_x, sampled_x, max_x);
+    base_measure_weights = sample_mid_points.subvec(1, sample_mid_points.n_elem - 1) -
     sample_mid_points.subvec(0, sample_mid_points.n_elem - 2);
+  } else {
+    base_measure_weights = arma::ones<arma::vec>(n);
+  }
 
   // Compute density-based probabilities
   arma::vec dens_sampled_base = dens % base_measure_weights;
@@ -36,6 +45,11 @@ arma::vec get_s_function(const arma::vec& weight_hat_vec,
     prob_sampled = Rcpp::as<arma::vec>(prior_variance_p_vector);
   } else {
     prob_sampled = dens / sum(dens);
+  }
+
+  // Without probability in variance
+  if(!with_prob_in_var){
+    prob_sampled = arma::ones<arma::vec>(n);
   }
 
   // Compute the function s(weight_hat_vec)
