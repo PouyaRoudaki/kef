@@ -20,9 +20,9 @@ n <- length(sampled_x)
 x_grid <-  seq(-3.1,3.1,length.out = 4*n)
 
 lambda <- 1
-tau <- (lambda^2)/135 * 1/sqrt(n)
+tau <- (lambda^2)/1350
 
-kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = 1/100 * 1/sqrt(n))
+kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = (lambda^2)/1350)
 
 kef_res$time
 
@@ -97,9 +97,9 @@ n <- length(sampled_x)
 x_grid <-  seq(-3.1,3.1,length.out = 4*n)
 
 lambda <- 1
-tau <- (lambda^2)/135 * 1/sqrt(n)
+tau <- (lambda^2)/1350
 
-kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = 1/100 * 1/sqrt(n))
+kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = (lambda^2)/1350)
 
 kef_res$time
 
@@ -142,11 +142,11 @@ kde_fixed_df <- data.frame(grid = sampled_x, kde_fixed_pdf = kde_fixed$estimate)
 
 ggplot() +
   geom_histogram(aes(x = sampled_x, y = ..density..), fill = 'gray', alpha = 1, color = 'black') +
-  geom_line(data = true_density_df_sampled, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 1) +
+  geom_line(data = true_density_df_sampled, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 2) +
   #geom_point(data = true_density_df_sampled, aes(x = grid, y = weights_var, color = 'Weights Var'), size = 1) +
-  geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
-  geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Fixed'), linewidth = 1) +
-  geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
+  geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Fixed'), linewidth = 2) +
+  geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Adaptive'), linewidth = 2) +
+  geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 2) +
   scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
   ggtitle(paste('Kernel Density Estimate for lambda_hat =',
                 format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
@@ -175,9 +175,9 @@ n <- length(sampled_x)
 x_grid <-  seq(-3.1,3.1,length.out = 4*n)
 
 lambda <- 1
-tau <- (lambda^2)/135 * 1/sqrt(n)
+tau <- (lambda^2)/1350
 
-kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = 1/100 * 1/sqrt(n))
+kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = (lambda^2)/1350)
 
 kef_res$time
 
@@ -254,9 +254,9 @@ n <- length(sampled_x)
 x_grid <-  seq(-3.1,3.1,length.out = 4*n)
 
 lambda <- 1
-tau <- (lambda^2)/135 * 1/sqrt(n)
+tau <- (lambda^2)/1350
 
-kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = 1/100 * 1/sqrt(n))
+kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = (lambda^2)/1350)
 
 kef_res$time
 
@@ -299,11 +299,11 @@ kde_fixed_df <- data.frame(grid = sampled_x, kde_fixed_pdf = kde_fixed$estimate)
 
 ggplot() +
   geom_histogram(aes(x = sampled_x, y = ..density..), fill = 'gray', alpha = 1, color = 'black') +
-  geom_line(data = true_density_df_sampled, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 1) +
+  geom_line(data = true_density_df_sampled, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 2) +
   #geom_point(data = true_density_df_sampled, aes(x = grid, y = weights_var, color = 'Weights Var'), size = 1) +
-  geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
-  geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Fixed'), linewidth = 1) +
-  geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
+  geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Fixed'), linewidth = 2) +
+  geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Adaptive'), linewidth = 2) +
+  geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 2) +
   scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
   ggtitle(paste('Kernel Density Estimate for lambda_hat =',
                 format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
@@ -323,9 +323,9 @@ x_grid <-  seq(0,1,length.out = 4*n)
 # For 10000 it takes 1446.795 secs
 
 lambda <- 1
-tau <- (lambda^2)/135 * 1/sqrt(n)
+tau <- (lambda^2)/1350
 
-kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = 1/100 * 1/sqrt(n))
+kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = (lambda^2)/1350)
 
 kef_res$time
 
@@ -375,9 +375,9 @@ x_grid <-  seq(0,1,length.out = 4*n)
 # For 10000 it takes 1446.795 secs
 
 lambda <- 1
-tau <- (lambda^2)/135 * 1/sqrt(n)
+tau <- (lambda^2)/1350
 
-kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = 1/100 * 1/sqrt(n))
+kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = (lambda^2)/1350)
 
 kef_res$time
 
@@ -399,11 +399,11 @@ kde_fixed_df <- data.frame(grid = sampled_x, kde_fixed_pdf = kde_fixed$estimate)
 
 ggplot() +
   geom_histogram(aes(x = sampled_x, y = ..density..), fill = 'gray', alpha = 1, color = 'black') +
-  geom_line(data = true_density_df_sampled, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 1) +
+  geom_line(data = true_density_df_sampled, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 2) +
   #geom_point(data = true_density_df_sampled, aes(x = grid, y = weights_var, color = 'Weights Var'), size = 1) +
-  geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
-  geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Fixed'), linewidth = 1) +
-  geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
+  geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Fixed'), linewidth = 2) +
+  geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Adaptive'), linewidth = 2) +
+  geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 2) +
   scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
   ggtitle(paste('Kernel Density Estimate for lambda_hat =',
                 format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
@@ -432,9 +432,9 @@ n <- length(sampled_x)
 x_grid <-  seq(-3.1,3.1,length.out = 4*n)
 
 lambda <- 1
-tau <- (lambda^2)/135 * 1/sqrt(n)
+tau <- (lambda^2)/1350
 
-kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = 1/100 * 1/sqrt(n))
+kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = (lambda^2)/1350)
 
 kef_res$time
 
@@ -511,9 +511,9 @@ n <- length(sampled_x)
 x_grid <-  seq(-3.1,3.1,length.out = 4*n)
 
 lambda <- 1
-tau <- (lambda^2)/135 * 1/sqrt(n)
+tau <- (lambda^2)/1350
 
-kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = 1/100 * 1/sqrt(n))
+kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = (lambda^2)/1350)
 
 kef_res$time
 
@@ -556,11 +556,11 @@ kde_fixed_df <- data.frame(grid = sampled_x, kde_fixed_pdf = kde_fixed$estimate)
 
 ggplot() +
   geom_histogram(aes(x = sampled_x, y = ..density..), fill = 'gray', alpha = 1, color = 'black') +
-  geom_line(data = true_density_df_sampled, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 1) +
+  geom_line(data = true_density_df_sampled, aes(x = grid, y = true_pdf, color = 'True Density'), linewidth = 2) +
   #geom_point(data = true_density_df_sampled, aes(x = grid, y = weights_var, color = 'Weights Var'), size = 1) +
-  geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
-  geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Fixed'), linewidth = 1) +
-  geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
+  geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Fixed'), linewidth = 2) +
+  geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Adaptive'), linewidth = 2) +
+  geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 2) +
   scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
   ggtitle(paste('Kernel Density Estimate for lambda_hat =',
                 format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
@@ -589,9 +589,9 @@ n <- length(sampled_x)
 x_grid <-  seq(-3.1,3.1,length.out = min(1000,max(4*n,100)))
 
 lambda <- 1
-tau <- (lambda^2)/135 * 1/sqrt(n)
+tau <- (lambda^2)/1350
 
-kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = 1/100 * 1/sqrt(n))
+kef_res <- kef(sampled_x,grid = x_grid,lambda = 1, tau = (lambda^2)/1350)
 
 kef_res$time
 

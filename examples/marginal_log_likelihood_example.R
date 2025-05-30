@@ -698,7 +698,7 @@ ggplot() +
 
 ################################################################################
 
-lambda_grid <- 10^(seq(-1,2,by=0.1))
+lambda_grid <- 10^(seq(-2,1,by=0.1))
 tau_grid <- 10^(seq(-4,1,by=0.1))
 
 # Create a data frame with all possible combinations of lambda and tau
@@ -730,8 +730,83 @@ lst_df <- compute_marginal_likelihood_grid_parallel(centered_kernel_mat_at_sampl
                                                     hyperparam_grid = filtered_grid,
                                                     initial_lambda = 1,
                                                     initial_w = rep(0, length(sampled_x)),
-                                                    MC_iterations = 5000,
-                                                    max.iterations = 5)
+                                                    MC_iterations = 5000)
+
+
+
+library(ggplot2)
+
+df <-lst_df
+df_filtered <- df %>% filter(marginal_log_likelihood>-200)
+
+# Create transformed variables
+df$log10_lambda <- log10(df$lambda)
+df$log10_tau <- log10(df$tau)
+
+
+slope_val <- 2
+intercept_through_max <- max_point$log10_tau - slope_val * max_point$log10_lambda
+# Plot
+ggplot(df_filtered, aes(x = log10_lambda, y = log10_tau, z = marginal_log_likelihood)) +
+  geom_contour(aes(alpha = ..level..), color = "black", bins = 20, linewidth = 0.7) +
+  scale_alpha_continuous(range = c(0.01, 1)) +  # Higher levels = more opaque
+  geom_point(data = max_point, aes(x = log10_lambda, y = log10_tau),
+             color = "red", size = 3, shape = 18) +
+  geom_abline(intercept = intercept_through_max, slope = slope_val,
+              color = "red", linetype = "solid", linewidth = 1) +
+  geom_abline(intercept = -3, slope = 2,
+              color = "springgreen3", linetype = "dashed", linewidth = 2) +
+  labs(
+    title = "Contour Plot of Marginal Likelihood",
+    x = expression(log[10](lambda)),
+    y = expression(log[10](tau))
+  ) +
+  theme_bw()+
+  theme(legend.position = "none")
+
+
+
+library(dplyr)
+library(ggplot2)
+library(akima)
+
+# Prepare data
+df_transformed <- df %>%
+  filter(marginal_log_likelihood > -200) %>%
+  mutate(
+    lambda2_div_tau = log10(lambda^2 / tau),
+    marginal_log_likelihood = as.numeric(marginal_log_likelihood)
+  )
+
+# Interpolate to a regular grid using akima
+interp_data <- with(df_transformed, akima::interp(x = lambda, y = lambda2_div_tau, z = marginal_log_likelihood))
+
+# Convert to data frame for ggplot
+interp_df <- as.data.frame(with(interp_data, expand.grid(x = x, y = y)))
+interp_df$z <- as.vector(interp_data$z)
+
+# Find max point
+max_point <- df_transformed %>%
+  filter(marginal_log_likelihood == max(marginal_log_likelihood))
+
+# Plot with interpolated contours
+ggplot(interp_df, aes(x = x, y = y, z = z)) +
+  geom_contour(color = "black", bins = 20, linewidth = 0.7) +
+  geom_point(data = max_point, aes(x = lambda, y = log10(lambda^2 / tau)),
+             color = "red", size = 3, shape = 18, inherit.aes = FALSE) +
+  geom_hline(yintercept = 1.7, color = "red", linetype = "solid", linewidth = 1) +
+  geom_hline(yintercept = 3, color = "springgreen3", linetype = "dashed", linewidth = 1) +
+  labs(
+    title = expression(paste("Contour Plot in ", lambda, " and ", lambda^2, "/", tau)),
+    x = expression(lambda),
+    y = expression(lambda^2 / tau)
+  ) +
+  theme_bw() +
+  theme(legend.position = "none")
+
+
+
+
 
 result_df <- lst_df[[1]]
 

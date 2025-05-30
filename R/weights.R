@@ -2,7 +2,7 @@
 #'
 #' This function estimates the weight vector using the Barzilai-Borwein method,
 #' a numerical approach to solve nonlinear systems of equations. It optimizes
-#' performance by leveraging Rcpp for computation and adaptive subsampling for
+#' performance by leveraging Rcpp for computation and adaptive sub-sampling for
 #' better initial values in the Barzilai-Borwein method.
 #'
 #' @param lambda_hat A scalar representing the estimated lambda parameter.
@@ -13,7 +13,7 @@
 #' @param max_x The maximum domain value.
 #' @param prior_variance_p_vector A numeric vector for prior variance probabilities. Default is NULL.
 #' @param print_trace Logical; if TRUE, prints progress updates.
-#' @param init Logical; if TRUE, the weights calculation has a subsampling method for initialization.
+#' @param init Logical; if TRUE, the weights calculation has a sub-sampling method for initialization.
 #'
 #' @return A numeric vector of estimated weights.
 #' @export

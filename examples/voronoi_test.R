@@ -107,7 +107,7 @@ library(ggplot2)
 #sourceCpp("src/voronoi.cpp")
 
 # Define Voronoi input points
-set.seed(7)
+set.seed(70)
 points <- matrix(unique(rnorm(100,mean = 0,4)),#,
                  #                   0,-14,
                  #                   -4,-12,
@@ -115,10 +115,10 @@ points <- matrix(unique(rnorm(100,mean = 0,4)),#,
                  ncol = 2, byrow = TRUE)
 
 
-x_min <- -10
-x_max <- 10
-y_min <- -10
-y_max <- 10
+x_min <- -20
+x_max <- 20
+y_min <- -20
+y_max <- 20
 
 # Compute Voronoi diagram
 voronoi_result <- generate_voronoi(points, x_min, x_max, y_min, y_max)
@@ -163,6 +163,20 @@ ggplot() +
   ggtitle("Boost Voronoi Diagram in R with Boundaries")+
   scale_x_continuous(breaks = seq(voronoi_result$x_min, voronoi_result$x_max, by = (voronoi_result$x_max - voronoi_result$x_min)/10)) +   # Smaller 'by' means denser vertical grid lines
   scale_y_continuous(breaks = seq(voronoi_result$y_min, voronoi_result$y_max, by =(voronoi_result$x_max - voronoi_result$x_min)/10))    # Smaller 'by' means denser horizontal grid lines
+
+
+library(deldir)
+# Create Voronoi diagram with rectangular window
+deldir_voronoi <- deldir(points[,1], points[,2], rw = c(-20, 20, -20, 20))
+
+sum(deldir_voronoi$summary$dir.area)
+
+# Plot Voronoi tessellation
+plot(deldir_voronoi, wlines = "tess", lty = 1, col = "blue")
+
+# Add the original points
+points(points[,1], points[,2], col = "red", pch = 19)
+
 
 
 site_points_matrix <- do.call(rbind, voronoi_result$site_points)
