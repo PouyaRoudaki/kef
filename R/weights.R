@@ -22,8 +22,11 @@ get_weights_wo_grid_BBsolve <- function(lambda_hat, tau_hat, centered_kernel_mat
                                         prior_variance_p_vector = NULL,
                                         print_trace = FALSE,
                                         init = FALSE,
-                                        with_base = TRUE,
-                                        with_prob_in_var = TRUE) {
+                                        q_with_base = TRUE,
+                                        with_prob_in_var = TRUE,
+                                        normalised_q = TRUE,
+                                        normalised_p = TRUE,
+                                        p_with_base = FALSE) {
 
   n <- nrow(centered_kernel_mat_at_sampled)  # Number of sampled points
 
@@ -31,7 +34,12 @@ get_weights_wo_grid_BBsolve <- function(lambda_hat, tau_hat, centered_kernel_mat
   s_function <- function(weight_hat_vec) {
     result <- get_s_function(weight_hat_vec, lambda_hat, tau_hat,
                              centered_kernel_mat_at_sampled, sampled_x, min_x, max_x,
-                             prior_variance_p_vector,with_base,with_prob_in_var)  # Pass prior_variance_p_vector
+                             prior_variance_p_vector,
+                             q_with_base,
+                             with_prob_in_var,
+                             normalised_q,
+                             normalised_p,
+                             p_with_base)  # Pass prior_variance_p_vector
 
     return(as.numeric(result))  # Ensure it's a standard numeric vector
   }
@@ -55,8 +63,14 @@ get_weights_wo_grid_BBsolve <- function(lambda_hat, tau_hat, centered_kernel_mat
     # BBsolve Wrapper for subsampled data
     s_function_100 <- function(weight_hat_vec_100) {
       result <- get_s_function(weight_hat_vec_100, lambda_hat, tau_hat,
-                               centered_kernel_mat_at_sampled_100, sampled_x_100, min_x, max_x,
-                               prior_variance_p_vector)  # Pass prior_variance_p_vector
+                               centered_kernel_mat_at_sampled_100, sampled_x_100,
+                               min_x, max_x,
+                               prior_variance_p_vector,
+                               q_with_base,
+                               with_prob_in_var,
+                               normalised_q,
+                               normalised_p,
+                               p_with_base)  # Pass prior_variance_p_vector
 
       return(as.numeric(result))  # Ensure it's a standard numeric vector
     }

@@ -70,13 +70,23 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
   geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Fixed'), linewidth = 1) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
-  ggtitle(paste('Kernel Density Estimate for lambda_hat =',
-                format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
-  xlab('Value') +
+  scale_color_manual(name = "Type of density:", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
+  #ggtitle(paste('Kernel Density Estimate for lambda_hat =',
+  #              format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
+  xlab('x') +
   ylab('Density') +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = c(1, 1),             # top-right inside plot
+    legend.justification = c("right", "top"),
+    legend.background = element_rect(color = alpha("black", 0.6)),
+    legend.key.size = unit(1.2, "cm"),           # increase size of legend keys
+    legend.text = element_text(size = 14),       # increase text size
+    legend.title = element_text(size = 15)       # increase title size
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(size = 3))  # increase line width in legend
+  )
 
 ################################################################################
 ###########################       CLAW  1000     ##############################
@@ -147,13 +157,23 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Fixed'), linewidth = 2) +
   geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Adaptive'), linewidth = 2) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 2) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
-  ggtitle(paste('Kernel Density Estimate for lambda_hat =',
-                format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
-  xlab('Value') +
+  scale_color_manual(name = "Type of density:", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
+  #ggtitle(paste('Kernel Density Estimate for lambda_hat =',
+  #              format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
+  xlab('x') +
   ylab('Density') +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = c(1, 1),             # top-right inside plot
+    legend.justification = c("right", "top"),
+    legend.background = element_rect(color = alpha("black", 0.6)),
+    legend.key.size = unit(1.2, "cm"),           # increase size of legend keys
+    legend.text = element_text(size = 14),       # increase text size
+    legend.title = element_text(size = 15)       # increase title size
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(size = 3))  # increase line width in legend
+  )
 
 ################################################################################
 ###########################     Bimodal 100  ###################################
@@ -225,13 +245,23 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
   geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Fixed'), linewidth = 1) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
-  ggtitle(paste('Kernel Density Estimate for lambda_hat =',
-                format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
-  xlab('Value') +
+  scale_color_manual(name = "Type of density:", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
+  #ggtitle(paste('Kernel Density Estimate for lambda_hat =',
+  #              format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
+  xlab('x') +
   ylab('Density') +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = c(0, 1),             # top-right inside plot
+    legend.justification = c("left", "top"),
+    legend.background = element_rect(color = alpha("black", 0.6)),
+    legend.key.size = unit(1.2, "cm"),           # increase size of legend keys
+    legend.text = element_text(size = 14),       # increase text size
+    legend.title = element_text(size = 15)       # increase title size
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(size = 3))  # increase line width in legend
+  )
 
 
 ################################################################################
@@ -304,13 +334,23 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Fixed'), linewidth = 2) +
   geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Adaptive'), linewidth = 2) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 2) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
-  ggtitle(paste('Kernel Density Estimate for lambda_hat =',
-                format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
-  xlab('Value') +
+  scale_color_manual(name = "Type of density:", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
+  #ggtitle(paste('Kernel Density Estimate for lambda_hat =',
+  #              format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
+  xlab('x') +
   ylab('Density') +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = c(0, 1),             # top-right inside plot
+    legend.justification = c("left", "top"),
+    legend.background = element_rect(color = alpha("black", 0.6)),
+    legend.key.size = unit(1.2, "cm"),           # increase size of legend keys
+    legend.text = element_text(size = 14),       # increase text size
+    legend.title = element_text(size = 15)       # increase title size
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(size = 3))  # increase line width in legend
+  )
 
 ################################################################################
 ###########################     Uniform 100  ###################################
@@ -356,13 +396,23 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
   geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Fixed'), linewidth = 1) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
-  ggtitle(paste('Kernel Density Estimate for lambda_hat =',
-                format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
-  xlab('Value') +
+  scale_color_manual(name = "Type of density:", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
+  #ggtitle(paste('Kernel Density Estimate for lambda_hat =',
+  #              format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
+  xlab('x') +
   ylab('Density') +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = c(1, 1),             # top-right inside plot
+    legend.justification = c("right", "top"),
+    legend.background = element_rect(color = alpha("black", 0.6)),
+    legend.key.size = unit(1.2, "cm"),           # increase size of legend keys
+    legend.text = element_text(size = 14),       # increase text size
+    legend.title = element_text(size = 15)       # increase title size
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(size = 3))  # increase line width in legend
+  )
 
 ################################################################################
 ###########################     Uniform 1000  ##################################
@@ -404,13 +454,23 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Fixed'), linewidth = 2) +
   geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Adaptive'), linewidth = 2) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 2) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
-  ggtitle(paste('Kernel Density Estimate for lambda_hat =',
-                format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
-  xlab('Value') +
+  scale_color_manual(name = "Type of density:", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
+  #ggtitle(paste('Kernel Density Estimate for lambda_hat =',
+  #              format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
+  xlab('x') +
   ylab('Density') +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = c(1, 0),             # top-right inside plot
+    legend.justification = c("right", "bottom"),
+    legend.background = element_rect(color = alpha("black", 0.6)),
+    legend.key.size = unit(1.2, "cm"),           # increase size of legend keys
+    legend.text = element_text(size = 14),       # increase text size
+    legend.title = element_text(size = 15)       # increase title size
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(size = 3))  # increase line width in legend
+  )
 
 ################################################################################
 ###########################     Our 3 modal Density 100 ########################
@@ -482,13 +542,23 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
   geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Fixed'), linewidth = 1) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
-  ggtitle(paste('Kernel Density Estimate for lambda_hat =',
-                format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
-  xlab('Value') +
+  scale_color_manual(name = "Type of density:", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
+  #ggtitle(paste('Kernel Density Estimate for lambda_hat =',
+  #              format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
+  xlab('x') +
   ylab('Density') +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = c(1, 1),             # top-right inside plot
+    legend.justification = c("right", "top"),
+    legend.background = element_rect(color = alpha("black", 0.6)),
+    legend.key.size = unit(1.2, "cm"),           # increase size of legend keys
+    legend.text = element_text(size = 14),       # increase text size
+    legend.title = element_text(size = 15)       # increase title size
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(size = 3))  # increase line width in legend
+  )
 
 
 ################################################################################
@@ -561,13 +631,23 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Fixed'), linewidth = 2) +
   geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Adaptive'), linewidth = 2) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 2) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
-  ggtitle(paste('Kernel Density Estimate for lambda_hat =',
-                format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
-  xlab('Value') +
+  scale_color_manual(name = "Type of density:", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
+  #ggtitle(paste('Kernel Density Estimate for lambda_hat =',
+  #              format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
+  xlab('x') +
   ylab('Density') +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = c(1, 1),             # top-right inside plot
+    legend.justification = c("right", "top"),
+    legend.background = element_rect(color = alpha("black", 0.6)),
+    legend.key.size = unit(1.2, "cm"),           # increase size of legend keys
+    legend.text = element_text(size = 14),       # increase text size
+    legend.title = element_text(size = 15)       # increase title size
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(size = 3))  # increase line width in legend
+  )
 
 ################################################################################
 ###########################     Our 3 modal Density 10 ########################
@@ -639,11 +719,21 @@ ggplot() +
   geom_line(data = kde_adaptive_df, aes(x = grid, y = kde_adaptive_pdf, color = 'KDE Adaptive'), linewidth = 1) +
   geom_line(data = kde_fixed_df, aes(x = grid, y = kde_fixed_pdf, color = 'KDE Fixed'), linewidth = 1) +
   geom_line(data = kef_df, aes(x = grid, y = kef_pdf, color = 'KEF'), linewidth = 1) +
-  scale_color_manual(name = "Type of density", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
-  ggtitle(paste('Kernel Density Estimate for lambda_hat =',
-                format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
-  xlab('Value') +
+  scale_color_manual(name = "Type of density:", values = c('True Density' = 'red', 'KDE Adaptive' = 'blue','KDE Fixed' = 'limegreen', 'KEF' = 'orange')) +
+  #ggtitle(paste('Kernel Density Estimate for lambda_hat =',
+  #              format(lambda,digits = 3,scientific = T),'and tau_hat =',format(tau,digits = 3,scientific = T))) +
+  xlab('x') +
   ylab('Density') +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = c(1, 1),             # top-right inside plot
+    legend.justification = c("right", "top"),
+    legend.background = element_rect(color = alpha("black", 0.6)),
+    legend.key.size = unit(1.2, "cm"),           # increase size of legend keys
+    legend.text = element_text(size = 14),       # increase text size
+    legend.title = element_text(size = 15)       # increase title size
+  ) +
+  guides(
+    color = guide_legend(override.aes = list(size = 3))  # increase line width in legend
+  )
 

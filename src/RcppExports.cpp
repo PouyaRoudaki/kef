@@ -25,6 +25,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// centered_kernel_matrix_hd
+arma::mat centered_kernel_matrix_hd(const arma::mat& first_mat_kernel, const arma::mat& second_mat_kernel, const arma::mat& centering_mat_grid, double hurst_coef);
+RcppExport SEXP _kef_centered_kernel_matrix_hd(SEXP first_mat_kernelSEXP, SEXP second_mat_kernelSEXP, SEXP centering_mat_gridSEXP, SEXP hurst_coefSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type first_mat_kernel(first_mat_kernelSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type second_mat_kernel(second_mat_kernelSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type centering_mat_grid(centering_mat_gridSEXP);
+    Rcpp::traits::input_parameter< double >::type hurst_coef(hurst_coefSEXP);
+    rcpp_result_gen = Rcpp::wrap(centered_kernel_matrix_hd(first_mat_kernel, second_mat_kernel, centering_mat_grid, hurst_coef));
+    return rcpp_result_gen;
+END_RCPP
+}
 // density_at_sampled_x
 arma::vec density_at_sampled_x(const arma::mat& centered_kernel_mat_at_sampled, double lambda_hat, const arma::vec& weight_hat_vec);
 RcppExport SEXP _kef_density_at_sampled_x(SEXP centered_kernel_mat_at_sampledSEXP, SEXP lambda_hatSEXP, SEXP weight_hat_vecSEXP) {
@@ -101,8 +115,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // get_s_function
-arma::vec get_s_function(const arma::vec& weight_hat_vec, double lambda_hat, double tau_hat, const arma::mat& centered_kernel_mat_at_sampled, const arma::vec& sampled_x, double min_x, double max_x, Rcpp::Nullable<arma::vec> prior_variance_p_vector);
-RcppExport SEXP _kef_get_s_function(SEXP weight_hat_vecSEXP, SEXP lambda_hatSEXP, SEXP tau_hatSEXP, SEXP centered_kernel_mat_at_sampledSEXP, SEXP sampled_xSEXP, SEXP min_xSEXP, SEXP max_xSEXP, SEXP prior_variance_p_vectorSEXP) {
+arma::vec get_s_function(const arma::vec& weight_hat_vec, double lambda_hat, double tau_hat, const arma::mat& centered_kernel_mat_at_sampled, const arma::vec& sampled_x, double min_x, double max_x, Rcpp::Nullable<arma::vec> prior_variance_p_vector, bool q_with_base, bool with_prob_in_var, bool normalised_q, bool normalised_p, bool p_with_base);
+RcppExport SEXP _kef_get_s_function(SEXP weight_hat_vecSEXP, SEXP lambda_hatSEXP, SEXP tau_hatSEXP, SEXP centered_kernel_mat_at_sampledSEXP, SEXP sampled_xSEXP, SEXP min_xSEXP, SEXP max_xSEXP, SEXP prior_variance_p_vectorSEXP, SEXP q_with_baseSEXP, SEXP with_prob_in_varSEXP, SEXP normalised_qSEXP, SEXP normalised_pSEXP, SEXP p_with_baseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -114,7 +128,32 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type min_x(min_xSEXP);
     Rcpp::traits::input_parameter< double >::type max_x(max_xSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<arma::vec> >::type prior_variance_p_vector(prior_variance_p_vectorSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_s_function(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, prior_variance_p_vector));
+    Rcpp::traits::input_parameter< bool >::type q_with_base(q_with_baseSEXP);
+    Rcpp::traits::input_parameter< bool >::type with_prob_in_var(with_prob_in_varSEXP);
+    Rcpp::traits::input_parameter< bool >::type normalised_q(normalised_qSEXP);
+    Rcpp::traits::input_parameter< bool >::type normalised_p(normalised_pSEXP);
+    Rcpp::traits::input_parameter< bool >::type p_with_base(p_with_baseSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_s_function(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, prior_variance_p_vector, q_with_base, with_prob_in_var, normalised_q, normalised_p, p_with_base));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_s_function_hd
+arma::vec get_s_function_hd(const arma::vec& weight_hat_vec, double lambda_hat, double tau_hat, const arma::mat& centered_kernel_mat_at_sampled, const arma::mat& sampled_x, Rcpp::Nullable<arma::vec> prior_variance_p_vector, bool with_prob_in_var, bool normalised_q, bool normalised_p, bool p_with_base);
+RcppExport SEXP _kef_get_s_function_hd(SEXP weight_hat_vecSEXP, SEXP lambda_hatSEXP, SEXP tau_hatSEXP, SEXP centered_kernel_mat_at_sampledSEXP, SEXP sampled_xSEXP, SEXP prior_variance_p_vectorSEXP, SEXP with_prob_in_varSEXP, SEXP normalised_qSEXP, SEXP normalised_pSEXP, SEXP p_with_baseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type weight_hat_vec(weight_hat_vecSEXP);
+    Rcpp::traits::input_parameter< double >::type lambda_hat(lambda_hatSEXP);
+    Rcpp::traits::input_parameter< double >::type tau_hat(tau_hatSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type centered_kernel_mat_at_sampled(centered_kernel_mat_at_sampledSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type sampled_x(sampled_xSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<arma::vec> >::type prior_variance_p_vector(prior_variance_p_vectorSEXP);
+    Rcpp::traits::input_parameter< bool >::type with_prob_in_var(with_prob_in_varSEXP);
+    Rcpp::traits::input_parameter< bool >::type normalised_q(normalised_qSEXP);
+    Rcpp::traits::input_parameter< bool >::type normalised_p(normalised_pSEXP);
+    Rcpp::traits::input_parameter< bool >::type p_with_base(p_with_baseSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_s_function_hd(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, prior_variance_p_vector, with_prob_in_var, normalised_q, normalised_p, p_with_base));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -207,12 +246,14 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_kef_centered_kernel_matrix", (DL_FUNC) &_kef_centered_kernel_matrix, 4},
+    {"_kef_centered_kernel_matrix_hd", (DL_FUNC) &_kef_centered_kernel_matrix_hd, 4},
     {"_kef_density_at_sampled_x", (DL_FUNC) &_kef_density_at_sampled_x, 3},
     {"_kef_density_at_grid", (DL_FUNC) &_kef_density_at_grid, 4},
     {"_kef_get_dens_wo_grid", (DL_FUNC) &_kef_get_dens_wo_grid, 6},
     {"_kef_get_dens_or_prob", (DL_FUNC) &_kef_get_dens_or_prob, 9},
     {"_kef_get_middle_points_grid", (DL_FUNC) &_kef_get_middle_points_grid, 3},
-    {"_kef_get_s_function", (DL_FUNC) &_kef_get_s_function, 8},
+    {"_kef_get_s_function", (DL_FUNC) &_kef_get_s_function, 13},
+    {"_kef_get_s_function_hd", (DL_FUNC) &_kef_get_s_function_hd, 10},
     {"_kef_interp_linear_cpp", (DL_FUNC) &_kef_interp_linear_cpp, 3},
     {"_kef_marginal_log_likelihood", (DL_FUNC) &_kef_marginal_log_likelihood, 10},
     {"_kef_call_get_weights_wo_grid_BBsolve", (DL_FUNC) &_kef_call_get_weights_wo_grid_BBsolve, 8},

@@ -13,7 +13,12 @@ get_weights_wo_grid_BBsolve(
   max_x,
   prior_variance_p_vector = NULL,
   print_trace = FALSE,
-  init = FALSE
+  init = FALSE,
+  with_base = TRUE,
+  with_prob_in_var = TRUE,
+  normalised_q = TRUE,
+  normalised_p = TRUE,
+  p_with_base = TRUE
 )
 }
 \arguments{
@@ -33,7 +38,7 @@ get_weights_wo_grid_BBsolve(
 
 \item{print_trace}{Logical; if TRUE, prints progress updates.}
 
-\item{init}{Logical; if TRUE, the weights calculation has a subsampling method for initialization.}
+\item{init}{Logical; if TRUE, the weights calculation has a sub-sampling method for initialization.}
 }
 \value{
 A numeric vector of estimated weights.
@@ -41,6 +46,6 @@ A numeric vector of estimated weights.
 \description{
 This function estimates the weight vector using the Barzilai-Borwein method,
 a numerical approach to solve nonlinear systems of equations. It optimizes
-performance by leveraging Rcpp for computation and adaptive subsampling for
+performance by leveraging Rcpp for computation and adaptive sub-sampling for
 better initial values in the Barzilai-Borwein method.
 }

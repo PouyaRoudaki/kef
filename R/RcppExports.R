@@ -5,6 +5,10 @@ centered_kernel_matrix <- function(first_vec_kernel, second_vec_kernel, centerin
     .Call(`_kef_centered_kernel_matrix`, first_vec_kernel, second_vec_kernel, centering_grid, hurst_coef)
 }
 
+centered_kernel_matrix_hd <- function(first_mat_kernel, second_mat_kernel, centering_mat_grid, hurst_coef) {
+    .Call(`_kef_centered_kernel_matrix_hd`, first_mat_kernel, second_mat_kernel, centering_mat_grid, hurst_coef)
+}
+
 density_at_sampled_x <- function(centered_kernel_mat_at_sampled, lambda_hat, weight_hat_vec) {
     .Call(`_kef_density_at_sampled_x`, centered_kernel_mat_at_sampled, lambda_hat, weight_hat_vec)
 }
@@ -25,8 +29,12 @@ get_middle_points_grid <- function(min, samples, max) {
     .Call(`_kef_get_middle_points_grid`, min, samples, max)
 }
 
-get_s_function <- function(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, prior_variance_p_vector = NULL) {
-    .Call(`_kef_get_s_function`, weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, prior_variance_p_vector)
+get_s_function <- function(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, prior_variance_p_vector = NULL, q_with_base = TRUE, with_prob_in_var = TRUE, normalised_q = TRUE, normalised_p = TRUE, p_with_base = FALSE) {
+    .Call(`_kef_get_s_function`, weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, min_x, max_x, prior_variance_p_vector, q_with_base, with_prob_in_var, normalised_q, normalised_p, p_with_base)
+}
+
+get_s_function_hd <- function(weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, prior_variance_p_vector = NULL, with_prob_in_var = TRUE, normalised_q = TRUE, normalised_p = TRUE, p_with_base = FALSE) {
+    .Call(`_kef_get_s_function_hd`, weight_hat_vec, lambda_hat, tau_hat, centered_kernel_mat_at_sampled, sampled_x, prior_variance_p_vector, with_prob_in_var, normalised_q, normalised_p, p_with_base)
 }
 
 interp_linear_cpp <- function(x, y, xnew) {
